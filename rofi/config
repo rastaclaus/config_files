@@ -1,0 +1,8 @@
+rofi.theme: arthur.rasi
+rofi.combi-modi:    window,drun
+rofi.modi:          combi
+rofi.modi:          ssh
+rofi.ssh-terminal:  termite
+rofi.terminal:      termite
+rofi.ssh-client:                     ssh
+rofi.ssh-command:                    {terminal} -e "{ssh-client} {host} -t"

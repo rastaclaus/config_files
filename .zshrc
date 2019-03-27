@@ -10,6 +10,5 @@ HISTSIZE=1000
 SAVEHIST=1000
 unsetopt beep
 bindkey -v
-eval "$(pyenv init -)"
 source /usr/share/fzf/key-bindings.zsh
 source /usr/share/fzf/completion.zsh

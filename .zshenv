@@ -1,4 +1,5 @@
-# export TERM=xterm-256color
+export EDITOR=nvim
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
-export EDITOR="nvim"
+eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"

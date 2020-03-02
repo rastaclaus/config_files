@@ -2,6 +2,6 @@ rofi.theme: arthur.rasi
 rofi.combi-modi:    window,drun
 rofi.modi:          combi
 rofi.modi:          ssh
-rofi.terminal:      termite
-rofi.ssh-client:                     ssh
-rofi.ssh-command:                    {terminal} -e "{ssh-client} {host}"
+rofi.terminal:      kitty
+rofi.ssh-client:    ssh
+rofi.ssh-command:   {terminal} {ssh-client} {host}

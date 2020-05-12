@@ -4,3 +4,6 @@
 [submodule "neovim"]
 	path = neovim
 	url = git@github.com:rastaclaus/neovim
+[submodule "conky"]
+	path = conky
+	url = git@github.com:rastaclaus/conky

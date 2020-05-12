@@ -1,0 +1,6 @@
+[submodule "i3config"]
+	path = i3config
+	url = git@github.com:rastaclaus/i3config
+[submodule "neovim"]
+	path = neovim
+	url = git@github.com:rastaclaus/neovim

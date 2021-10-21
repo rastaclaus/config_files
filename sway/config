@@ -86,7 +86,10 @@ input "1:1:AT_Translated_Set_2_keyboard" {
     bindsym $mod+Shift+q kill
 
     # Start your launcher
-    bindsym $mod+d exec wofi --gtk-dark -Imi --show drun,run,window
+    #bindsym $mod+d exec wofi --gtk-dark -Imi --show drun,run,window
+
+    bindsym $mod+d exec rofi -show combi -icon-theme "Papirus" -show-icons -run-shell-command 'kitty -e zsh -ic "{cmd} && read"'
+
 
     # Drag floating windows by holding down $mod and left mouse button.
     # Resize them with right mouse button + $mod.
@@ -228,6 +231,7 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 bindsym $mod+i exec swaymsg bar mode toggle
+bindsym $mod+t exec ~/.config/sway/toggletouch.sh
 
 #
 # Status Bar:

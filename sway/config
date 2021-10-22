@@ -21,6 +21,7 @@ set $term env KITTY_ENABLE_WAYLAND=1 kitty
 # Note: pass the final command to swaymsg so that the resulting window can be opened
 # on the original workspace that the command was run on.
 set $menu dmenu_path | dmenu | xargs swaymsg exec --
+font Source Code Pro 11
 
 ### Output configuration
 #
@@ -28,7 +29,7 @@ set $menu dmenu_path | dmenu | xargs swaymsg exec --
 set $wallpapers_path /home/artems/Wallpapers/
 output * bg $(find $wallpapers_path -type f | shuf -n 1) fill
 
-default_border none
+default_border pixel 2
 hide_edge_borders --i3 smart
 
 # output * bg /usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png fill

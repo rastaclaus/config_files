@@ -104,13 +104,8 @@ interval=30
 #LABEL=⚡
 interval=30
 LABEL=BAT 
-BAT_NUMBER=1
+BAT_NUMBER=0
 
-# Date Time
-
-[time]
-interval=1
-command=date +'%d.%m.%Y %H:%M:%S'
 
 [volume-pipewire]
 interval=persist
@@ -133,3 +128,8 @@ LONG_FORMAT="${SYMB} ${VOL}% [${INDEX}:${NAME}]"
 ## SUBSCRIBE=1 requires interval=persist and always uses LONG_FORMAT
 SUBSCRIBE=1
 
+# Date Time
+
+[time]
+interval=1
+command=date +'%d.%m.%Y %H:%M:%S'

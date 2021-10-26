@@ -256,7 +256,7 @@ bar {
     }
 }
 
-exec --no-startup-id nm-applet
+exec --no-startup-id nm-applet --indicator
 exec --no-startup-id gammastep -l 55.755814:47.617635
 
 include /etc/sway/config.d/*

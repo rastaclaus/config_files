@@ -17,7 +17,7 @@ markup=1
 border-color=#cccccc
 
 [urgency=normal]
-border-color=#60877080
+border-color=#608770
 
 [urgency=high]
 border-color=#bf616a

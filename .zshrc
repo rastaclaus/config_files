@@ -19,10 +19,4 @@ source /usr/share/fzf/key-bindings.zsh
 source /usr/share/doc/pkgfile/command-not-found.zsh
 source /usr/share/fzf/completion.zsh
 #
-eval "$(pyenv init --path)"
-eval "$(pyenv virtualenv-init -)"
 eval "$(direnv hook zsh)"
-#
-if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
-  source "${VIRTUAL_ENV}/bin/activate"
-fi

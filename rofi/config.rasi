@@ -1,7 +1,7 @@
 configuration {
   modi: "combi,file-browser-extended,run,ssh";
-  theme: "gruvbox-dark-soft";
   font: "hack 10";
   combi-modi: "window,drun";
   run-shell-command: "kitty -e zsh -ic '{cmd} && read'";
 }
+@theme "gruvbox-dark-soft"

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Microsoft Teams for Linux
+Comment=Unofficial Microsoft Teams client for Linux.
+GenericName=Teams
+Exec=teams-for-linux --chromeUserAgent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36/exzk1Brw-59"
+MimeType=x-scheme-handler/msteams;
+Icon=teams-for-linux
+Categories=Network;Chat;InstantMessaging;Application;
+Terminal=false
+StartupNotify=true
+Version=0.1.10

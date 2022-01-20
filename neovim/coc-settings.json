@@ -16,5 +16,9 @@
 
   "tabnine.priority": 80,
 
-  "yaml.schemaStore.enable": false
+  "yaml.schemaStore.enable": true,
+  "yaml.schemas": {
+    "https://json.schemastore.org/ansible-playbook.json": "deploy.yml"
+  },
+  "explorer.position": "left"
 }

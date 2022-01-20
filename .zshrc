@@ -1,3 +1,4 @@
+source ~/.config/zsh/plugins/zsh-snap/znap.zsh
 # The following lines were added by compinstall
 
 fpath=(~/.zsh/completion $fpath)
@@ -19,8 +20,6 @@ source /usr/share/fzf/key-bindings.zsh
 source /usr/share/doc/pkgfile/command-not-found.zsh
 source /usr/share/fzf/completion.zsh
 
-eval "$(pyenv init --path)"
-eval "$(pyenv virtualenv-init -)"
 eval "$(direnv hook zsh)"
 
 if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
@@ -32,4 +31,6 @@ if [ -n "$DESKTOP_SESSION" ];then
     export SSH_AUTH_SOCK
 fi
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
+eval "$(pyenv init -)"
+
+alias ssh="TERM=xterm-256color ssh"

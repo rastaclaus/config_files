@@ -1,6 +1,6 @@
 # The following lines were added by compinstall
 
-fpath=(~/.zsh/completion $fpath)
+# fpath=(~/.zsh/completion $fpath)
 autoload -U compinit promptinit
 compinit
 promptinit

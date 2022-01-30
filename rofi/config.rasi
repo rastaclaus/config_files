@@ -1,5 +1,5 @@
 configuration {
-  modi: "combi,file-browser-extended,run,ssh";
+  modi: "combi,run,ssh";
   font: "hack 10";
   combi-modi: "window,drun";
   run-shell-command: "kitty -e zsh -ic '{cmd} && read'";

@@ -1,6 +1,6 @@
 configuration {
   modi: "combi,drun,ssh,run,filebrowser";
-  theme: "gruvbox-dark-soft";
   font: "Source Code Pro 12";
   combi-modi: "drun,keys";
 }
+@theme "/usr/share/rofi/themes/gruvbox-dark-soft.rasi"

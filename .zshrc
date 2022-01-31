@@ -125,5 +125,5 @@ eval "$(pyenv init -)"
 
 alias ssh="TERM=xterm-256color ssh"
 
-eval $(ssh-agent) > /dev/null
-ssh-add ~/.ssh/id_rsa_yp 2> /dev/null
+#eval $(ssh-agent) > /dev/null
+#ssh-add ~/.ssh/id_rsa_yp 2> /dev/null

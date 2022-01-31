@@ -64,6 +64,7 @@ ZSH_THEME="af-magic"
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
+ZSH_CUSTOM=$HOME/.oh-my-zsh
 
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/
@@ -111,19 +112,12 @@ fi
 source $ZSH/oh-my-zsh.sh
 
 eval "$(direnv hook zsh)"
-
-if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
-  source "${VIRTUAL_ENV}/bin/activate"
-fi
-
-if [ -n "$DESKTOP_SESSION" ];then
-    eval $(gnome-keyring-daemon --start)
-    export SSH_AUTH_SOCK
-fi
-
 eval "$(pyenv init -)"
 
 alias ssh="TERM=xterm-256color ssh"
 
-#eval $(ssh-agent) > /dev/null
-#ssh-add ~/.ssh/id_rsa_yp 2> /dev/null
+if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
+  exec sway
+  eval $(gnome-keyring-daemon --start)
+  export SSH_AUTH_SOCK
+fi

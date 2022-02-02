@@ -1,6 +1,6 @@
 {
   "pyright.enable": true,
-  "pyright.disableDiagnostics": true,
+  "pyright.disableDiagnostics": false,
   "python.linting.enabled": true,
 
   "python.linting.pylintEnabled": true,

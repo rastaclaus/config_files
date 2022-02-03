@@ -111,21 +111,20 @@ fi
 
 source $ZSH/oh-my-zsh.sh
 
-eval "$(direnv hook zsh)"
-
-if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
-  source "${VIRTUAL_ENV}/bin/activate"
-fi
 
 if [ -n "$DESKTOP_SESSION" ];then
     eval $(gnome-keyring-daemon --start)
     export SSH_AUTH_SOCK
 fi
 
+eval "$(direnv hook zsh)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 alias ssh="TERM=xterm-256color ssh"
 
-#eval $(ssh-agent) > /dev/null
-#ssh-add ~/.ssh/id_rsa_yp 2> /dev/null
+if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
+  exec sway
+  eval $(gnome-keyring-daemon --start)
+  export SSH_AUTH_SOCK
+fi

@@ -1,6 +1,7 @@
 "syntax
 Plug 'neoclide/coc.nvim', {'branch': 'master', 'do': 'yarn install --frozen-lockfile'}
 Plug 'fatih/vim-go', { 'do': ':GoUpdateBinaries' }
+Plug 'Vimjas/vim-python-pep8-indent'
 
 " apperance
 Plug 'xolox/vim-misc'

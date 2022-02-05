@@ -1,14 +1,13 @@
 {
   "pyright.enable": true,
-  "pyright.disableDiagnostics": false,
+  "pyright.disableDiagnostics": true,
   "python.linting.enabled": true,
-
-  "python.linting.pylintEnabled": true,
+  "python.linting.mypyEnabled": true,
   "python.linting.pycodestyleEnabled": true,
+  "python.linting.pylintEnabled": true,
 
   "python.linting.flake8Enabled": false,
   "python.linting.banditEnabled": false,
-  "python.linting.mypyEnabled": false,
   "python.linting.pytypeEnabled": false,
   "python.linting.prospectorEnabled": false,
 
@@ -16,9 +15,5 @@
 
   "tabnine.priority": 80,
 
-  "yaml.schemaStore.enable": true,
-  "yaml.schemas": {
-    "https://json.schemastore.org/ansible-playbook.json": "deploy.yml"
-  },
-  "explorer.position": "left"
+  "yaml.schemaStore.enable": false
 }

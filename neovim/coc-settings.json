@@ -15,5 +15,8 @@
 
   "tabnine.priority": 80,
 
-  "yaml.schemaStore.enable": false
+  "yaml.schemaStore.enable": false,
+
+  "explorer.width": 50,
+  "explorer.openAction.strategy": "select"
 }

@@ -1,5 +1,5 @@
 "Начало <Раскладка>
-set keymap=russian-jcukenwin
+set langmap=ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯЖЭ;ABCDEFGHIJKLMNOPQRSTUVWXYZ:\",фисвуапршолдьтщзйкыегмцчняжэ;abcdefghijklmnopqrstuvwxyz\;\'
 set iminsert=0 " по умолчанию - латинская раскладка
 set imsearch=0 " по умолчанию - латинская раскладка при поиске
 
@@ -13,7 +13,7 @@ nnoremap qE :Files<CR>
 nnoremap ed :Buffers<CR>
 
 inoremap <silent><expr> <c-space> coc#refresh()
-inoremap jj <ESC>
+" inoremap jj <ESC>
 
 tnoremap <ESC> <C-\><C-n>
 tnoremap <A-h> <C-\><C-N><C-w>h

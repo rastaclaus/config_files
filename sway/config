@@ -242,7 +242,7 @@ bar {
 
     # When the status_command prints a new line to stdout, swaybar updates.
     # The default just shows the current date and time.
-    status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
+    #  status_command SCRIPT_DIR=~/.config/i3blocks i3blocks
     # status_command waybar
     colors {
       background #222222
@@ -250,8 +250,8 @@ bar {
     }
 }
 
-exec --no-startup-id nm-applet --indicator
-exec --no-startup-id gammastep -l 55.755814:47.617635
-exec --no-startup-id gnome-keyring-daemon -s
+#exec --no-startup-id nm-applet --indicator
+#exec --no-startup-id gammastep -l 55.755814:47.617635
+#exec --no-startup-id gnome-keyring-daemon -s
 
 include /etc/sway/config.d/*

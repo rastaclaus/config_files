@@ -112,11 +112,6 @@ fi
 source $ZSH/oh-my-zsh.sh
 
 
-if [ -n "$DESKTOP_SESSION" ];then
-    eval $(gnome-keyring-daemon --start)
-    export SSH_AUTH_SOCK
-fi
-
 eval "$(direnv hook zsh)"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
@@ -124,7 +119,8 @@ eval "$(pyenv virtualenv-init -)"
 alias ssh="TERM=xterm-256color ssh"
 
 if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
-  exec sway
   eval $(gnome-keyring-daemon --start)
   export SSH_AUTH_SOCK
+  exec sway --unsupported-gpu
 fi
+

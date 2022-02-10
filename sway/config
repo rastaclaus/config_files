@@ -57,14 +57,8 @@ exec swayidle -w \
 #
 # Example configuration:
 #
-input "1739:52632:MSFT0004:00_06CB:CD98_Touchpad" {
-    dwt enabled
-    tap enabled
-    natural_scroll disabled
-    middle_emulation enabled
-}
 
-input "1:1:AT_Translated_Set_2_keyboard" {
+input "10874:38279:CASUE_USB_KB" {
   repeat_delay 200
   repeat_rate 50
   xkb_model "pc101"

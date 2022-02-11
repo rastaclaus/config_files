@@ -51,11 +51,6 @@ separator=false
 #interval=10
 separator=false
 #
-[bandwidth]
-INTERFACE=wlan0
-interval=5
-separator=false
-
 [nm-vpn]
 init_color=#FFFF00
 on_color=#00FF00
@@ -99,12 +94,6 @@ interval=30
 ## Battery indicator
 ##
 ## The battery instance defaults to 0.
-
-[battery-poly]
-#LABEL=⚡
-interval=30
-LABEL=BAT 
-
 
 [volume-pipewire]
 interval=persist

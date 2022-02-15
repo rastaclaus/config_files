@@ -14,9 +14,14 @@
   "python.formatting.provider": "black",
 
   "tabnine.priority": 80,
-
+  "tabnine.disable_line_regex": ["import" ],
   "yaml.schemaStore.enable": false,
 
+<<<<<<< HEAD
+  "yaml.schemaStore.enable": false,
+
+=======
+>>>>>>> desktop-sway
   "explorer.width": 50,
   "explorer.openAction.strategy": "select"
 }

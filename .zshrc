@@ -123,9 +123,5 @@ if [ -n "$DESKTOP_SESSION" ];then
 fi
 
 eval "$(pyenv init -)"
-# eval "$(pyenv virtualenv init -)"
 
 alias ssh="TERM=xterm-256color ssh"
-
-#eval $(ssh-agent) > /dev/null
-#ssh-add ~/.ssh/id_rsa_yp 2> /dev/null

@@ -8,7 +8,7 @@ ZSH=/usr/share/oh-my-zsh/
 # load a random theme each time oh-my-zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="af-magic"
+ZSH_THEME="mh"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -64,6 +64,7 @@ ZSH_THEME="af-magic"
 
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
+ZSH_CUSTOM=$HOME/.oh-my-zsh
 
 # Which plugins would you like to load?
 # Standard plugins can be found in $ZSH/plugins/
@@ -122,7 +123,7 @@ if [ -n "$DESKTOP_SESSION" ];then
 fi
 
 eval "$(pyenv init -)"
-eval "$(pyenv virtualenv init -)"
+# eval "$(pyenv virtualenv init -)"
 
 alias ssh="TERM=xterm-256color ssh"
 

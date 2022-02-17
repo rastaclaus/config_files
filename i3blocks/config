@@ -99,68 +99,6 @@ interval=30
 
 
 
-# Network interface monitoring
-#
-# If the instance is not specified, use the interface used for default route.
-# The address can be forced to IPv4 or IPv6 with -4 or -6 switches.
-[wttr]
-interval=600
-
-[iface]
-#IFACE=wlan0
-color=#00FF00
-interval=10
-separator=false
-#
-#[wifi]
-##INTERFACE=wlp3s0
-#label=wifi:
-#interval=10
-separator=false
-#
-[nm-vpn]
-init_color=#FFFF00
-on_color=#00FF00
-label=VPN: 
-interval=5
-
-
-
-#
-## CPU usage
-##
-## The script may be called with -w and -c switches to specify thresholds,
-## see the script for details.
-[cpu_usage]
-interval=10
-LABEL=CPU: 
-min_width=CPU: 100.00%
-T_WARN=50
-T_CRIT=80
-DECIMALS=2
-COLOR_NORMAL=#EBDBB2
-COLOR_WARN=#FFFC00
-COLOR_CRIT=#FF0000
-separator=false
-
-[load_average]
-label=AVG: 
-interval=30
-
-[memory]
-label=MEM 
-#separator=false
-interval=30
-
-[disk]
-label=disk 
-#DIR=/mnt/data
-interval=30
-#
-#
-## Battery indicator
-##
-## The battery instance defaults to 0.
 
 [volume-pipewire]
 interval=persist
@@ -185,3 +123,7 @@ SUBSCRIBE=1
 
 [time]
 interval=1
+#TZ_FILE=~/.tz
+STRFTIME_FORMAT=%Y-%m-%d %R
+TZONES=$DEFAULT_TZ,Brazil/East,Australia/Brisbane,Asia/Calcutta
+#TZ_LABELS=,Brazil,AU,Hyderabad

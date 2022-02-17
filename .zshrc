@@ -123,5 +123,10 @@ if [ -n "$DESKTOP_SESSION" ];then
 fi
 
 eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 
 alias ssh="TERM=xterm-256color ssh"
+
+if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
+  source .swayenv && exec sway --unsupported-gpu
+fi

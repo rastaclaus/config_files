@@ -186,7 +186,7 @@ bar {
 # exec --no-startup-id compton -b -f --vsync drm
 # exec --no-startup-id /home/artems/.conky/startconky.sh
 exec --no-startup-id compton -b -f --vsync
-exec --no-startup-id xset r rate 180 50
+exec --no-startup-id xset r rate 150 80
 exec --no-startup-id nm-applet
 exec_always --no-startup-id nitrogen --random --set-tiled ~/Wallpapers
 exec --no-startup-id redshift-gtk -l 55.755814:37.617635

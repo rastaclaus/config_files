@@ -124,6 +124,6 @@ SUBSCRIBE=1
 [time]
 interval=1
 #TZ_FILE=~/.tz
-STRFTIME_FORMAT=%Y-%m-%d %R
-TZONES=$DEFAULT_TZ,Brazil/East,Australia/Brisbane,Asia/Calcutta
+STRFTIME_FORMAT=%a, %Y-%m-%d %H:%M:%S
+TZONES=Europe/Moscow
 #TZ_LABELS=,Brazil,AU,Hyderabad

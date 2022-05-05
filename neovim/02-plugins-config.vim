@@ -30,3 +30,7 @@ let g:fzf_action = {
 
 " vim-autoformat
 let g:formatdef_tsfmt = "'tsfmt --stdin --no-tslint '.bufname('%')"
+
+"NERDTree
+let NERDTreeIgnore = ['\.pyc$', '__pycache__', ".git", ".mypy_cache", ".pytest_cache"]
+let NERDTreeWinSize = 51

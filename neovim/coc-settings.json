@@ -15,6 +15,7 @@
 
   "tabnine.priority": 80,
   "tabnine.disable_line_regex": ["import" ],
+
   "yaml.schemaStore.enable": false,
 
   "explorer.width": 50,

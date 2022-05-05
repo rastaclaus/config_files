@@ -2,7 +2,7 @@
 name = "auth"
 version = "0.1.0"
 description = ""
-authors = ["tema.rastaclaus@gmail.com"]
+authors = ["Artem Shestopalov <tema.rastaclaus@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"

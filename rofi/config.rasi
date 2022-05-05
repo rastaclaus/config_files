@@ -1,6 +1,7 @@
 configuration {
-  modi: "combi,drun,ssh,run,filebrowser";
-  font: "Source Code Pro 12";
-  combi-modi: "drun,keys";
+  modi: "combi,run,ssh";
+  font: "hack 10";
+  combi-modi: "window,drun";
+  run-shell-command: "kitty -e zsh -ic '{cmd} && read'";
 }
-@theme "/usr/share/rofi/themes/gruvbox-dark-soft.rasi"
+@theme "gruvbox-dark-soft"

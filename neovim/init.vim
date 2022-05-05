@@ -10,6 +10,7 @@ set number "Нумеровать строки
 set numberwidth=4 "Ширина поля нумерации строк
 set splitright
 set splitbelow
+set nocp
 
 "Поддержка truecolor
 set termguicolors

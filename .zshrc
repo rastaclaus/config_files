@@ -117,16 +117,7 @@ if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
   source "${VIRTUAL_ENV}/bin/activate"
 fi
 
-if [ -n "$DESKTOP_SESSION" ];then
-    eval $(gnome-keyring-daemon --start)
-    export SSH_AUTH_SOCK
-fi
-
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 alias ssh="TERM=xterm-256color ssh"
-
-if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
-  source .swayenv && exec sway --unsupported-gpu
-fi

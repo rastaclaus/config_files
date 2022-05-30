@@ -15,7 +15,7 @@ mypy = {version = "^0.950", optional = true}
 pytest = "^7.1.2"
 
 [tool.poetry.extras]
-dev_tools = [
+dev-tools = [
   "pylint",
   "pycodestyle",
   "black",

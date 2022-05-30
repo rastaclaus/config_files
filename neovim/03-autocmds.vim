@@ -7,3 +7,4 @@ autocmd FileType python imap <buffer> <F9> <esc>:w<CR>:exec '!python' shellescap
 
 " Save session on quitting Vim
 autocmd VimLeave * mksession! ~/.session.vim
+autocmd BufRead,BufNewFile *.ddl set filetype=sql

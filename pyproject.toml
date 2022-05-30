@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "auth"
+name = "allocation"
 version = "0.1.0"
 description = ""
 authors = ["Artem Shestopalov <tema.rastaclaus@gmail.com>"]
@@ -28,8 +28,10 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pylint.master]
 extension-pkg-allow-list=[]
-
 load-plugins = []
+
+[tool.pylint.format]
+max-line-length = 120
 
 [tool.pylint.message-control]
 disable = [

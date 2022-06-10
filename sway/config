@@ -27,10 +27,12 @@ font pango:SourceCodePro Medium 10
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
 set $wallpapers_path /home/artems/Wallpapers/
-output * bg $(find $wallpapers_path -type f | shuf -n 1) center
+
+# output "*" bg $(find $wallpapers_path -type f | shuf -n 1) fit
+exec ~/.azotebg
 
 default_border pixel 2
-hide_edge_borders --i3 smart
+# hide_edge_borders --i3 smart
 
 # output * bg /usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png fill
 #
@@ -59,8 +61,8 @@ exec swayidle -w \
 #
 
 input "10874:38279:CASUE_USB_KB" {
-  repeat_delay 150
-  repeat_rate 30
+  repeat_delay 120
+  repeat_rate 60
   xkb_model "pc101"
   xkb_layout "us,ru"
   xkb_options "grp:caps_toggle, grp_led:caps"
@@ -248,6 +250,8 @@ bar {
 }
 
 exec --no-startup-id nm-applet --indicator
+# exec --no-startup-id pipewire
+exec --no-startup-id blueman-applet
 exec --no-startup-id gammastep -l 55.755814:47.617635
 exec --no-startup-id gnome-keyring-daemon -s
 

@@ -121,3 +121,7 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 alias ssh="TERM=xterm-256color ssh"
+
+if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
+  exec sway
+fi

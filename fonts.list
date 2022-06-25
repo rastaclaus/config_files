@@ -1,17 +1,15 @@
-
-ttf-font-icons
-ttf-liberation
-ttf-font-awesome
-ttf-dejavu
-xorg-fonts-encodings
-noto-fonts-emoji
-noto-fonts-cjk
-noto-fonts
-libxft
-libxfont2
-libfontenc
-gsfonts
-freetype2
-fontconfig
-cantarell-fonts
-adobe-source-code-pro-fonts
+    Set of Installed Fonts
+aur/nerd-fonts-jetbrains-mono 2.1.0-3 (+23 2.99) (Installed)
+aur/nerd-fonts-source-code-pro 2.1.0-2 (+27 0.38) (Installed)
+aur/ttf-font-icons 1.1-3 (+29 0.63) (Installed)
+aur/nerd-fonts-fira-code 2.1.0-2 (+31 0.99) (Installed)
+community/ttf-dejavu 2.37+18+g9b5d1b2f-3 (2.6 MiB 10.0 MiB) (Installed)
+extra/xorg-mkfontscale 1.2.2-1 (23.1 KiB 47.7 KiB) [xorg-apps xorg] (Installed)
+extra/xorg-fonts-encodings 1.0.5-2 (567.0 KiB 625.4 KiB) [xorg-fonts xorg] (Installed)
+extra/xorg-font-util 1.3.2-3 (30.8 KiB 231.1 KiB) [xorg-fonts xorg] (Installed)
+extra/noto-fonts-emoji 20211101-1 (8.6 MiB 9.4 MiB) (Installed)
+extra/noto-fonts-cjk 20220126-1 (188.6 MiB 297.8 MiB) (Installed)
+extra/noto-fonts 20220607-1 (26.0 MiB 109.7 MiB) (Installed)
+extra/gsfonts 20200910-2 (1.6 MiB 3.1 MiB) (Installed)
+extra/cantarell-fonts 1:0.303.1-1 (112.8 KiB 189.7 KiB) (Installed)
+extra/adobe-source-code-pro-fonts 2.038ro+1.058it+1.018var-1 (939.5 KiB 1.9 MiB) (Installed)

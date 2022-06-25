@@ -1,0 +1,25 @@
+---
+version: 2
+log-file: /tmp/efm.log
+log-level: 1
+
+lint-debounce: 1s
+
+
+tools:
+  python-pylint: &python-pylint
+    lint-command: 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}'
+    lint-stdin: true
+    require-marker: true
+    lint-ignore-exit-code: true
+    
+    lint-formats:
+      - '%f:%l:%c:%t:%m'
+    lint-offset-columns: 1
+    lint-category-map:
+      I: H
+      R: I
+      C: I
+      W: W
+      E: E
+      F: E

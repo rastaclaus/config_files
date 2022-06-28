@@ -14,67 +14,6 @@ require('indent_blankline').setup {
   show_trailing_blankline_indent = false,
 }
 
--- [[ Configure Treesitter ]]
--- See `:help nvim-treesitter`
-require('nvim-treesitter.configs').setup {
-  -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'lua', 'rust', 'go', 'python' },
-
-  highlight = { enable = true },
-  indent = { enable = true },
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = '<c-space>',
-      node_incremental = '<c-space>',
-      -- TODO: I'm not sure for this one.
-      scope_incremental = '<c-s>',
-      node_decremental = '<c-backspace>',
-    },
-  },
-  textobjects = {
-    select = {
-      enable = true,
-      lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
-      keymaps = {
-        -- You can use the capture groups defined in textobjects.scm
-        ['af'] = '@function.outer',
-        ['if'] = '@function.inner',
-        ['ac'] = '@class.outer',
-        ['ic'] = '@class.inner',
-      },
-    },
-    move = {
-      enable = true,
-      set_jumps = true, -- whether to set jumps in the jumplist
-      goto_next_start = {
-        [']m'] = '@function.outer',
-        [']]'] = '@class.outer',
-      },
-      goto_next_end = {
-        [']M'] = '@function.outer',
-        [']['] = '@class.outer',
-      },
-      goto_previous_start = {
-        ['[m'] = '@function.outer',
-        ['[['] = '@class.outer',
-      },
-      goto_previous_end = {
-        ['[M'] = '@function.outer',
-        ['[]'] = '@class.outer',
-      },
-    },
-    swap = {
-      enable = true,
-      swap_next = {
-        ['<leader>a'] = '@parameter.inner',
-      },
-      swap_previous = {
-        ['<leader>A'] = '@parameter.inner',
-      },
-    },
-  },
-}
 
 require('telescope').setup {
   defaults = {
@@ -132,6 +71,7 @@ local on_attach = function(_, bufnr)
   nmap('<leader>wl', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
+  nmap('<F5>', vim.lsp.buf.formatting, "[F]ormat")
 
   -- Create a command `:Format` local to the LSP buffer
   vim.api.nvim_buf_create_user_command(bufnr, 'Format', vim.lsp.buf.format or vim.lsp.buf.formatting, { desc = 'Format current buffer with LSP' })
@@ -141,7 +81,7 @@ end
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- Enable the following language servers
-local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'efm', 'dockerls' }
+local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'efm', 'dockerls', 'jsonls' }
 
 -- Ensure the servers above are installed
 require('nvim-lsp-installer').setup {
@@ -215,24 +155,63 @@ require('lspconfig').pyright.setup {
 }
 
 require('lspconfig').efm.setup {
-  -- init_options = {documentFormatting = true},
+   init_options = {
+    hover = false,
+    documentFormatting = true,
+    documentSymbol = true,
+  },
   settings = {
+    lintDebounce = "1s",
+    rootMarkers = {
+      ".git",
+      "pyproject.toml",
+    },
     languages = {
+      yaml = {
+        {
+          lintCommand = 'yamllint -f parsable -',
+          lintStdin = true
+        }
+      },
       python = {
         {
-          lintCommand = 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}',
+          lintCommand = 'pylint j0 --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}',
           lintStdin = true,
           lintIgnoreExitCode = true,
-          -- lintFormats = {'%f:%l:%c:%t:%m'},
-          -- lintOffsetColumns = 1,
-          -- lintCategoryMap = {
-          --   I = 'H',
-          --   R = 'I',
-          --   C = 'I',
-          --   W = 'W',
-          --   E = 'E',
-          --   F = 'E'
-          -- }
+          lintFormats = { "%f:%l:%c:%t:%m", },
+          lintOffsetColumns = 1,
+          lintCategoryMap = {
+            I = "H",
+            R = "I",
+            C = "I",
+            W = "W",
+            E = "E",
+            F = "E"
+          }
+        },
+        {
+          lintCommand = 'pycodestyle ${INPUT}',
+          lintStdin = true,
+          lintOffsetColumns = 1,
+          lintIgnoreExitCode = true,
+        },
+        {
+          formatCommand = 'black --quiet -',
+          formatStdin = true
+        },
+        {
+          formatCommand = 'isort --quiet -',
+          formatStdin = true
+        }
+      },
+      json = {
+        {
+          formatCommand = "prettier ${--tab-width:tabWidth} --parser json",
+          formatStdin = true
+        },
+        {
+          lintCommand = 'jq .',
+          formatStdin = true
         }
       }
     }
@@ -253,7 +232,7 @@ cmp.setup {
   mapping = cmp.mapping.preset.insert {
     ['<C-d>'] = cmp.mapping.scroll_docs(-4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-Space>'] = cmp.mapping.complete({}),
     ['<CR>'] = cmp.mapping.confirm {
       behavior = cmp.ConfirmBehavior.Replace,
       select = true,

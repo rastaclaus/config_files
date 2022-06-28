@@ -31,6 +31,7 @@ vim.opt.cursorline = true -- higlight current line
 vim.opt.scrolloff = 5 -- minimal number of screen lines to keep above and below the cursor
 vim.opt.linebreak = true -- do not break the words
 
+vim.opt.autoindent = true
 vim.opt.expandtab = true -- Change tabs to spaces
 vim.opt.shiftwidth = 4 -- Number of spaces to use for each step of (auto)indent.
 vim.opt.tabstop = 4 -- Number of spaces that a <Tab> in the file counts for.

@@ -4,10 +4,12 @@ log-file: /tmp/efm.log
 log-level: 1
 
 lint-debounce: 1s
+  bbb
 
 
 tools:
   python-pylint: &python-pylint
+    lint-debounce: 1s
     lint-command: 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}'
     lint-stdin: true
     require-marker: true
@@ -23,3 +25,24 @@ tools:
       W: W
       E: E
       F: E
+
+  python-pycodestyle: &python-pycodestyle
+    lint-debounce: 1s
+    lint-command: 'pycodestyle ${input}'
+    lint-stdin: true
+    lint-offset-columns: 1
+
+  yaml-yamllint: &yaml-yamllint
+    lint-debounce: 1s
+    lint-command: 'yamllint -f parsable -'
+    lint-stdin: true
+
+languages:
+
+  python:
+    - << *python-pylint
+    - << *python-pycodestyle
+
+  yaml:
+    - << *yaml-yamllint
+

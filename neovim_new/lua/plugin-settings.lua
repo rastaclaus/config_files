@@ -170,8 +170,13 @@ require('lspconfig').efm.setup {
       yaml = {
         {
           lintCommand = 'yamllint -f parsable -',
-          lintStdin = true
-        }
+          lintStdin = true,
+          lintIgnoreExitCode = true,
+        },
+        {
+          formatCommand = "prettier ${--tab-width:tabWidth} --parser yaml",
+          formatStdin = true
+        },
       },
       python = {
         {

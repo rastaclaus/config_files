@@ -29,7 +29,7 @@ require('packer').startup(function(use)
     use 'williamboman/nvim-lsp-installer' -- Automatically install language servers to stdpath
     use { 'hrsh7th/nvim-cmp', requires = { 'hrsh7th/cmp-nvim-lsp' } } -- Autocompletion
     use { 'L3MON4D3/LuaSnip', requires = { 'saadparwaiz1/cmp_luasnip' } } -- Snippet Engine and Snippet Expansion
-    use { 'nvim-telescope/telescope.nvim', requires = { 'nvim-lua/plenary.nvim' } } -- Fuzzy Finder (files, lsp, etc)
+    use { 'nvim-telescope/telescope.nvim', requires = { 'nvim-lua/plenary.nvim', } } -- Fuzzy Finder (files, lsp, etc)
     use 'Vimjas/vim-python-pep8-indent'
     use 'jiangmiao/auto-pairs'
     use 'tpope/vim-surround'
@@ -42,6 +42,9 @@ require('packer').startup(function(use)
             vim.g.mkdp_open_to_the_world = 1
             vim.g.mkdp_echo_preview_url = 1
         end,
+    }
+    use {
+        'nvim-treesitter/nvim-treesitter',
     }
 
 

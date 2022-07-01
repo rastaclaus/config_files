@@ -71,17 +71,19 @@ local on_attach = function(_, bufnr)
   nmap('<leader>wl', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
-  nmap('<F5>', vim.lsp.buf.formatting, "[F]ormat")
+  nmap('<F5>', vim.lsp.buf.format, "[F]ormat")
 
   -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', vim.lsp.buf.format or vim.lsp.buf.formatting, { desc = 'Format current buffer with LSP' })
+  vim.api.nvim_buf_create_user_command(bufnr, 'Format', vim.lsp.buf.format or vim.lsp.buf.formatting,
+    { desc = 'Format current buffer with LSP' })
 end
 
 -- nvim-cmp supports additional completion capabilities
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- Enable the following language servers
-local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'efm', 'dockerls', 'jsonls' }
+local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'efm', 'dockerls', 'jsonls',
+  'yamlls' }
 
 -- Ensure the servers above are installed
 require('nvim-lsp-installer').setup {
@@ -155,7 +157,7 @@ require('lspconfig').pyright.setup {
 }
 
 require('lspconfig').efm.setup {
-   init_options = {
+  init_options = {
     hover = false,
     documentFormatting = true,
     documentSymbol = true,
@@ -169,7 +171,7 @@ require('lspconfig').efm.setup {
     languages = {
       yaml = {
         {
-          lintCommand = 'yamllint -f parsable -',
+          lintCommand = 'yamllint -d "{extends: relaxed, rules: {line-length: {max: 120}}}" --f parsable -',
           lintStdin = true,
           lintIgnoreExitCode = true,
         },
@@ -265,4 +267,27 @@ cmp.setup {
     { name = 'nvim_lsp' },
     { name = 'luasnip' },
   },
+}
+require('nvim-treesitter.configs').setup {
+  ensure_installed = { 'c', 'cpp', 'lua', 'python', "yaml" },
+
+  highlight = {
+    enable = true,
+  },
+
+  indent = {
+    enable = true,
+    disable = {'python'}
+  },
+
+  incremental_selection = {
+    enable = true,
+    keymaps = {
+      init_selection = "gnn",
+      node_incremental = "grn",
+      scope_incremental = "grc",
+      node_decremental = "grm",
+    }
+  }
+
 }

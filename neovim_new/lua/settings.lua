@@ -35,6 +35,8 @@ vim.opt.autoindent = true
 vim.opt.expandtab = true -- Change tabs to spaces
 vim.opt.shiftwidth = 4 -- Number of spaces to use for each step of (auto)indent.
 vim.opt.tabstop = 4 -- Number of spaces that a <Tab> in the file counts for.
+vim.opt.list = true
+vim.opt.listchars = {tab="->", trail="-"}
 
 vim.opt.wildmode = 'longest:full,full'
 

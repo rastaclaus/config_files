@@ -31,7 +31,16 @@ require('packer').startup(function(use)
     use 'williamboman/nvim-lsp-installer'                                           -- Automatically install language servers to stdpath
     use { 'hrsh7th/nvim-cmp', requires = { 'hrsh7th/cmp-nvim-lsp' } }               -- Autocompletion
     use { 'L3MON4D3/LuaSnip', requires = { 'saadparwaiz1/cmp_luasnip' } }           -- Snippet Engine and Snippet Expansion
-    use { 'nvim-telescope/telescope.nvim', requires = { 'nvim-lua/plenary.nvim' } } -- Fuzzy Finder (files, lsp, etc)
+    use {-- Fuzzy Finder (files, lsp, etc)
+        'nvim-telescope/telescope.nvim',
+        requires = {
+            { 'nvim-lua/plenary.nvim' },
+            { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
+        }
+    }
+    use 'tpope/vim-surround'
+    use 'jiangmiao/auto-pairs'
+    use 'alvan/vim-closetag'
 
 
 

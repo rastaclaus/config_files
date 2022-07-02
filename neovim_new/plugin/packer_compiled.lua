@@ -79,6 +79,11 @@ _G.packer_plugins = {
     path = "/home/artems/.local/share/nvim/site/pack/packer/start/LuaSnip",
     url = "https://github.com/L3MON4D3/LuaSnip"
   },
+  ["auto-pairs"] = {
+    loaded = true,
+    path = "/home/artems/.local/share/nvim/site/pack/packer/start/auto-pairs",
+    url = "https://github.com/jiangmiao/auto-pairs"
+  },
   ["cmp-nvim-lsp"] = {
     loaded = true,
     path = "/home/artems/.local/share/nvim/site/pack/packer/start/cmp-nvim-lsp",
@@ -154,6 +159,11 @@ _G.packer_plugins = {
     path = "/home/artems/.local/share/nvim/site/pack/packer/start/plenary.nvim",
     url = "https://github.com/nvim-lua/plenary.nvim"
   },
+  ["telescope-fzf-native.nvim"] = {
+    loaded = true,
+    path = "/home/artems/.local/share/nvim/site/pack/packer/start/telescope-fzf-native.nvim",
+    url = "https://github.com/nvim-telescope/telescope-fzf-native.nvim"
+  },
   ["telescope.nvim"] = {
     loaded = true,
     path = "/home/artems/.local/share/nvim/site/pack/packer/start/telescope.nvim",
@@ -164,6 +174,11 @@ _G.packer_plugins = {
     path = "/home/artems/.local/share/nvim/site/pack/packer/start/vim-afterglow",
     url = "https://github.com/danilo-augusto/vim-afterglow"
   },
+  ["vim-closetag"] = {
+    loaded = true,
+    path = "/home/artems/.local/share/nvim/site/pack/packer/start/vim-closetag",
+    url = "https://github.com/alvan/vim-closetag"
+  },
   ["vim-fugitive"] = {
     loaded = true,
     path = "/home/artems/.local/share/nvim/site/pack/packer/start/vim-fugitive",
@@ -173,6 +188,11 @@ _G.packer_plugins = {
     loaded = true,
     path = "/home/artems/.local/share/nvim/site/pack/packer/start/vim-sleuth",
     url = "https://github.com/tpope/vim-sleuth"
+  },
+  ["vim-surround"] = {
+    loaded = true,
+    path = "/home/artems/.local/share/nvim/site/pack/packer/start/vim-surround",
+    url = "https://github.com/tpope/vim-surround"
   }
 }
 

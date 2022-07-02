@@ -130,6 +130,7 @@ local on_attach = function(_, bufnr)
   nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
   nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
   nmap('<leader>wl', function()
+  nmap('<F5>', vim.lsp.buf.format, 'Format')
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
 
@@ -215,24 +216,42 @@ require('lspconfig').pyright.setup {
 }
 
 require('lspconfig').efm.setup {
-  -- init_options = {documentFormatting = true},
+  init_options = {
+    hover = true,
+    documentFormatting = true
+  },
   settings = {
     languages = {
       python = {
         {
+          lintDebounce = "1s",
           lintCommand = 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}',
           lintStdin = true,
           lintIgnoreExitCode = true,
-          -- lintFormats = {'%f:%l:%c:%t:%m'},
-          -- lintOffsetColumns = 1,
-          -- lintCategoryMap = {
-          --   I = 'H',
-          --   R = 'I',
-          --   C = 'I',
-          --   W = 'W',
-          --   E = 'E',
-          --   F = 'E'
-          -- }
+          lintFormats = {'%f:%l:%c:%t:%m'},
+          lintOffsetColumns = 1,
+          lintCategoryMap = {
+            I = 'H',
+            R = 'I',
+            C = 'I',
+            W = 'W',
+            E = 'E',
+            F = 'E'
+          }
+        },
+        {
+          lintDebounce = "1s",
+          lintCommand = 'pycodestyle ${INPUT}',
+          lintStdin = true,
+          lintIgnoreExitCode = true,
+          lintOffsetColumns = 1,
+        }
+      },
+      yaml = {
+        {
+          lintDebounce = "1s",
+          lintCommand = "yamllint -f parsable -",
+          lintStdin = true,
         }
       }
     }

@@ -2,6 +2,7 @@
 version: 2
 log-file: /tmp/efm.log
 log-level: 1
+hover: true
 
 lint-debounce: 1s
 
@@ -23,3 +24,15 @@ tools:
       W: W
       E: E
       F: E
+
+  yaml-yamllint: &yaml-yamllint
+    lint-command:  'yamllint -f parsable -'
+    lint-stdin: true
+
+
+languages:
+  python:
+    - <<: *python-pylint
+
+  yaml:
+    - <<: *yaml-yamllint

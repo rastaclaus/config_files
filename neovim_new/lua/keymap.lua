@@ -5,7 +5,9 @@ vim.g.maplocalleader = ' '
 
 
 vim.opt.langmap = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz'
+
 vim.keymap.set('n', '<F2>', '<cmd>NeoTreeFocusToggle<cr>')
+vim.keymap.set('n', '<F5>', '<cmd>Neoformat<cr>')
 --
 -- See `:help telescope.builtin`
 vim.keymap.set('n', '<leader>?', require('telescope.builtin').oldfiles, { desc = '[?] Find recently opened files' })

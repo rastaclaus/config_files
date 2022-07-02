@@ -41,6 +41,13 @@ require('packer').startup(function(use)
     use { 'hrsh7th/nvim-cmp', requires = { 'hrsh7th/cmp-nvim-lsp' } } -- Autocompletion
     use { 'L3MON4D3/LuaSnip', requires = { 'saadparwaiz1/cmp_luasnip' } } -- Snippet Engine and Snippet Expansion
     use { 'nvim-telescope/telescope.nvim', requires = { 'nvim-lua/plenary.nvim', } } -- Fuzzy Finder (files, lsp, etc)
+
+    use {'mfussenegger/nvim-lint'}
+    use {'sbdchd/neoformat'}
+
+
+
+
     use 'Vimjas/vim-python-pep8-indent'
     use 'jiangmiao/auto-pairs'
     use 'tpope/vim-surround'

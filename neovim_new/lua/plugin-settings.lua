@@ -135,8 +135,12 @@ local python_root_files = {
   'pyrightconfig.json',
 }
 
+
 require('lspconfig').pyright.setup {
   on_attach = on_attach,
+  handlers = {
+        ['textDocument/publishDiagnostics'] = function(...) end
+    },
   root_dir = util.root_pattern(unpack(python_root_files)),
   single_file_suport = true,
 
@@ -144,9 +148,8 @@ require('lspconfig').pyright.setup {
   settings = {
     pyright = {
       analisys = {
-        autoSearchPaths = true,
+        autoSearchPaths = false,
         typeCheckingMode = "off",
-        disgnosticMode = 'workspace',
       },
     },
     -- python = {
@@ -269,15 +272,20 @@ cmp.setup {
   },
 }
 require('nvim-treesitter.configs').setup {
-  ensure_installed = { 'c', 'cpp', 'lua', 'python', "yaml" },
+  ensure_installed = { 'c', 'cpp', 'lua', 'python', "yaml", "go" },
+
+  rainbow = {
+    enable = true,
+    extended_mode = true,
+  },
 
   highlight = {
     enable = true,
   },
 
   indent = {
-    enable = true,
-    disable = {'python'}
+    enable = false,
+    -- disable = {'python', 'yaml'}
   },
 
   incremental_selection = {

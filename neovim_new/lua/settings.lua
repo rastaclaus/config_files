@@ -23,7 +23,11 @@ vim.wo.signcolumn = 'yes'
 
 -- Set colorscheme
 vim.o.termguicolors = true
-vim.cmd [[colorscheme afterglow]]
+vim.o.background = "dark"
+vim.g.codeschool_contrast_dark = "hard"
+vim.g.gruvbox_material_background = 'hard'
+
+vim.cmd [[colorscheme gruvbox-material]]
 
 vim.o.completeopt = 'menuone,noselect' -- Set completeopt to have a better completion experience
 

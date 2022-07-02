@@ -1,6 +1,17 @@
 require('packer').startup(function(use)
     use 'wbthomason/packer.nvim' -- packer self
-    use 'danilo-augusto/vim-afterglow' -- colorscheme
+
+    -- colorschemes
+    use 'danilo-augusto/vim-afterglow'
+    use {"adisen99/codeschool.nvim", requires = {"rktjmp/lush.nvim"}}
+    use {'tomasiser/vim-code-dark'}
+    use {'marko-cerovac/material.nvim'}
+    use {'fenetikm/falcon'}
+    use {'sainnhe/everforest'}
+    use {'sainnhe/gruvbox-material'}
+
+
+
 
     use {
         'nvim-neo-tree/neo-tree.nvim',
@@ -45,6 +56,9 @@ require('packer').startup(function(use)
     }
     use {
         'nvim-treesitter/nvim-treesitter',
+        requires = {
+            "p00f/nvim-ts-rainbow"
+        }
     }
 
 

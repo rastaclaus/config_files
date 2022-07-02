@@ -71,18 +71,13 @@ local on_attach = function(_, bufnr)
   nmap('<leader>wl', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
-  nmap('<F5>', vim.lsp.buf.format, "[F]ormat")
-
-  -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', vim.lsp.buf.format or vim.lsp.buf.formatting,
-    { desc = 'Format current buffer with LSP' })
 end
 
 -- nvim-cmp supports additional completion capabilities
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- Enable the following language servers
-local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'efm', 'dockerls', 'jsonls',
+local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'dockerls', 'jsonls',
   'yamlls' }
 
 -- Ensure the servers above are installed
@@ -139,8 +134,8 @@ local python_root_files = {
 require('lspconfig').pyright.setup {
   on_attach = on_attach,
   handlers = {
-        ['textDocument/publishDiagnostics'] = function(...) end
-    },
+    ['textDocument/publishDiagnostics'] = function(...) end
+  },
   root_dir = util.root_pattern(unpack(python_root_files)),
   single_file_suport = true,
 
@@ -159,74 +154,6 @@ require('lspconfig').pyright.setup {
   },
 }
 
-require('lspconfig').efm.setup {
-  init_options = {
-    hover = false,
-    documentFormatting = true,
-    documentSymbol = true,
-  },
-  settings = {
-    lintDebounce = "1s",
-    rootMarkers = {
-      ".git",
-      "pyproject.toml",
-    },
-    languages = {
-      yaml = {
-        {
-          lintCommand = 'yamllint -d "{extends: relaxed, rules: {line-length: {max: 120}}}" --f parsable -',
-          lintStdin = true,
-          lintIgnoreExitCode = true,
-        },
-        {
-          formatCommand = "prettier ${--tab-width:tabWidth} --parser yaml",
-          formatStdin = true
-        },
-      },
-      python = {
-        {
-          lintCommand = 'pylint j0 --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}',
-          lintStdin = true,
-          lintIgnoreExitCode = true,
-          lintFormats = { "%f:%l:%c:%t:%m", },
-          lintOffsetColumns = 1,
-          lintCategoryMap = {
-            I = "H",
-            R = "I",
-            C = "I",
-            W = "W",
-            E = "E",
-            F = "E"
-          }
-        },
-        {
-          lintCommand = 'pycodestyle ${INPUT}',
-          lintStdin = true,
-          lintOffsetColumns = 1,
-          lintIgnoreExitCode = true,
-        },
-        {
-          formatCommand = 'black --quiet -',
-          formatStdin = true
-        },
-        {
-          formatCommand = 'isort --quiet -',
-          formatStdin = true
-        }
-      },
-      json = {
-        {
-          formatCommand = "prettier ${--tab-width:tabWidth} --parser json",
-          formatStdin = true
-        },
-        {
-          lintCommand = 'jq .',
-          formatStdin = true
-        }
-      }
-    }
-  }
-}
 
 
 -- nvim-cmp setup
@@ -299,3 +226,12 @@ require('nvim-treesitter.configs').setup {
   }
 
 }
+
+require('lint').linters_by_ft = {
+  yaml = { 'yamllint', },
+  python = { 'pylint', 'pycodestyle' },
+}
+
+
+vim.g.neoformat_enabled_python = {'black', 'isort'}
+vim.g.neoformat_run_all_formatters = 1

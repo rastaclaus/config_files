@@ -1,6 +1,17 @@
 require('packer').startup(function(use)
     use 'wbthomason/packer.nvim' -- packer self
-    use 'danilo-augusto/vim-afterglow' -- colorscheme
+
+    -- colorschemes
+    use 'danilo-augusto/vim-afterglow'
+    use {"adisen99/codeschool.nvim", requires = {"rktjmp/lush.nvim"}}
+    use {'tomasiser/vim-code-dark'}
+    use {'marko-cerovac/material.nvim'}
+    use {'fenetikm/falcon'}
+    use {'sainnhe/everforest'}
+    use {'sainnhe/gruvbox-material'}
+
+
+
 
     use {
         'nvim-neo-tree/neo-tree.nvim',
@@ -18,29 +29,44 @@ require('packer').startup(function(use)
         requires = {
             'nvim-lua/plenary.nvim'
         }
-    }  -- Add git related info in the signs columns and popups
-    use 'nvim-lualine/lualine.nvim'   -- Fancier statusline
+    } -- Add git related info in the signs columns and popups
+    use 'nvim-lualine/lualine.nvim' -- Fancier statusline
     use 'numToStr/Comment.nvim'
     use 'lukas-reineke/indent-blankline.nvim'
     use 'tpope/vim-sleuth'
 
-    use 'nvim-treesitter/nvim-treesitter'   -- Highlight, edit, and navigate code
-    use 'nvim-treesitter/nvim-treesitter-textobjects' --  Additional textobjects for treesitter
 
-    use 'neovim/nvim-lspconfig'                                                     -- Collection of configurations for built-in LSP client
-    use 'williamboman/nvim-lsp-installer'                                           -- Automatically install language servers to stdpath
-    use { 'hrsh7th/nvim-cmp', requires = { 'hrsh7th/cmp-nvim-lsp' } }               -- Autocompletion
-    use { 'L3MON4D3/LuaSnip', requires = { 'saadparwaiz1/cmp_luasnip' } }           -- Snippet Engine and Snippet Expansion
-    use {-- Fuzzy Finder (files, lsp, etc)
-        'nvim-telescope/telescope.nvim',
+    use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client
+    use 'williamboman/nvim-lsp-installer' -- Automatically install language servers to stdpath
+    use { 'hrsh7th/nvim-cmp', requires = { 'hrsh7th/cmp-nvim-lsp' } } -- Autocompletion
+    use { 'L3MON4D3/LuaSnip', requires = { 'saadparwaiz1/cmp_luasnip' } } -- Snippet Engine and Snippet Expansion
+    use { 'nvim-telescope/telescope.nvim', requires = { 'nvim-lua/plenary.nvim', } } -- Fuzzy Finder (files, lsp, etc)
+
+    use {'mfussenegger/nvim-lint'}
+    use {'sbdchd/neoformat'}
+
+
+
+
+    use 'Vimjas/vim-python-pep8-indent'
+    use 'jiangmiao/auto-pairs'
+    use 'tpope/vim-surround'
+
+    use { -- markdown preview plugin
+        'iamcco/markdown-preview.nvim',
+        run = function() vim.fn['mkdp#util#install']() end,
+        ft = { 'markdown' },
+        setup = function()
+            vim.g.mkdp_open_to_the_world = 1
+            vim.g.mkdp_echo_preview_url = 1
+        end,
+    }
+    use {
+        'nvim-treesitter/nvim-treesitter',
         requires = {
-            { 'nvim-lua/plenary.nvim' },
-            { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
+            "p00f/nvim-ts-rainbow"
         }
     }
-    use 'tpope/vim-surround'
-    use 'jiangmiao/auto-pairs'
-    use 'alvan/vim-closetag'
 
 
 
@@ -51,11 +77,10 @@ require('packer').startup(function(use)
 end)
 
 if is_bootstrap then
-  print '=================================='
-  print '    Plugins are being installed'
-  print '    Wait until Packer completes,'
-  print '       then restart nvim'
-  print '=================================='
-  return
+    print '=================================='
+    print '    Plugins are being installed'
+    print '    Wait until Packer completes,'
+    print '       then restart nvim'
+    print '=================================='
+    return
 end
-

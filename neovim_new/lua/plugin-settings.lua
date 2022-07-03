@@ -71,14 +71,17 @@ local on_attach = function(_, bufnr)
   nmap('<leader>wl', function()
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
+
+  local bufopts = { noremap=true, silent=true, buffer=bufnr }
+  vim.keymap.set('n', '<leader>f', vim.lsp.buf.format, bufopts)
+
 end
 
 -- nvim-cmp supports additional completion capabilities
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- Enable the following language servers
-local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'dockerls', 'jsonls',
-  'yamlls' }
+local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'dockerls', 'jsonls', 'yamlls', 'efm' }
 
 -- Ensure the servers above are installed
 require('nvim-lsp-installer').setup {
@@ -155,6 +158,36 @@ require('lspconfig').pyright.setup {
 }
 
 
+require('lspconfig').efm.setup {
+    init_options = {documentFormatting = true},
+    settings = {
+        --rootMarkers = {".git/", "pyproject.toml", ".envrc"},
+        languages = {
+            lua = {
+                {formatCommand = "lua-format -i", formatStdin = true}
+            },
+            python = {
+                {formatCommand = "black --quiet -", formatStdin = true},
+                {formatCommand = "isort --quiet -", formatStdin = true},
+                {
+                  lintCommand = "pylint --output-format text --score no ${INPUT}",
+                  lintStdin = true,
+                  --lintFormats = { "'%f:%l:%c:%t:%m'" },
+                  lintOffsetColumns = 1,
+                  lintIgnoreExitCode = true,
+                  lintDebounce = 1
+                },
+                {
+                  lintCommand = "pycodestyle ${INPUT}",
+                  lintStdin = true,
+                  lintIgnoreExitCode = true
+                },
+            }
+        }
+    }
+}
+
+
 
 -- nvim-cmp setup
 local cmp = require 'cmp'
@@ -198,6 +231,7 @@ cmp.setup {
     { name = 'luasnip' },
   },
 }
+
 require('nvim-treesitter.configs').setup {
   ensure_installed = { 'c', 'cpp', 'lua', 'python', "yaml", "go" },
 
@@ -224,14 +258,4 @@ require('nvim-treesitter.configs').setup {
       node_decremental = "grm",
     }
   }
-
 }
-
-require('lint').linters_by_ft = {
-  yaml = { 'yamllint', },
-  python = { 'pylint', 'pycodestyle' },
-}
-
-
-vim.g.neoformat_enabled_python = {'black', 'isort'}
-vim.g.neoformat_run_all_formatters = 1

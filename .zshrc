@@ -1,5 +1,7 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
+export GOPATH="$HOME/projects/go"
+export PATH=$HOME/.local/bin:$GOPATH/bin:$PATH
 
 # Path to your oh-my-zsh installation.
 ZSH=/usr/share/oh-my-zsh/
@@ -75,6 +77,7 @@ plugins=(
   git
   command-not-found
   fzf
+  virtualenv
 )
 
 
@@ -111,20 +114,17 @@ fi
 
 source $ZSH/oh-my-zsh.sh
 
-
-if [ -n "$DESKTOP_SESSION" ];then
-    eval $(gnome-keyring-daemon --start)
-    export SSH_AUTH_SOCK
-fi
-
-eval "$(direnv hook zsh)"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
+function virtualenv_info {
+   [ $VIRTUAL_ENV ] && echo '('`basename $VIRTUAL_ENV`') '
+}
 
 alias ssh="TERM=xterm-256color ssh"
 
 if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
   exec sway
-  eval $(gnome-keyring-daemon --start)
-  export SSH_AUTH_SOCK
 fi
+
+export PYENV_ROOT="$HOME/.pyenv"
+eval "$(pyenv init -)"
+
+eval "$(direnv hook zsh)"

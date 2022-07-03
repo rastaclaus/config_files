@@ -14,67 +14,6 @@ require('indent_blankline').setup {
   show_trailing_blankline_indent = false,
 }
 
--- [[ Configure Treesitter ]]
--- See `:help nvim-treesitter`
-require('nvim-treesitter.configs').setup {
-  -- Add languages to be installed here that you want installed for treesitter
-  ensure_installed = { 'lua', 'rust', 'go', 'python' },
-
-  highlight = { enable = true },
-  indent = { enable = true },
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = '<c-space>',
-      node_incremental = '<c-space>',
-      -- TODO: I'm not sure for this one.
-      scope_incremental = '<c-s>',
-      node_decremental = '<c-backspace>',
-    },
-  },
-  textobjects = {
-    select = {
-      enable = true,
-      lookahead = true, -- Automatically jump forward to textobj, similar to targets.vim
-      keymaps = {
-        -- You can use the capture groups defined in textobjects.scm
-        ['af'] = '@function.outer',
-        ['if'] = '@function.inner',
-        ['ac'] = '@class.outer',
-        ['ic'] = '@class.inner',
-      },
-    },
-    move = {
-      enable = true,
-      set_jumps = true, -- whether to set jumps in the jumplist
-      goto_next_start = {
-        [']m'] = '@function.outer',
-        [']]'] = '@class.outer',
-      },
-      goto_next_end = {
-        [']M'] = '@function.outer',
-        [']['] = '@class.outer',
-      },
-      goto_previous_start = {
-        ['[m'] = '@function.outer',
-        ['[['] = '@class.outer',
-      },
-      goto_previous_end = {
-        ['[M'] = '@function.outer',
-        ['[]'] = '@class.outer',
-      },
-    },
-    swap = {
-      enable = true,
-      swap_next = {
-        ['<leader>a'] = '@parameter.inner',
-      },
-      swap_previous = {
-        ['<leader>A'] = '@parameter.inner',
-      },
-    },
-  },
-}
 
 require('telescope').setup {
   defaults = {
@@ -130,19 +69,16 @@ local on_attach = function(_, bufnr)
   nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
   nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
   nmap('<leader>wl', function()
-  nmap('<F5>', vim.lsp.buf.format, 'Format')
     print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
   end, '[W]orkspace [L]ist Folders')
-
-  -- Create a command `:Format` local to the LSP buffer
-  vim.api.nvim_buf_create_user_command(bufnr, 'Format', vim.lsp.buf.format or vim.lsp.buf.formatting, { desc = 'Format current buffer with LSP' })
 end
 
 -- nvim-cmp supports additional completion capabilities
 local capabilities = require('cmp_nvim_lsp').update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 -- Enable the following language servers
-local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'efm', 'dockerls' }
+local servers = { 'clangd', 'rust_analyzer', 'pyright', 'tsserver', 'sumneko_lua', 'gopls', 'dockerls', 'jsonls',
+  'yamlls' }
 
 -- Ensure the servers above are installed
 require('nvim-lsp-installer').setup {
@@ -194,8 +130,12 @@ local python_root_files = {
   'pyrightconfig.json',
 }
 
+
 require('lspconfig').pyright.setup {
   on_attach = on_attach,
+  handlers = {
+    ['textDocument/publishDiagnostics'] = function(...) end
+  },
   root_dir = util.root_pattern(unpack(python_root_files)),
   single_file_suport = true,
 
@@ -203,9 +143,8 @@ require('lspconfig').pyright.setup {
   settings = {
     pyright = {
       analisys = {
-        autoSearchPaths = true,
+        autoSearchPaths = false,
         typeCheckingMode = "off",
-        disgnosticMode = 'workspace',
       },
     },
     -- python = {
@@ -215,48 +154,6 @@ require('lspconfig').pyright.setup {
   },
 }
 
-require('lspconfig').efm.setup {
-  init_options = {
-    hover = true,
-    documentFormatting = true
-  },
-  settings = {
-    languages = {
-      python = {
-        {
-          lintDebounce = "1s",
-          lintCommand = 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}',
-          lintStdin = true,
-          lintIgnoreExitCode = true,
-          lintFormats = {'%f:%l:%c:%t:%m'},
-          lintOffsetColumns = 1,
-          lintCategoryMap = {
-            I = 'H',
-            R = 'I',
-            C = 'I',
-            W = 'W',
-            E = 'E',
-            F = 'E'
-          }
-        },
-        {
-          lintDebounce = "1s",
-          lintCommand = 'pycodestyle ${INPUT}',
-          lintStdin = true,
-          lintIgnoreExitCode = true,
-          lintOffsetColumns = 1,
-        }
-      },
-      yaml = {
-        {
-          lintDebounce = "1s",
-          lintCommand = "yamllint -f parsable -",
-          lintStdin = true,
-        }
-      }
-    }
-  }
-}
 
 
 -- nvim-cmp setup
@@ -272,7 +169,7 @@ cmp.setup {
   mapping = cmp.mapping.preset.insert {
     ['<C-d>'] = cmp.mapping.scroll_docs(-4),
     ['<C-f>'] = cmp.mapping.scroll_docs(4),
-    ['<C-Space>'] = cmp.mapping.complete(),
+    ['<C-Space>'] = cmp.mapping.complete({}),
     ['<CR>'] = cmp.mapping.confirm {
       behavior = cmp.ConfirmBehavior.Replace,
       select = true,
@@ -301,3 +198,40 @@ cmp.setup {
     { name = 'luasnip' },
   },
 }
+require('nvim-treesitter.configs').setup {
+  ensure_installed = { 'c', 'cpp', 'lua', 'python', "yaml", "go" },
+
+  rainbow = {
+    enable = true,
+    extended_mode = true,
+  },
+
+  highlight = {
+    enable = true,
+  },
+
+  indent = {
+    enable = false,
+    -- disable = {'python', 'yaml'}
+  },
+
+  incremental_selection = {
+    enable = true,
+    keymaps = {
+      init_selection = "gnn",
+      node_incremental = "grn",
+      scope_incremental = "grc",
+      node_decremental = "grm",
+    }
+  }
+
+}
+
+require('lint').linters_by_ft = {
+  yaml = { 'yamllint', },
+  python = { 'pylint', 'pycodestyle' },
+}
+
+
+vim.g.neoformat_enabled_python = {'black', 'isort'}
+vim.g.neoformat_run_all_formatters = 1

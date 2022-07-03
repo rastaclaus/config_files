@@ -23,7 +23,11 @@ vim.wo.signcolumn = 'yes'
 
 -- Set colorscheme
 vim.o.termguicolors = true
-vim.cmd [[colorscheme afterglow]]
+vim.o.background = "dark"
+vim.g.codeschool_contrast_dark = "hard"
+vim.g.gruvbox_material_background = 'hard'
+
+vim.cmd [[colorscheme gruvbox-material]]
 
 vim.o.completeopt = 'menuone,noselect' -- Set completeopt to have a better completion experience
 
@@ -31,9 +35,12 @@ vim.opt.cursorline = true -- higlight current line
 vim.opt.scrolloff = 5 -- minimal number of screen lines to keep above and below the cursor
 vim.opt.linebreak = true -- do not break the words
 
+vim.opt.autoindent = true
 vim.opt.expandtab = true -- Change tabs to spaces
 vim.opt.shiftwidth = 4 -- Number of spaces to use for each step of (auto)indent.
 vim.opt.tabstop = 4 -- Number of spaces that a <Tab> in the file counts for.
+vim.opt.list = true
+vim.opt.listchars = {tab="->", trail="-"}
 
 vim.opt.wildmode = 'longest:full,full'
 

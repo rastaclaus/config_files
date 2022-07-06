@@ -10,9 +10,6 @@ require('packer').startup(function(use)
     use {'sainnhe/everforest'}
     use {'sainnhe/gruvbox-material'}
 
-
-
-
     use {
         'nvim-neo-tree/neo-tree.nvim',
         branch = 'v2.x',
@@ -34,6 +31,9 @@ require('packer').startup(function(use)
     use 'numToStr/Comment.nvim'
     use 'lukas-reineke/indent-blankline.nvim'
     use 'tpope/vim-sleuth'
+
+    use 'mfussenegger/nvim-lint'
+    use 'sbdchd/neoformat'
 
 
     use 'neovim/nvim-lspconfig' -- Collection of configurations for built-in LSP client

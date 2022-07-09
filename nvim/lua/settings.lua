@@ -26,7 +26,7 @@ vim.opt.listchars = {tab="->", trail="-"}
 
 o.tabstop = 4
 o.softtabstop = 4
-o.shitwidth = 4
+o.shiftwidth = 4
 o.expandtab = true
 wo.wrap = false
 wo.number = true

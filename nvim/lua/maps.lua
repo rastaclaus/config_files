@@ -1,15 +1,23 @@
---[[ Space = leader key ]]
-vim.keymap.set({ 'n', 'v' }, '<Space>', '<Nop>', { silent = true })
-vim.g.mapleader = ' '
-vim.g.maplocalleader = ' '
+local map = vim.api.nvim_set_keymap
+
+local options = { noremap = true }
 
 
 vim.opt.langmap = 'ФИСВУАПРШОЛДЬТЩЗЙКЫЕГМЦЧНЯ;ABCDEFGHIJKLMNOPQRSTUVWXYZ,фисвуапршолдьтщзйкыегмцчня;abcdefghijklmnopqrstuvwxyz'
 
-vim.keymap.set('n', '<F2>', '<cmd>NeoTreeFocusToggle<cr>')
-vim.keymap.set('n', '<F5>', '<cmd>Neoformat<cr>')
+map('n','<Space>', '<Nop>', {silent = true})
+map('v','<Space>', '<Nop>', {silent = true})
+vim.g.mapleader = ' '
+vim.g.maplocalleader = ' '
 
---
+
+map('n', '<leader><esc>', ':nohlsearch<cr>', options)
+map('n', '<leader>n', ':bnext<cr>', options)
+map('n', '<leader>p', ':bprev<cr>', options)
+
+map('n', '<F2>', '<cmd>NeoTreeFocusToggle<cr>', options)
+map('n', '<F5>', '<cmd>Neoformat<cr>', options)
+
 -- See `:help telescope.builtin`
 vim.keymap.set('n', '<leader>?', require('telescope.builtin').oldfiles, { desc = '[?] Find recently opened files' })
 vim.keymap.set('n', '<leader><space>', require('telescope.builtin').buffers, { desc = '[ ] Find existing buffers' })

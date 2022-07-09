@@ -1,1 +1,2 @@
-./neovim/plugged
+.nvim/plugin/
+.nvim/undodir/

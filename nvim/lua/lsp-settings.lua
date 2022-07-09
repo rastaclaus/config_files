@@ -32,9 +32,6 @@ local on_attach = function(_, bufnr)
         end,
         "[W]orkspace [L]ist Folders"
     )
-
-    local bufopts = {noremap = true, silent = true, buffer = bufnr}
-    vim.keymap.set("n", "<leader>f", vim.lsp.buf.format, bufopts)
 end
 
 -- nvim-cmp supports additional completion capabilities
@@ -50,7 +47,7 @@ local servers = {
     "gopls",
     "dockerls",
     "jsonls",
-    "yamlls",
+    "yamlls"
 }
 
 -- Ensure the servers above are installed

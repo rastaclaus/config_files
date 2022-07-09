@@ -107,53 +107,39 @@ require("telescope").setup {
 
 pcall(require("telescope").load_extension, "fzf")
 
-require("lint").linters_by_ft = {
-    python = {"pylint", "pycodestyle"},
-    yaml = {"yamllint"}
-}
 
-vim.diagnostic.config(
-    {
-        virtual_text = {
-            source = "always",
-            format = function(diagnostic)
-                if diagnostic.user_data.lsp.code ~= nil then
-                    return string.format("%s: %s", diagnostic.user_data.lsp.code, diagnostic.message)
-                end
-                return diagnostic.message
-            end
+require("nvim-treesitter.configs").setup {
+    ensure_installed = {"c", "cpp", "lua", "python", "yaml", "go"},
+    rainbow = {
+        enable = true,
+        extended_mode = true
+    },
+    highlight = {
+        enable = true
+    },
+    indent = {
+        enable = false
+        -- disable = {'python', 'yaml'}
+    },
+    incremental_selection = {
+        enable = true,
+        keymaps = {
+            init_selection = "gnn",
+            node_incremental = "grn",
+            scope_incremental = "grc",
+            node_decremental = "grm"
         }
     }
-)
+}
 
 vim.g.neoformat_enabled_python = {"black", "isort"}
 vim.g.neoformat_enabled_sql = {"pg_format"}
 vim.g.neoformat_run_all_formatters = 1
 
-require('nvim-treesitter.configs').setup {
-  ensure_installed = { 'c', 'cpp', 'lua', 'python', "yaml", "go" },
 
-  rainbow = {
-    enable = true,
-    extended_mode = true,
-  },
+require("lint").linters.pylint = require("pylint")
 
-  highlight = {
-    enable = true,
-  },
-
-  indent = {
-    enable = false,
-    -- disable = {'python', 'yaml'}
-  },
-
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = "gnn",
-      node_incremental = "grn",
-      scope_incremental = "grc",
-      node_decremental = "grm",
-    }
-  }
+require("lint").linters_by_ft = {
+    python = {"pycodestyle", "pylint"},
+    yaml = {"yamllint"}
 }

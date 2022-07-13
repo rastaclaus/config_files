@@ -26,9 +26,14 @@ require("packer").startup(
         use("numToStr/Comment.nvim") -- easy comment selected lines
         use("lukas-reineke/indent-blankline.nvim") -- indent visualization
 
-
-        use 'tpope/vim-sleuth'
+        use "tpope/vim-sleuth"
         use("Vimjas/vim-python-pep8-indent")
+
+        use(
+            {"iamcco/markdown-preview.nvim", run = "cd app && npm install", setup = function()
+                    vim.g.mkdp_filetypes = {"markdown"}
+                end, ft = {"markdown"}}
+        )
 
         use("jiangmiao/auto-pairs")
         use("tpope/vim-surround")
@@ -57,7 +62,7 @@ require("packer").startup(
         )
 
         use({"L3MON4D3/LuaSnip", requires = {"saadparwaiz1/cmp_luasnip"}}) -- Snippet Engine and Snippet Expansion
-        use({"tzachar/cmp-tabnine", run = "./install.sh", requires = "hrsh7th/nvim-cmp"}) -- tabnine
+        -- use({"tzachar/cmp-tabnine", run = "./install.sh", requires = "hrsh7th/nvim-cmp"}) -- tabnine
 
         use("mfussenegger/nvim-lint") -- linter
         use("sbdchd/neoformat") -- formatter

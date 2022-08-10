@@ -68,6 +68,11 @@ input "10874:38279:CASUE_USB_KB" {
   xkb_options "grp:caps_toggle, grp_led:caps"
 }
 
+input "12538:768:USB_OPTICAL_MOUSE" {
+    scroll_button button2
+    scroll_method on_button_down
+}
+
 ### Key bindings
 #
 # Basics:

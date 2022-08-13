@@ -134,12 +134,13 @@ require("nvim-treesitter.configs").setup {
 
 vim.g.neoformat_enabled_python = {"black", "isort"}
 vim.g.neoformat_enabled_sql = {"pg_format"}
+vim.g.neoformat_enabled_yaml = {"prettier"}
 vim.g.neoformat_run_all_formatters = 1
 
 
 require("lint").linters.pylint = require("pylint")
 
 require("lint").linters_by_ft = {
-    python = {"pycodestyle", "pylint"},
+    python = {"pycodestyle", "pylint", "mypy"},
     yaml = {"yamllint"}
 }

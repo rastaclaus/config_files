@@ -107,7 +107,6 @@ require("telescope").setup {
 
 pcall(require("telescope").load_extension, "fzf")
 
-
 require("nvim-treesitter.configs").setup {
     ensure_installed = {"c", "cpp", "lua", "python", "yaml", "go"},
     rainbow = {
@@ -131,12 +130,23 @@ require("nvim-treesitter.configs").setup {
         }
     }
 }
+require("neo-tree").setup(
+    {
+        filesystem = {
+            filtered_items = {
+                visible = false, -- when true, they will just be displayed differently than normal items
+                hide_dotfiles = true,
+                hide_gitignored = true,
+                hide_hidden = true -- only works on Windows for hidden files/directories
+            }
+        }
+    }
+)
 
 vim.g.neoformat_enabled_python = {"black", "isort"}
 vim.g.neoformat_enabled_sql = {"pg_format"}
 vim.g.neoformat_enabled_yaml = {"prettier"}
 vim.g.neoformat_run_all_formatters = 1
-
 
 require("lint").linters.pylint = require("pylint")
 

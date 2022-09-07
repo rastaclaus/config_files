@@ -23,6 +23,7 @@ require("packer").startup(
             }
         )
         use("tpope/vim-fugitive") -- git integrations plugin
+        use("tpope/vim-repeat") -- git integrations plugin
         use("numToStr/Comment.nvim") -- easy comment selected lines
         use("lukas-reineke/indent-blankline.nvim") -- indent visualization
 

@@ -63,7 +63,7 @@ exec swayidle -w \
 input "10874:38279:CASUE_USB_KB" {
   repeat_delay 120
   repeat_rate 60
-  xkb_model "pc101"
+  xkb_model "pc105"
   xkb_layout "us,ru"
   xkb_options "grp:caps_toggle, grp_led:caps"
 }

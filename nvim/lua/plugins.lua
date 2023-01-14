@@ -31,9 +31,14 @@ require("packer").startup(
         use("Vimjas/vim-python-pep8-indent")
 
         use(
-            {"iamcco/markdown-preview.nvim", run = "cd app && npm install", setup = function()
+            {
+                "iamcco/markdown-preview.nvim",
+                run = "cd app && npm install",
+                setup = function()
                     vim.g.mkdp_filetypes = {"markdown"}
-                end, ft = {"markdown"}}
+                end,
+                ft = {"markdown"}
+            }
         )
 
         use("jiangmiao/auto-pairs")

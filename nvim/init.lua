@@ -1,15 +1,10 @@
--- Install packer
-local install_path = vim.fn.stdpath "data" .. "/site/pack/packer/start/packer.nvim"
+require('base/disable_builtins')
+require('base/search')
+require('base/tabs')
+require('base/other')
 
-if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
-    vim.fn.execute("!git clone https://github.com/wbthomason/packer.nvim " .. install_path)
-    vim.cmd [[packadd packer.nvim]]
-end
-
-require("plugins")
-require("plugins-settings")
-require("lsp-settings")
-require("settings")
-require("maps")
-require("autocmd")
-require("colorscheme")
+require('keys/main')
+require('plugins/packer_install')
+require('keys/plugins')
+require('base/colors')
+require("base/autocmd")

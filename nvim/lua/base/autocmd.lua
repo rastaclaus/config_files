@@ -1,6 +1,4 @@
-local cmd = vim.cmd
-
-cmd('au BufNewFile, BufRead * if &ft == "" | set ft=text | endif')
+vim.cmd('au BufNewFile, BufRead * if &ft == "" | set ft=text | endif')
 
 vim.api.nvim_create_autocmd(
   {"BufEnter", "BufWritePost"},

@@ -9,6 +9,7 @@ opt.completeopt = 'menuone,noselect'
 opt.termguicolors = true
 opt.swapfile = false
 opt.undodir = vim.fn.stdpath('config') .. '/undodir'
+opt.undofile = true
 opt.hidden = true
 opt.showmode = false
 

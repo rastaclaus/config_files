@@ -9,7 +9,19 @@ require("lualine").setup {
         globalstatus = false
     },
     sections = {
-        lualine_c = {"filename", "lsp_progress"},
+        lualine_c = {
+            {
+                "filename",
+                newfile_status = true,
+                path = 3,
+                symbols = {
+                    modified = '[+]',
+                    readonly = '[-]',
+                    unnamed = '[No Name]',
+                    newfile = '[New]',
+                }
+            }
+        },
         lualine_y = {"progress"},
         lualine_z = {"location"}
     }

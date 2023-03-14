@@ -17,7 +17,6 @@ lspinstaller.setup{
 		'cssls',                  -- CSS
 		'emmet_ls',               -- HTML
 		'pyright',                -- Python
-		'sumneko_lua',            -- Lua
         'clangd',                 -- c++
         'gopls',                  -- go
         'dockerls',               -- dockerfiles

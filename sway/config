@@ -255,8 +255,8 @@ bar {
 }
 
 exec --no-startup-id nm-applet --indicator
-# exec --no-startup-id pipewire
-exec --no-startup-id blueman-applet
+# exec --no-startup-id blueman-manager
+# exec --no-startup-id blueman-applet
 exec --no-startup-id gammastep -l 55.755814:47.617635
 exec --no-startup-id gnome-keyring-daemon -s
 

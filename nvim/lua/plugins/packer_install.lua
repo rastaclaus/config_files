@@ -112,6 +112,8 @@ return require("packer").startup(
             requires = "neovim/nvim-lspconfig"
         }
 
+        use "Vimjas/vim-python-pep8-indent"
+
         -- Git
         use "tpope/vim-fugitive"
         use "tpope/vim-repeat"

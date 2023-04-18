@@ -66,3 +66,11 @@ lspconfig.pyright.setup {
         }
     }
 }
+
+lspconfig.yamlls.setup({
+    settings = {
+        yaml = {
+            keyOrdering = false
+        }
+    }
+})

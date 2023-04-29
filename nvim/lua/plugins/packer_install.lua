@@ -40,12 +40,6 @@ return require("packer").startup(
             end
         }
 
-        use {
-            "tzachar/cmp-tabnine",
-            run = "./install.sh",
-            requires = "hrsh7th/nvim-cmp"
-        }
-
         use "sainnhe/gruvbox-material" -- colorschems
 
         use {
@@ -57,6 +51,7 @@ return require("packer").startup(
 
         use "lukas-reineke/indent-blankline.nvim" -- indent visualization
 
+        use "Exafunction/codeium.vim" --codeim code helper
 
         use {
             "nvim-neo-tree/neo-tree.nvim",

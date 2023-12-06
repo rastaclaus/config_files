@@ -29,18 +29,14 @@ command=$SCRIPT_DIR/$BLOCK_NAME/$BLOCK_NAME
 separator_block_width=15
 markup=pango
 
-
-
-
+[wttr]
+interval=600
 # Network interface monitoring
 #
 # If the instance is not specified, use the interface used for default route.
 # The address can be forced to IPv4 or IPv6 with -4 or -6 switches.
-[wttr]
-interval=600
-
 [iface]
-#IFACE=wlan0
+IFACE=enp4s0
 color=#00FF00
 interval=10
 separator=false
@@ -52,23 +48,23 @@ separator=false
 separator=false
 #
 [bandwidth]
-INTERFACE=wlan0
+INTERFACE=enp4s0
 interval=5
+
 separator=false
 
 [nm-vpn]
 init_color=#FFFF00
 on_color=#00FF00
-label=VPN: 
+label=VPN:-
 interval=5
-
-
-
 #
 ## CPU usage
 ##
 ## The script may be called with -w and -c switches to specify thresholds,
 ## see the script for details.
+
+
 [cpu_usage]
 interval=10
 LABEL=CPU: 
@@ -89,46 +85,45 @@ interval=30
 label=MEM 
 #separator=false
 interval=30
-
-[disk]
-label=disk 
-#DIR=/mnt/data
-interval=30
 #
 #
 ## Battery indicator
 ##
 ## The battery instance defaults to 0.
 
-[battery-poly]
-#LABEL=⚡
-interval=30
-LABEL=BAT 
-
-
-[volume-pipewire]
-interval=persist
-signal=1
-MIXER=pulse
-SCONTROL=[determined automatically]
-##exposed format variables: ${SYMB}, ${VOL}, ${INDEX}, ${NAME}
-LONG_FORMAT="${SYMB} ${VOL}% [${INDEX}:${NAME}]"
-#SHORT_FORMAT="${SYMB} ${VOL}% [${INDEX}]"
-#AUDIO_HIGH_SYMBOL='  '
-#AUDIO_MED_THRESH=50
-#AUDIO_MED_SYMBOL='  '
-#AUDIO_LOW_THRESH=0
-#AUDIO_LOW_SYMBOL='  '
-#AUDIO_DELTA=5
-#DEFAULT_COLOR="#ffffff"
-#MUTED_COLOR="#a0a0a0"
-#USE_ALSA_NAME=0
-#USE_DESCRIPTION=0
-## SUBSCRIBE=1 requires interval=persist and always uses LONG_FORMAT
-SUBSCRIBE=1
-
 # Date Time
+[disk]
+label=disk 
+#DIR=/mnt/data
+interval=30
+
+
+
+
+# [volume-pipewire]
+# interval=persist
+# signal=1
+# MIXER=pulse
+# SCONTROL=[determined automatically]
+# ##exposed format variables: ${SYMB}, ${VOL}, ${INDEX}, ${NAME}
+# LONG_FORMAT="${SYMB} ${VOL}% [${INDEX}:${NAME}]"
+# #SHORT_FORMAT="${SYMB} ${VOL}% [${INDEX}]"
+# #AUDIO_HIGH_SYMBOL='  '
+# #AUDIO_MED_THRESH=50
+# #AUDIO_MED_SYMBOL='  '
+# #AUDIO_LOW_THRESH=0
+# #AUDIO_LOW_SYMBOL='  '
+# #AUDIO_DELTA=5
+# #DEFAULT_COLOR="#ffffff"
+# #MUTED_COLOR="#a0a0a0"
+# #USE_ALSA_NAME=0
+# #USE_DESCRIPTION=0
+# ## SUBSCRIBE=1 requires interval=persist and always uses LONG_FORMAT
+# SUBSCRIBE=1
 
 [time]
 interval=1
-command=date +'%d.%m.%Y %H:%M:%S'
+#TZ_FILE=~/.tz
+STRFTIME_FORMAT=%a, %Y-%m-%d %H:%M:%S
+TZONES=Europe/Moscow
+#TZ_LABELS=,Brazil,AU,Hyderabad

@@ -74,11 +74,11 @@ ZSH_CUSTOM=$HOME/.oh-my-zsh
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
-  git
-  command-not-found
-  fzf
-  virtualenv
+ command-not-found
+ fzf
 )
+# git
+# virtualenv
 
 
 # User configuration
@@ -125,6 +125,8 @@ if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
 fi
 
 export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:/$PATH"
 eval "$(pyenv init -)"
+eval "$(pyenv virtualenv-init -)"
 
 eval "$(direnv hook zsh)"

@@ -119,7 +119,7 @@ function print_format {
 }
 
 function print_block {
-    ACTIVE=$(pactl list sinks  | grep "State\: SUSPENDED\|State\: RUNNING" -B4 -A55 | grep "Name:\|Volume: \(front-left\|mono\)\|Mute:\|api.alsa.pcm.card = \|node.nick = ")
+    ACTIVE=$(pactl list sinks | grep "Description: enc060" -B4 -A 62 | grep "Name:\|Volume: \(front-left\|mono\)\|Mute:\|api.alsa.pcm.card = \|node.nick = ")
     for Name in NAME MUTED VOL INDEX NICK; do
         read $Name
     done < <(echo "$ACTIVE")

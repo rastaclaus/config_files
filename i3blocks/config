@@ -36,7 +36,7 @@ interval=600
 # If the instance is not specified, use the interface used for default route.
 # The address can be forced to IPv4 or IPv6 with -4 or -6 switches.
 [iface]
-IFACE=enp4s0
+IFACE=wlan0
 color=#00FF00
 interval=10
 separator=false
@@ -47,12 +47,6 @@ separator=false
 #interval=10
 separator=false
 #
-[bandwidth]
-INTERFACE=enp4s0
-interval=5
-
-separator=false
-
 [nm-vpn]
 init_color=#FFFF00
 on_color=#00FF00

@@ -119,6 +119,7 @@ function virtualenv_info {
 }
 
 alias ssh="TERM=xterm-256color ssh"
+alias sshntech="lemonade server > /dev/null & ssh -R 10512:127.0.0.1:10512 ashestopalov@172.20.77.70"
 
 if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
   exec sway

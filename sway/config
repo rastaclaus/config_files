@@ -60,7 +60,7 @@ exec swayidle -w \
 # Example configuration:
 #
 
-input "10874:38279:CASUE_USB_KB" {
+input "10874:38295:CASUE_USB_KB" {
   repeat_delay 120
   repeat_rate 60
   xkb_model "pc105"
@@ -259,6 +259,7 @@ exec --no-startup-id nm-applet --indicator
 # exec --no-startup-id blueman-applet
 exec --no-startup-id gammastep -l 55.755814:47.617635
 exec --no-startup-id gnome-keyring-daemon -s
+exec --no-startup-id darkman get
 
 include shotman.conf
 include /etc/sway/config.d/*

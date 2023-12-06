@@ -27,12 +27,10 @@ font pango:SourceCodePro Medium 10
 #
 # Default wallpaper (more resolutions are available in /usr/share/backgrounds/sway/)
 set $wallpapers_path /home/artems/Wallpapers/
-
-# output "*" bg $(find $wallpapers_path -type f | shuf -n 1) fit
-exec ~/.azotebg
+output * bg $(find $wallpapers_path -type f | shuf -n 1) fill
 
 default_border pixel 2
-# hide_edge_borders --i3 smart
+hide_edge_borders --i3 smart
 
 # output * bg /usr/share/backgrounds/sway/Sway_Wallpaper_Blue_1920x1080.png fill
 #
@@ -59,11 +57,17 @@ exec swayidle -w \
 #
 # Example configuration:
 #
+input "1739:52632:MSFT0004:00_06CB:CD98_Touchpad" {
+    dwt enabled
+    tap enabled
+    natural_scroll disabled
+    middle_emulation enabled
+}
 
-input "10874:38279:CASUE_USB_KB" {
-  repeat_delay 120
-  repeat_rate 60
-  xkb_model "pc105"
+input "1:1:AT_Translated_Set_2_keyboard" {
+  repeat_delay 200
+  repeat_rate 50
+  xkb_model "pc101"
   xkb_layout "us,ru"
   xkb_options "grp:caps_toggle, grp_led:caps"
 }
@@ -234,7 +238,6 @@ bindsym $mod+t exec ~/.config/sway/toggletouch.sh
 # Read `man 5 sway-bar` for more information about this section.
 
 bar {
-    tray_bindcode 273 ContextMenu
     position bottom
     # hidden_state hide
     mode hide
@@ -250,8 +253,6 @@ bar {
 }
 
 exec --no-startup-id nm-applet --indicator
-# exec --no-startup-id blueman-manager
-# exec --no-startup-id blueman-applet
 exec --no-startup-id gammastep -l 55.755814:47.617635
 exec --no-startup-id gnome-keyring-daemon -s
 

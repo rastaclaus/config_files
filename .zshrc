@@ -115,7 +115,7 @@ fi
 source $ZSH/oh-my-zsh.sh
 
 function virtualenv_info {
-   [ $VIRTUAL_ENV ] && echo '('`basename $VIRTUAL_ENV`') '
+   [ $PYENV_VERSION ] && echo '('`echo $PYENV_VERSION`') '
 }
 
 alias ssh="TERM=xterm-256color ssh"

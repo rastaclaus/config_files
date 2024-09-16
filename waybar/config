@@ -10,6 +10,7 @@
     "hyprland/window"
   ],
   "modules-right": [
+    "battery",
     "cpu",
     "memory",
     "pulseaudio",
@@ -62,4 +63,22 @@
       "Easy Effects Sink"
     ]
   },
+  "battery": {
+    "bat": "BAT1",
+    "interval": 10,
+    "states": {
+      "good": 60,
+      "warning": 30,
+      "critical": 10
+    },
+    "format": "{capacity}% {icon}   {time}",
+    "format-icons": [
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "max-length": 25
+  }
 }

@@ -123,13 +123,21 @@ button:hover {
 }
 
 #battery {
-    background-color: #ffffff;
+    background-color: #25b025;
     color: #000000;
 }
 
 #battery.charging, #battery.plugged {
     color: #ffffff;
-    background-color: #26A65B;
+    background-color: #26267B;
+}
+
+#battery.good:not(.charging) {
+    background-color: #269626;
+}
+
+#battery.warning:not(.charging) {
+    background-color: #267b7b;
 }
 
 @keyframes blink {

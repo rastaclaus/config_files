@@ -59,8 +59,9 @@ exec swayidle -w \
 #
 # Example configuration:
 #
+output * max_render_time 3
 
-input "10874:38295:CASUE_USB_KB" {
+input "2522:8808:SONiX_USB_Keyboard" {
   repeat_delay 120
   repeat_rate 60
   xkb_model "pc105"
@@ -205,6 +206,8 @@ input "12538:768:USB_OPTICAL_MOUSE" {
 #   bindsym XF86AudioPause $exec playerctl play-pause
 #   bindsym XF86AudioNext $exec playerctl next
 #   bindsym XF86AudioPrev $exec playerctl previous
+    bindsym Ctrl+Shift+o input "12538:768:USB_OPTICAL_MOUSE" map_to_output HDMI-A-1
+    bindsym Ctrl+Shift+p input "12538:768:USB_OPTICAL_MOUSE" map_to_output *
 
 #
 # Resizing containers:

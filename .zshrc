@@ -76,6 +76,7 @@ ZSH_CUSTOM=$HOME/.oh-my-zsh
 plugins=(
  command-not-found
  fzf
+ direnv
 )
 # git
 # virtualenv
@@ -122,12 +123,8 @@ alias ssh="TERM=xterm-256color ssh"
 alias sshntech="lemonade server > /dev/null & ssh -R 10512:127.0.0.1:10512 ashestopalov@172.20.77.70"
 
 if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
-  exec sway
+  exec Hyprland
 fi
-
 export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:/$PATH"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
-
-eval "$(direnv hook zsh)"

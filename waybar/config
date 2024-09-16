@@ -10,6 +10,7 @@
     "hyprland/window"
   ],
   "modules-right": [
+    "network",
     "battery",
     "cpu",
     "memory",
@@ -80,5 +81,15 @@
       ""
     ],
     "max-length": 25
+  },
+  "network": {
+    "interface": "wlan0",
+    "format": "{ifname}",
+    "format-wifi": "{essid} ({signalStrength}%) ",
+    "format-disconnected": "",
+    "tooltip-format": "{ifname} via {gwaddr} 󰊗",
+    "tooltip-format-wifi": "{essid} ({signalStrength}%) ",
+    "tooltip-format-disconnected": "Disconnected",
+    "max-length": 50
   }
 }

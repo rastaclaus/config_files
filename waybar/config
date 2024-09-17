@@ -3,6 +3,7 @@
   "position": "bottom",
   "height": 28,
   "spacing": 2,
+  "start_hidden": true,
   "modules-left": [
     "hyprland/workspaces"
   ],

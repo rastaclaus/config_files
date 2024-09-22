@@ -1,9 +1,11 @@
 {
-  "layer": "bottom",
+  "layer": "top",
   "position": "bottom",
   "height": 28,
   "spacing": 2,
   "start_hidden": true,
+  "modifier-reset": "release",
+  "exclusive": false,
   "modules-left": [
     "hyprland/workspaces"
   ],

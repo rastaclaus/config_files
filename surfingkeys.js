@@ -19,9 +19,12 @@ const {
     RUNTIME
 } = api;
 
-api.addSearchAlias('l', 'deepl', 'https://duckduckgo.com/?q=', 's', function(response) {
-    var res = JSON.parse(response.text);
-    return res.map(function(r){
-        return r.phrase;
-    });
+api.map('sl', 'Translate selected text with DeepL', function() {
+    var selectedText = window.getSelection().toString();
+    if (selectedText) {
+        var deeplUrl = `https://www.deepl.com/translator#en/ru/${encodeURIComponent(selectedText)}`;
+        window.open(deeplUrl, '_blank');
+    } else {
+        Front.showBanner('Please select text to translate');
+    }
 });

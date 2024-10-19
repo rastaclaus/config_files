@@ -19,7 +19,7 @@ const {
     RUNTIME
 } = api;
 
-map('sl', 'Translate selected text with DeepL', function() {
+api.map('sl', 'Translate selected text with DeepL', function() {
     var selectedText = window.getSelection().toString();
     if (selectedText) {
         var deeplUrl = `https://www.deepl.com/translator#en/ru/${encodeURIComponent(selectedText)}`;

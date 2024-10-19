@@ -19,7 +19,7 @@ const {
     RUNTIME
 } = api;
 
-addSearchAlias('l', 'deepl', 'https://duckduckgo.com/?q=', 's', function(response) {
+api.addSearchAlias('l', 'deepl', 'https://duckduckgo.com/?q=', 's', function(response) {
     var res = JSON.parse(response.text);
     return res.map(function(r){
         return r.phrase;

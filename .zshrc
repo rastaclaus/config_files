@@ -77,6 +77,8 @@ ZSH_CUSTOM=$HOME/.oh-my-zsh
 plugins=(
  command-not-found
  fzf
+ direnv
+ virtualenv
 )
 # git
 # virtualenv
@@ -115,15 +117,19 @@ fi
 
 source $ZSH/oh-my-zsh.sh
 
-function virtualenv_info {
-   [ $VIRTUAL_ENV ] && echo '('`basename $VIRTUAL_ENV`') '
+# function virtualenv_info {
+#    [ $PYENV_VERSION ] && echo '('`echo $PYENV_VERSION`') '
+# }
+function virtualenv_info { 
+    [ $VIRTUAL_ENV ] && echo '('`basename $VIRTUAL_ENV`') '
 }
 
 alias ssh="TERM=xterm-256color ssh"
+# alias sshntech="lemonade server > /dev/null & ssh -R 10512:127.0.0.1:10512 ashestopalov@172.20.77.70"
 
-export PYENV_ROOT="$HOME/.pyenv"
-command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:/$PATH"
-eval "$(pyenv init -)"
-eval "$(pyenv virtualenv-init -)"
+# export PYENV_ROOT="$HOME/.pyenv"
+# command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:/$PATH"
+# eval "$(pyenv init -)"
+# eval "$(pyenv virtualenv-init -)"
 
 eval "$(direnv hook zsh)"

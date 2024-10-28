@@ -77,6 +77,7 @@ plugins=(
  command-not-found
  fzf
  direnv
+ virtualenv
 )
 # git
 # virtualenv
@@ -115,8 +116,11 @@ fi
 
 source $ZSH/oh-my-zsh.sh
 
-function virtualenv_info {
-   [ $PYENV_VERSION ] && echo '('`echo $PYENV_VERSION`') '
+# function virtualenv_info {
+#    [ $PYENV_VERSION ] && echo '('`echo $PYENV_VERSION`') '
+# }
+function virtualenv_info { 
+    [ $VIRTUAL_ENV ] && echo '('`basename $VIRTUAL_ENV`') '
 }
 
 alias ssh="TERM=xterm-256color ssh"
@@ -125,6 +129,6 @@ alias sshntech="lemonade server > /dev/null & ssh -R 10512:127.0.0.1:10512 ashes
 if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
   exec Hyprland
 fi
-export PYENV_ROOT="$HOME/.pyenv"
-[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
-eval "$(pyenv init -)"
+# export PYENV_ROOT="$HOME/.pyenv"
+# [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+# eval "$(pyenv init -)"

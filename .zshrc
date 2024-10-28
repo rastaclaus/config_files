@@ -1,7 +1,8 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 export GOPATH="$HOME/projects/go"
-export PATH=$HOME/.local/bin:$GOPATH/bin:$PATH
+export PATH=/opt/cuda/bin:$HOME/.local/bin:$GOPATH/bin:$PATH
+export LD_LIBRARY_PATH=/opt/cuda/lib64:$LD_LIBRARY_PATH
 
 # Path to your oh-my-zsh installation.
 ZSH=/usr/share/oh-my-zsh/
@@ -119,10 +120,6 @@ function virtualenv_info {
 }
 
 alias ssh="TERM=xterm-256color ssh"
-
-if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
-  exec sway
-fi
 
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:/$PATH"

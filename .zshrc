@@ -127,7 +127,7 @@ alias ssh="TERM=xterm-256color ssh"
 alias sshprovider3="lemonade server > /dev/null & ssh -R 10512:127.0.0.1:10512 ashestopalov@127.0.0.1"
 
 if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
-  exec Hyprland
+  exec sway
 fi
 # export PYENV_ROOT="$HOME/.pyenv"
 # [[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"

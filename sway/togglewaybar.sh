@@ -6,5 +6,5 @@ if [ "$?" -eq 0 ]
 then
   ps aux | grep " [w]aybar" | awk '{ print $2 }' | xargs kill
 else
-  waybar
+  waybar -c ~/.config/waybar/config
 fi

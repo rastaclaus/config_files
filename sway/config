@@ -260,6 +260,7 @@ bar {
     modifier $mod
     swaybar_command waybar
     mode hide
+    output *
 }
 
 exec --no-startup-id nm-applet --indicator

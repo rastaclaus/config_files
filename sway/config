@@ -48,8 +48,8 @@ default_border pixel 2
 #
 exec swayidle -w \
          timeout 300 'swaylock -f -c 000000' \
-         timeout 600 'swaymsg "output * dpms off"' resume 'swaymsg "output * dpms on"' \
-         timeout 630 'systemctl suspend' \
+         timeout 1800 'swaymsg "output * dpms off"' resume 'swaymsg "output * dpms on"' \
+         timeout 1830 'systemctl suspend' \
          before-sleep 'swaylock -f -c 000000'
 
 # This will lock your screen after 300 seconds of inactivity, then turn off
@@ -70,8 +70,14 @@ input "1739:52632:MSFT0004:00_06CB:CD98_Touchpad" {
 }
 
 input "1:1:AT_Translated_Set_2_keyboard" {
-  repeat_delay 200
-  repeat_rate 50
+  # repeat_delay 200
+  # repeat_rate 50
+  repeat_delay 160
+  repeat_rate 60
+  # xkb_model "pc105"
+  xkb_layout "us,ru"
+  xkb_options "grp:caps_toggle, grp_led:caps"
+
   xkb_model "pc101"
 }
 
@@ -236,7 +242,8 @@ mode "resize" {
 }
 bindsym $mod+r mode "resize"
 bindsym $mod+i exec swaymsg bar mode toggle
-bindsym $mod+t output * bg $(find $wallpapers_path -type f | shuf -n 1) fill
+bindsym $mod+t exec $HOME/.config/sway/toggletouch.sh
+bindsym $mod+Shift+w output * bg $(find $wallpapers_path -type f | shuf -n 1) fill
 
 
 #

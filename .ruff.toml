@@ -39,7 +39,6 @@ indent-width = 4
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 select = ["ALL"]
-ignore = ["D100", "D211", "D213", "ANN401"]
 
 fixable = ["ALL"]
 unfixable = []

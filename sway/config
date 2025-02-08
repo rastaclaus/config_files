@@ -258,14 +258,20 @@ bindsym $mod+t exec ~/.config/sway/wallpapers.sh
 bar {
     id bar1
     modifier $mod
-    swaybar_command waybar
+    # swaybar_command waybar
     mode hide
+    status_command ~/.config/sway/swaybar-status.py
+    workspace_buttons yes
     output *
+    colors {
+      background #222222
+      inactive_workspace #323232 #323232 #5c5c5c
+    }
 }
 
 exec --no-startup-id nm-applet --indicator
 # exec --no-startup-id blueman-manager
-# exec --no-startup-id blueman-applet
+exec --no-startup-id blueman-applet
 exec --no-startup-id gammastep -l 55.755814:47.617635
 exec --no-startup-id gnome-keyring-daemon -s
 exec --no-startup-id darkman get

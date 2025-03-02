@@ -266,12 +266,18 @@ bindsym $mod+Shift+w output * bg $(find $wallpapers_path -type f | shuf -n 1) fi
 #       inactive_workspace #323232 #323232 #5c5c5c
 #     }
 # }
-bar {
-    id bar1
-    modifier $mod
-    swaybar_command waybar
-    mode hide
-}
+ bar {
+     id bar1
+     modifier $mod
+     mode hide
+     status_command ~/.config/sway/swaybar-status.py
+     workspace_buttons yes
+     output *
+     colors {
+       background #222222
+       inactive_workspace #323232 #323232 #5c5c5c
+     }
+ }
 
 
 

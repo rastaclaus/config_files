@@ -274,7 +274,7 @@ exec --no-startup-id nm-applet --indicator
 exec --no-startup-id blueman-applet
 exec --no-startup-id gammastep -l 55.755814:47.617635
 exec --no-startup-id gnome-keyring-daemon -s
-exec --no-startup-id darkman get
+exec systemctl --user star darkman
 exec --no-startup-id $HOME/.config/sway/wallpapers.sh
 
 include shotman.conf

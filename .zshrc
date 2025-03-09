@@ -2,6 +2,7 @@
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 export GOPATH="$HOME/projects/go"
 export PATH=$HOME/.local/bin:$GOPATH/bin:$PATH
+export EDITOR='nvim'
 
 # Path to your oh-my-zsh installation.
 ZSH=/usr/share/oh-my-zsh/
@@ -93,7 +94,7 @@ plugins=(
 
 # Preferred editor for local and remote sessions
 # if [[ -n $SSH_CONNECTION ]]; then
-#   export EDITOR='vim'
+#     export EDITOR=`nvim`
 # else
 #   export EDITOR='mvim'
 # fi

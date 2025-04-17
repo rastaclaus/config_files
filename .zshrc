@@ -128,3 +128,6 @@ alias sshprovider3="lemonade server > /dev/null & ssh -R 10512:127.0.0.1:10512 a
 if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
    exec sway
 fi
+export PROVIDER1_API_KEY=$(cat $HOME/.config/provider1_key)
+export PROVIDER3_API_KEY=$(cat $HOME/.config/provider3_key)
+export GOOGLE_API_KEY=$(cat $HOME/.config/google_api_key)

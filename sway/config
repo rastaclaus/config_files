@@ -74,8 +74,8 @@ input "14006:49153:PNP0C50:03_36B6:C001_Touchpad" {
 input "1:1:AT_Translated_Set_2_keyboard" {
   # repeat_delay 200
   # repeat_rate 50
-  repeat_delay 160
-  repeat_rate 70
+  repeat_delay 120
+  repeat_rate 90
   # xkb_model "pc105"
   xkb_layout "us,ru"
   xkb_options "grp:caps_toggle, grp_led:caps"

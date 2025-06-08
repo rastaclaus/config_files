@@ -3,7 +3,7 @@
 export GOPATH="$HOME/projects/go"
 export PATH=$HOME/.local/bin:$GOPATH/bin:$PATH
 export EDITOR='nvim'
-export vblank_mode=0
+export vblank_mode=2
 
 # Path to your oh-my-zsh installation.
 ZSH=/usr/share/oh-my-zsh/

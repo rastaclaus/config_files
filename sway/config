@@ -15,7 +15,7 @@
 # output HDMI-A-1 pos 0 0 res 2560x1440
 # output DP-1 pos 2560 0 res 2560x1440
 
-output eDP-1 scale 1.4
+output eDP-1 mode 3072x1920@120Hz scale 1.4
 
 set $mod Mod4
 # Home row direction keys, like vim
@@ -210,14 +210,14 @@ input "1:1:AT_Translated_Set_2_keyboard" {
     bindsym XF86AudioLowerVolume exec pactl set-sink-volume 0 -5%
     bindsym XF86AudioRaiseVolume exec pactl set-sink-volume 0 +5%
 
-    bindsym Print exec SWAY_INTERACTIVE_SCREENSHOT_SAVEDIR=$HOME/screenshots /usr/bin/sway-interactive-screenshot
+    # bindsym $mod+Shift+p exec SWAY_INTERACTIVE_SCREENSHOT_SAVEDIR=$HOME/screenshots /usr/bin/sway-interactive-screenshot
 #   # Media player controls
 #   bindsym XF86AudioPlay $exec playerctl play-pause
 #   bindsym XF86AudioPause $exec playerctl play-pause
 #   bindsym XF86AudioNext $exec playerctl next
 #   bindsym XF86AudioPrev $exec playerctl previous
-    bindsym Ctrl+Shift+o input "12538:768:USB_OPTICAL_MOUSE" map_to_output HDMI-A-1
-    bindsym Ctrl+Shift+p input "12538:768:USB_OPTICAL_MOUSE" map_to_output *
+    # bindsym Ctrl+Shift+o input "12538:768:USB_OPTICAL_MOUSE" map_to_output HDMI-A-1
+    # bindsym Ctrl+Shift+p input "12538:768:USB_OPTICAL_MOUSE" map_to_output *
 
 #
 # Resizing containers:
@@ -291,3 +291,7 @@ exec --no-startup-id $HOME/.config/sway/wallpapers.sh
 
 include shotman.conf
 include /etc/sway/config.d/*
+
+# exec_always "env vblank_mode=0"
+# exec_always "env __GL_SYNC_TO_VBLANK=0"
+# exec_always "env GSK_RENDERER=opengl" # если используется GTK4

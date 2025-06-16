@@ -1,3 +1,8 @@
-lat: 55.8
-lng: 37.6
+# Moscow
+# lat: 55.8
+# lng: 37.6
+
+#Alupka
+lat: 44.41
+lng: 34.03
 dbusserver: true

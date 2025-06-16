@@ -12,7 +12,8 @@ from dataclasses import dataclass
 import psutil  # type: ignore[import-untyped]
 import requests  # type: ignore[import-untyped]
 
-LAT, LON = 55.816078, 37.703576
+# LAT, LON = 55.816078, 37.703576 # Moscow
+LAT, LON = 44.410805, 34.035193 # Alupka
 
 WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast"
 WEATHER_UPDATE_INTERVAL = 600  # 10 minutes in seconds

@@ -132,3 +132,14 @@ fi
 export BOTHUB_API_KEY=$(cat $HOME/.config/openai_key)
 export NTECH_API_KEY=$(cat $HOME/.config/ntech_key)
 export GOOGLE_API_KEY=$(cat $HOME/.config/google_api_key)
+
+# Load pyenv automatically by appending
+# the following to 
+# your shell's login startup file (for login shells)
+# and your shell's interactive startup file (for interactive shells) :
+
+export PYENV_ROOT="$HOME/.pyenv"
+[[ -d $PYENV_ROOT/bin ]] && export PATH="$PYENV_ROOT/bin:$PATH"
+eval "$(pyenv init - nvim)"
+
+# Restart your shell for the changes to take effect.

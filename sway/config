@@ -66,6 +66,7 @@ output * max_render_time 3
 
 input "14006:49153:PNP0C50:03_36B6:C001_Touchpad" {
     dwt enabled
+	dwtp enabled
     tap enabled
     natural_scroll disabled
     middle_emulation enabled

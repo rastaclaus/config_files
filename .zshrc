@@ -130,6 +130,7 @@ if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
    exec sway
 fi
 export BOTHUB_API_KEY=$(cat $HOME/.config/openai_key)
+export OPENAI_API_KEY=$(cat $HOME/.config/openai_key)
 export NTECH_API_KEY=$(cat $HOME/.config/ntech_key)
 export GOOGLE_API_KEY=$(cat $HOME/.config/google_api_key)
 

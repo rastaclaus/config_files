@@ -130,6 +130,7 @@ if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
    exec sway
 fi
 export PROVIDER1_API_KEY=$(cat $HOME/.config/provider1_key)
+export OPENAI_API_KEY=$(cat $HOME/.config/provider1_key)
 export PROVIDER3_API_KEY=$(cat $HOME/.config/provider3_key)
 export GOOGLE_API_KEY=$(cat $HOME/.config/google_api_key)
 

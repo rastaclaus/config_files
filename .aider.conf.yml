@@ -19,8 +19,6 @@
 
 ## Specify the model to use for the main chat
 model: gpt-4.1
-weak-model: openai/gemini-2.5-flash
-editor-model: openai/qwen-2.5-coder-32b-instruct
 
 ########################
 # API Keys and settings:
@@ -440,7 +438,7 @@ dirty-commits: false
 #detect-urls: true
 
 ## Specify which editor to use for the /editor command
-#editor: xxx
+editor: nvim
 
 ## Print shell completion script for the specified SHELL and exit. Supported shells: bash, tcsh, zsh. Example: aider --shell-completions bash
 #shell-completions: xxx

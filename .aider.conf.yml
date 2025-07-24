@@ -394,6 +394,7 @@ dirty-commits: false
 
 ## Specify the language to use in the chat (default: None, uses system settings)
 #chat-language: xxx
+chat-language: ru
 
 ## Specify the language to use in the commit message (default: None, user language)
 #commit-language: xxx

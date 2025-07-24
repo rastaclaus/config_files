@@ -12,24 +12,24 @@
 
 - name: openai/gemini-2.5-pro
   edit_format: diff
-  weak_model_name: gemini-2.5-flash
+  weak_model_name: openai/gemini-2.5-flash
   use_repo_map: true
   examples_as_sys_msg: true
   extra_params:
     max_tokens: 16384
   caches_by_default: true
-  editor_model_name: gemini-2.5-flash
+  editor_model_name: openai/gemini-2.5-flash
   editor_edit_format: editor-diff
 
 - name: openai/qwen3-235b-a22b
   edit_format: diff
-  weak_model_name: qwen-2.5-coder-32b-instruct
+  weak_model_name: openai/qwen-2.5-coder-32b-instruct
   use_repo_map: false
   examples_as_sys_msg: true
   extra_params:
     max_tokens: 8192
   caches_by_default: true
-  editor_model_name: qwen-2.5-coder-32b-instruct
+  editor_model_name: openai/qwen-2.5-coder-32b-instruct
   editor_edit_format: editor-diff
 
 - name: openai/deepseek-r1

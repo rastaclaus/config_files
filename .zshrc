@@ -128,6 +128,7 @@ alias sshntech="lemonade server > /dev/null & ssh -R 10512:127.0.0.1:10512 ashes
 if [ -z $DISPLAY ] && [ "$(tty)" = "/dev/tty1" ]; then
    exec sway
 fi
+export OPENAI_API_KEY=$(cat $HOME/.config/openai_key)
 export BOTHUB_API_KEY=$(cat $HOME/.config/openai_key)
 export NTECH_API_KEY=$(cat $HOME/.config/ntech_key)
 export GOOGLE_API_KEY=$(cat $HOME/.config/google_api_key)

@@ -398,6 +398,7 @@ chat-language: ru
 
 ## Specify the language to use in the commit message (default: None, user language)
 #commit-language: xxx
+commit-language: en
 
 ## Always say yes to every confirmation
 #yes-always: false

@@ -16,7 +16,7 @@
   use_repo_map: true
   examples_as_sys_msg: true
   extra_params:
-    max_tokens: 16384
+    max_tokens: 32000
   caches_by_default: true
   editor_model_name: openai/gemini-2.5-flash
   editor_edit_format: editor-diff

@@ -1,7 +1,10 @@
 if status is-interactive
-    # Commands to run in interactive sessions can go here
+    if [ -z $DISPLAY ] && [ "$(tty)" = /dev/tty1 ]
+        then
+        exec sway
+    end
 end
-pyenv init  - fish | source
+pyenv init - fish | source
 direnv hook fish | source
 
 set -x BOTHUB_API_KEY (cat $HOME/.config/openai_key)

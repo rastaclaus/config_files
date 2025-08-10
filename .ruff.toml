@@ -39,6 +39,7 @@ indent-width = 4
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 select = ["ALL"]
+ignore = []
 
 fixable = ["ALL"]
 unfixable = []
@@ -74,7 +75,7 @@ docstring-code-format = false
 docstring-code-line-length = "dynamic"
 
 [lint.per-file-ignores]
-"tests/**.py" = ["D", "S", "ANN201", "PLR2004", "SLF"]
+"**/tests/**.py" = ["D", "S", "ANN201", "PLR2004", "SLF"]
 
 [lint.isort]
 section-order = ["future", "standard-library", "third-party",  "first-party", "local-folder"]

@@ -1,0 +1,18 @@
+{
+  "include": ["src", "tests"],
+  "exclude": [".venv"],
+  "reportMissingParameterType": false,
+  "reportUnknownParameterType": false,
+  "reportUnknownArgumentType": false,
+  "executionEnvironments": [
+    {
+      "root": "./src"
+    },
+    {
+      "root": "./tests",
+      "extraPaths": ["./src"],
+      "reportUnusedImport": false,
+      "reportUnusedCallResult": false
+    }
+  ]
+}

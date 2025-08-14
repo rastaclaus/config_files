@@ -62,7 +62,7 @@ output * max_render_time 3
 
 input "2522:8808:SONiX_USB_Keyboard" {
   repeat_delay 120
-  repeat_rate 60
+  repeat_rate 90
   xkb_model "pc105"
   xkb_layout "us,ru"
   xkb_options "grp:caps_toggle, grp_led:caps"

@@ -1,6 +1,6 @@
 #!/bin/fish
 
-set -Ux fish_color_autosuggestion 585858
+set -Ux fish_color_autosuggestion 989898
 set -Ux fish_color_cancel \x2d\x2dreverse
 set -Ux fish_color_command a1b56c
 set -Ux fish_color_comment f7ca88

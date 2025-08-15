@@ -1,6 +1,6 @@
 [general]
 import = [
-  "~/.config/alacritty/themes/themes/gruvbox_light.toml"
+  "~/.config/alacritty/themes/themes/gruvbox_material_medium_light.toml"
 ]
 live_config_reload = true
 [window]

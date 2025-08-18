@@ -1,5 +1,4 @@
 #!/bin/fish
-
 set -Ux fish_color_autosuggestion 989898
 set -Ux fish_color_cancel \x2d\x2dreverse
 set -Ux fish_color_command a1b56c
@@ -34,7 +33,6 @@ set -Ux fish_color_selection white\x1e\x2d\x2dbold\x1e\x2d\x2dbackground\x3dbrbl
 set -Ux fish_color_status red
 set -Ux fish_color_user brgreen
 set -Ux fish_color_valid_path \x2d\x2dunderline
-set -Ux fish_key_bindings fish_vi_key_bindings
 set -Ux fish_pager_color_background \x1d
 set -Ux fish_pager_color_completion normal
 set -Ux fish_pager_color_description B3A06D
@@ -48,4 +46,3 @@ set -Ux fish_pager_color_selected_background \x2d\x2dbackground\x3dbrblack
 set -Ux fish_pager_color_selected_completion \x1d
 set -Ux fish_pager_color_selected_description \x1d
 set -Ux fish_pager_color_selected_prefix \x1d
-set -Ux fish_user_paths /home/artems/\x2elocal/bin

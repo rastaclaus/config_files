@@ -40,7 +40,7 @@ SETUVAR --export fish_color_selection:white\x1e\x2d\x2dbold\x1e\x2d\x2dbackgroun
 SETUVAR --export fish_color_status:red
 SETUVAR --export fish_color_user:brgreen
 SETUVAR --export fish_color_valid_path:\x2d\x2dunderline
-SETUVAR --export fish_key_bindings:fish_vi_key_bindings
+SETUVAR fish_key_bindings:fish_default_key_bindings
 SETUVAR --export fish_pager_color_background:\x1d
 SETUVAR --export fish_pager_color_completion:normal
 SETUVAR --export fish_pager_color_description:B3A06D

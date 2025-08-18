@@ -3,7 +3,17 @@ if status is-interactive
         then
         exec sway
     end
+
 end
+
+if command -q darkman
+    if test (darkman get) = "light"
+        fish_config theme choose "Snow Day"
+    else
+        fish_config theme choose "Base16 Default Dark"
+    end
+end
+
 pyenv init - fish | source
 direnv hook fish | source
 

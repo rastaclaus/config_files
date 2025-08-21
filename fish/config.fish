@@ -9,7 +9,7 @@ if command -q darkman
     if test (darkman get) = "light"
         fish_config theme choose "Snow Day"
     else
-        fish_config theme choose "Base16 Default Dark"
+        fish_config theme choose "dark"
     end
 end
 

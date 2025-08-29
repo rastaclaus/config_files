@@ -36,8 +36,9 @@ indent-width = 4
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 # Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
 # McCabe complexity (`C901`) by default.
+
 select = ["ALL"]
-ignore = ["D211", "D213"]
+ignore = []
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
@@ -72,3 +73,11 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+[lint.per-file-ignores]
+"**/tests/**.py" = ["D", "S", "ANN201", "PLR2004", "SLF"]
+
+[lint.isort]
+section-order = ["future", "standard-library", "third-party",  "first-party", "local-folder"]
+no-lines-before = ["local-folder"]
+known-first-party = []

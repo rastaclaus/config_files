@@ -5,13 +5,7 @@ if status is-interactive
     end
 end
 
-if command -q darkman
-    if test (darkman get) = "light"
-        fish_config theme choose "Snow Day"
-    else
-        fish_config theme choose "dark"
-    end
-end
+update_theme
 
 pyenv init - fish | source
 direnv hook fish | source

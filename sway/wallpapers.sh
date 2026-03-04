@@ -10,8 +10,8 @@ IMAGE=$(ls "$WALLPAPER_DIR" | shuf -n 1)
 IMAGE_PATH="$WALLPAPER_DIR/$IMAGE"
 
 # Получаем размеры мониторов
-MONITOR2=$(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name' | sed -n '1p')
-MONITOR1=$(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name' | sed -n '2p')
+MONITOR1=$(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name' | sed -n '1p')
+MONITOR2=$(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name' | sed -n '2p')
 
 echo $MONITOR1
 echo $MONITOR2

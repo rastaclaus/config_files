@@ -1,15 +1,3 @@
-- name: gpt-4.1
-  edit_format: udiff
-  use_repo_map: true
-  weak_model_name: gpt-4.1-mini
-  reminder: sys
-  examples_as_sys_msg: true
-  extra_params:
-    max_tokens: 32000
-  caches_by_default: true
-  editor_model_name: gpt-4.1-mini
-  editor_edit_format: editor-diff
-
 - name: gpt-5
   edit_format: diff
   use_repo_map: true
@@ -22,35 +10,46 @@
   editor_model_name: gpt-5-nano
   editor_edit_format: editor-diff
 
-- name: openai/gemini-2.5-pro-preview
+- name: openai/gemini-3-pro-preview
   edit_format: diff-fenced
-  weak_model_name: openai/gemini-2.5-flash
+  weak_model_name: openai/gemini-3-flash-preview
   use_repo_map: true
   examples_as_sys_msg: true
   extra_params:
-    max_tokens: 16384
+    max_tokens: 32000
   caches_by_default: true
-  editor_model_name: openai/gemini-2.5-flash
+  editor_model_name: openai/gemini-3-flash-preview
   editor_edit_format: editor-diff
 
-- name: openai/qwen3-235b-a22b
+- name: openai/qwen3-coder-plus
   edit_format: diff
-  weak_model_name: openai/qwen-2.5-coder-32b-instruct
+  weak_model_name: openai/qwen-3-coder-30b-a3b-instruct
   use_repo_map: false
   examples_as_sys_msg: true
   extra_params:
     max_tokens: 32000
   caches_by_default: true
-  editor_model_name: openai/qwen-2.5-coder-32b-instruct
+  editor_model_name: openai/qwen-3-coder-30b-a3b-instruct
   editor_edit_format: editor-diff
 
-- name: openai/deepseek-r1
+- name: openai/deepseek-v3.2
   edit_format: diff
-  weak_model_name: openai/deepseek-chat-v3
+  weak_model_name: openai/deepseek-v3.2-exp
   use_repo_map: true
   extra_params:
     max_tokens: 32000
   use_temperature: false
-  editor_model_name: openai/deepseek-chat-v3
+  editor_model_name: openai/deepseek-v3.2-exp
+  editor_edit_format: editor-diff
+  reasoning_tag: think
+
+- name: openai/claude-sonnet-4.6
+  edit_format: diff
+  weak_model_name: openai/claude-haiku-4.5
+  use_repo_map: true
+  extra_params:
+    max_tokens: 32000
+  use_temperature: false
+  editor_model_name: openai/claude-haiku-4.5
   editor_edit_format: editor-diff
   reasoning_tag: think

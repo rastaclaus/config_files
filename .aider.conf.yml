@@ -159,10 +159,10 @@ show-model-warnings: false
 # Output settings:
 
 ## Use colors suitable for a dark terminal background (default: False)
-dark-mode: false
+dark-mode: true
 
 ## Use colors suitable for a light terminal background (default: False)
-light-mode: true
+light-mode: false
 
 ## Enable/disable pretty, colorized output (default: True)
 #pretty: true

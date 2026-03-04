@@ -33,6 +33,17 @@
   editor_model_name: openai/gemini-2.5-flash
   editor_edit_format: editor-diff
 
+- name: openai/gemini-3-pro-preview
+  edit_format: diff-fenced
+  weak_model_name: openai/gemini-2.5-flash
+  use_repo_map: true
+  examples_as_sys_msg: true
+  extra_params:
+    max_tokens: 16384
+  caches_by_default: true
+  editor_model_name: openai/gemini-2.5-flash
+  editor_edit_format: editor-diff
+
 - name: openai/qwen3-235b-a22b
   edit_format: diff
   weak_model_name: openai/qwen-2.5-coder-32b-instruct

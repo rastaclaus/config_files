@@ -63,59 +63,65 @@
         "gpt-5-codex": {
           "name": "gpt-5-codex"
         },
+        "claude-opus-4.6-fast": {
+          "name": "claude-opus-4.6-fast"
+        },
         "claude-sonnet-4.5": {
           "name": "claude-sonnet-4.5"
-        },
-        "claude-opus-4.6": {
-          "name": "claude-opus-4.6"
         },
         "claude-sonnet-4.6": {
           "name": "claude-sonnet-4.6"
         },
-        "claude-opus-4.6-fast": {
-          "name": "claude-opus-4.6-fast"
+        "claude-opus-4.6": {
+          "name": "claude-opus-4.6"
         },
         "seed-1.6-flash": {
           "name": "seed-1.6-flash"
         },
-        "seed-2.0-mini": {
-          "name": "seed-2.0-mini"
-        },
         "seed-2.0-lite": {
           "name": "seed-2.0-lite"
         },
-        "relace-search": {
-          "name": "relace-search"
+        "seed-2.0-mini": {
+          "name": "seed-2.0-mini"
         },
         "relace-apply-3": {
           "name": "relace-apply-3"
         },
-        "bodybuilder": {
-          "name": "bodybuilder"
+        "relace-search": {
+          "name": "relace-search"
         },
         "free": {
           "name": "free"
         },
+        "bodybuilder": {
+          "name": "bodybuilder"
+        },
         "step-3.5-flash:free": {
           "name": "step-3.5-flash:free"
         },
-        "glm-4.5": {
-          "name": "glm-4.5"
-        },
-        "glm-4.6v": {
-          "name": "glm-4.6v"
+        "glm-4.7": {
+          "name": "glm-4.7"
         },
         "glm-5-turbo": {
           "name": "glm-5-turbo"
         },
-        "glm-4.6": {
-          "name": "glm-4.6"
+        "glm-4.7-flash": {
+          "name": "glm-4.7-flash"
         },
         "glm-5.1": {
           "name": "glm-5.1"
         },
-        "glm-4.7-flash": {
-          "name": "glm-4.7-flash"
+        "glm-5v-turbo": {
+          "name": "glm-5v-turbo"
+        },
+        "glm-4.5": {
+          "name": "glm-4.5"
+        },
+        "glm-4.6": {
+          "name": "glm-4.6"
+        },
+        "glm-4.6v": {
+          "name": "glm-4.6v"
         },
         "glm-5": {
           "name": "glm-5"
@@ -123,20 +129,14 @@
         "glm-4.5v": {
           "name": "glm-4.5v"
         },
-        "glm-5v-turbo": {
-          "name": "glm-5v-turbo"
-        },
-        "glm-4.7": {
-          "name": "glm-4.7"
-        },
         "morph-v3-large": {
           "name": "morph-v3-large"
         },
-        "ernie-4.5-21b-a3b-thinking": {
-          "name": "ernie-4.5-21b-a3b-thinking"
-        },
         "ernie-4.5-21b-a3b": {
           "name": "ernie-4.5-21b-a3b"
+        },
+        "ernie-4.5-21b-a3b-thinking": {
+          "name": "ernie-4.5-21b-a3b-thinking"
         },
         "ernie-4.5-300b-a47b": {
           "name": "ernie-4.5-300b-a47b"
@@ -147,14 +147,11 @@
         "minimax-m1": {
           "name": "minimax-m1"
         },
-        "minimax-m2.7": {
-          "name": "minimax-m2.7"
-        },
         "minimax-m2.1": {
           "name": "minimax-m2.1"
         },
-        "minimax-m2.5:free": {
-          "name": "minimax-m2.5:free"
+        "minimax-m2.7": {
+          "name": "minimax-m2.7"
         },
         "minimax-01": {
           "name": "minimax-01"
@@ -162,32 +159,35 @@
         "minimax-m2.5": {
           "name": "minimax-m2.5"
         },
+        "minimax-m2.5:free": {
+          "name": "minimax-m2.5:free"
+        },
         "minimax-m2-her": {
           "name": "minimax-m2-her"
-        },
-        "mercury-2": {
-          "name": "mercury-2"
         },
         "mercury": {
           "name": "mercury"
         },
+        "mercury-2": {
+          "name": "mercury-2"
+        },
         "deepseek-r1": {
           "name": "deepseek-r1"
-        },
-        "grok-4.20-multi-agent": {
-          "name": "grok-4.20-multi-agent"
-        },
-        "grok-code-fast-1": {
-          "name": "grok-code-fast-1"
-        },
-        "grok-3-beta": {
-          "name": "grok-3-beta"
         },
         "grok-3-mini": {
           "name": "grok-3-mini"
         },
         "grok-4": {
           "name": "grok-4"
+        },
+        "grok-3-beta": {
+          "name": "grok-3-beta"
+        },
+        "grok-4.20-multi-agent": {
+          "name": "grok-4.20-multi-agent"
+        },
+        "grok-code-fast-1": {
+          "name": "grok-code-fast-1"
         },
         "nova-pro-v1": {
           "name": "nova-pro-v1"
@@ -198,50 +198,50 @@
         "qwq-32b": {
           "name": "qwq-32b"
         },
-        "llama-3.3-nemotron-super-49b-v1.5": {
-          "name": "llama-3.3-nemotron-super-49b-v1.5"
-        },
         "llama-4-maverick": {
           "name": "llama-4-maverick"
-        },
-        "llama-guard-4-12b": {
-          "name": "llama-guard-4-12b"
         },
         "llama-guard-3-8b": {
           "name": "llama-guard-3-8b"
         },
+        "llama-3.3-nemotron-super-49b-v1.5": {
+          "name": "llama-3.3-nemotron-super-49b-v1.5"
+        },
+        "llama-guard-4-12b": {
+          "name": "llama-guard-4-12b"
+        },
         "tts-001": {
           "name": "tts-001"
-        },
-        "mistral-medium-3.1": {
-          "name": "mistral-medium-3.1"
-        },
-        "mistral-small-3.1-24b-instruct": {
-          "name": "mistral-small-3.1-24b-instruct"
-        },
-        "mistral-small-creative": {
-          "name": "mistral-small-creative"
-        },
-        "mistral-saba": {
-          "name": "mistral-saba"
-        },
-        "mistral-large-2411": {
-          "name": "mistral-large-2411"
         },
         "mistral-medium-3": {
           "name": "mistral-medium-3"
         },
+        "mistral-saba": {
+          "name": "mistral-saba"
+        },
+        "mistral-small-3.1-24b-instruct": {
+          "name": "mistral-small-3.1-24b-instruct"
+        },
+        "mistral-large-2411": {
+          "name": "mistral-large-2411"
+        },
         "reka-edge": {
           "name": "reka-edge"
+        },
+        "mistral-small-creative": {
+          "name": "mistral-small-creative"
+        },
+        "mistral-medium-3.1": {
+          "name": "mistral-medium-3.1"
         },
         "mistral-small-2603": {
           "name": "mistral-small-2603"
         },
-        "olmo-3-32b-think": {
-          "name": "olmo-3-32b-think"
-        },
         "olmo-3.1-32b-instruct": {
           "name": "olmo-3.1-32b-instruct"
+        },
+        "olmo-3-32b-think": {
+          "name": "olmo-3-32b-think"
         },
         "olmo-2-0325-32b-instruct": {
           "name": "olmo-2-0325-32b-instruct"
@@ -249,20 +249,17 @@
         "whisper-001": {
           "name": "whisper-001"
         },
-        "spotlight": {
-          "name": "spotlight"
-        },
-        "trinity-large-thinking": {
-          "name": "trinity-large-thinking"
-        },
         "trinity-large-preview:free": {
           "name": "trinity-large-preview:free"
         },
         "trinity-mini:free": {
           "name": "trinity-mini:free"
         },
-        "kimi-k2": {
-          "name": "kimi-k2"
+        "trinity-large-thinking": {
+          "name": "trinity-large-thinking"
+        },
+        "spotlight": {
+          "name": "spotlight"
         },
         "kimi-k2.5": {
           "name": "kimi-k2.5"
@@ -273,14 +270,17 @@
         "kimi-k2-thinking": {
           "name": "kimi-k2-thinking"
         },
+        "kimi-k2": {
+          "name": "kimi-k2"
+        },
         "paraphrase-minilm-l6-v2": {
           "name": "paraphrase-minilm-l6-v2"
         },
-        "aion-2.0": {
-          "name": "aion-2.0"
-        },
         "aion-1.0": {
           "name": "aion-1.0"
+        },
+        "aion-2.0": {
+          "name": "aion-2.0"
         },
         "lfm-2.5-1.2b-thinking:free": {
           "name": "lfm-2.5-1.2b-thinking:free"
@@ -288,23 +288,23 @@
         "lfm-2-24b-a2b": {
           "name": "lfm-2-24b-a2b"
         },
-        "cydonia-24b-v4.1": {
-          "name": "cydonia-24b-v4.1"
+        "skyfall-36b-v2": {
+          "name": "skyfall-36b-v2"
         },
         "rocinante-12b": {
           "name": "rocinante-12b"
         },
-        "skyfall-36b-v2": {
-          "name": "skyfall-36b-v2"
+        "cydonia-24b-v4.1": {
+          "name": "cydonia-24b-v4.1"
         },
         "inflection-3-productivity": {
           "name": "inflection-3-productivity"
         },
-        "command-a": {
-          "name": "command-a"
-        },
         "command-r7b-12-2024": {
           "name": "command-r7b-12-2024"
+        },
+        "command-a": {
+          "name": "command-a"
         },
         "l3.1-70b-hanami-x1": {
           "name": "l3.1-70b-hanami-x1"
@@ -318,77 +318,77 @@
         "phi-4": {
           "name": "phi-4"
         },
-        "hermes-4-70b": {
-          "name": "hermes-4-70b"
-        },
         "hermes-3-llama-3.1-70b": {
           "name": "hermes-3-llama-3.1-70b"
+        },
+        "hermes-4-70b": {
+          "name": "hermes-4-70b"
         },
         "codellama-7b-instruct-solidity": {
           "name": "codellama-7b-instruct-solidity"
         },
-        "cogito-v2.1-671b": {
-          "name": "cogito-v2.1-671b"
-        },
         "jamba-large-1.7": {
           "name": "jamba-large-1.7"
-        },
-        "magnum-v4-72b": {
-          "name": "magnum-v4-72b"
-        },
-        "longcat-flash-chat": {
-          "name": "longcat-flash-chat"
-        },
-        "granite-4.0-h-micro": {
-          "name": "granite-4.0-h-micro"
-        },
-        "ui-tars-1.5-7b": {
-          "name": "ui-tars-1.5-7b"
-        },
-        "solar-pro-3": {
-          "name": "solar-pro-3"
-        },
-        "palmyra-x5": {
-          "name": "palmyra-x5"
-        },
-        "rnj-1-instruct": {
-          "name": "rnj-1-instruct"
-        },
-        "intellect-3": {
-          "name": "intellect-3"
         },
         "dolphin-mistral-24b-venice-edition:free": {
           "name": "dolphin-mistral-24b-venice-edition:free"
         },
-        "kat-coder-pro-v2": {
-          "name": "kat-coder-pro-v2"
+        "longcat-flash-chat": {
+          "name": "longcat-flash-chat"
         },
         "router": {
           "name": "router"
         },
-        "nemotron-nano-9b-v2:free": {
-          "name": "nemotron-nano-9b-v2:free"
+        "kat-coder-pro-v2": {
+          "name": "kat-coder-pro-v2"
+        },
+        "cogito-v2.1-671b": {
+          "name": "cogito-v2.1-671b"
+        },
+        "ui-tars-1.5-7b": {
+          "name": "ui-tars-1.5-7b"
+        },
+        "granite-4.0-h-micro": {
+          "name": "granite-4.0-h-micro"
+        },
+        "rnj-1-instruct": {
+          "name": "rnj-1-instruct"
+        },
+        "magnum-v4-72b": {
+          "name": "magnum-v4-72b"
+        },
+        "intellect-3": {
+          "name": "intellect-3"
+        },
+        "palmyra-x5": {
+          "name": "palmyra-x5"
+        },
+        "solar-pro-3": {
+          "name": "solar-pro-3"
         },
         "nemotron-3-nano-30b-a3b:free": {
           "name": "nemotron-3-nano-30b-a3b:free"
         },
-        "nemotron-3-super-120b-a12b:free": {
-          "name": "nemotron-3-super-120b-a12b:free"
-        },
-        "nemotron-nano-12b-v2-vl:free": {
-          "name": "nemotron-nano-12b-v2-vl:free"
+        "nemotron-nano-9b-v2:free": {
+          "name": "nemotron-nano-9b-v2:free"
         },
         "nemotron-nano-9b-v2": {
           "name": "nemotron-nano-9b-v2"
         },
-        "devstral-small": {
-          "name": "devstral-small"
+        "nemotron-nano-12b-v2-vl:free": {
+          "name": "nemotron-nano-12b-v2-vl:free"
+        },
+        "nemotron-3-super-120b-a12b:free": {
+          "name": "nemotron-3-super-120b-a12b:free"
         },
         "devstral-medium": {
           "name": "devstral-medium"
         },
         "voxtral-small-24b-2507": {
           "name": "voxtral-small-24b-2507"
+        },
+        "devstral-small": {
+          "name": "devstral-small"
         },
         "yandexgpt": {
           "name": "yandexgpt"
@@ -399,11 +399,11 @@
         "gpt-5.3-chat": {
           "name": "gpt-5.3-chat"
         },
-        "gpt-5.3-codex": {
-          "name": "gpt-5.3-codex"
-        },
         "gpt-5.2-chat": {
           "name": "gpt-5.2-chat"
+        },
+        "gpt-5.3-codex": {
+          "name": "gpt-5.3-codex"
         },
         "claude-opus-4.1": {
           "name": "claude-opus-4.1"
@@ -414,11 +414,11 @@
         "step-3.5-flash": {
           "name": "step-3.5-flash"
         },
-        "glm-4.5-air": {
-          "name": "glm-4.5-air"
-        },
         "glm-4.5-air:free": {
           "name": "glm-4.5-air:free"
+        },
+        "glm-4.5-air": {
+          "name": "glm-4.5-air"
         },
         "morph-v3-fast": {
           "name": "morph-v3-fast"
@@ -441,14 +441,14 @@
         "deepseek-v3.2-exp": {
           "name": "deepseek-v3.2-exp"
         },
-        "grok-4.20": {
-          "name": "grok-4.20"
+        "grok-3": {
+          "name": "grok-3"
         },
         "grok-3-mini-beta": {
           "name": "grok-3-mini-beta"
         },
-        "grok-3": {
-          "name": "grok-3"
+        "grok-4.20": {
+          "name": "grok-4.20"
         },
         "nova-lite-v1": {
           "name": "nova-lite-v1"
@@ -459,11 +459,11 @@
         "gemini-3-flash-preview": {
           "name": "gemini-3-flash-preview"
         },
-        "llama-4-scout": {
-          "name": "llama-4-scout"
-        },
         "llama-3.3-70b-instruct": {
           "name": "llama-3.3-70b-instruct"
+        },
+        "llama-4-scout": {
+          "name": "llama-4-scout"
         },
         "tts-hd-001": {
           "name": "tts-hd-001"
@@ -516,11 +516,11 @@
         "tongyi-deepresearch-30b-a3b": {
           "name": "tongyi-deepresearch-30b-a3b"
         },
-        "nemotron-3-super-120b-a12b": {
-          "name": "nemotron-3-super-120b-a12b"
-        },
         "nemotron-nano-12b-v2-vl": {
           "name": "nemotron-nano-12b-v2-vl"
+        },
+        "nemotron-3-super-120b-a12b": {
+          "name": "nemotron-3-super-120b-a12b"
         },
         "nemotron-3-nano-30b-a3b": {
           "name": "nemotron-3-nano-30b-a3b"
@@ -552,11 +552,11 @@
         "gemini-3.1-pro-preview": {
           "name": "gemini-3.1-pro-preview"
         },
-        "llama-3.2-11b-vision-instruct": {
-          "name": "llama-3.2-11b-vision-instruct"
-        },
         "llama-nemotron-embed-vl-1b-v2:free": {
           "name": "llama-nemotron-embed-vl-1b-v2:free"
+        },
+        "llama-3.2-11b-vision-instruct": {
+          "name": "llama-3.2-11b-vision-instruct"
         },
         "tts-1-hd": {
           "name": "tts-1-hd"
@@ -615,14 +615,14 @@
         "tts-1": {
           "name": "tts-1"
         },
-        "mistral-large-2512": {
-          "name": "mistral-large-2512"
-        },
         "mixtral-8x22b-instruct": {
           "name": "mixtral-8x22b-instruct"
         },
         "mistral-small-24b-instruct-2501": {
           "name": "mistral-small-24b-instruct-2501"
+        },
+        "mistral-large-2512": {
+          "name": "mistral-large-2512"
         },
         "coder-large": {
           "name": "coder-large"
@@ -747,14 +747,14 @@
         "text-embedding-ada-002-2": {
           "name": "text-embedding-ada-002-2"
         },
-        "gpt-5-nano": {
-          "name": "gpt-5-nano"
-        },
         "gpt-5.4-mini": {
           "name": "gpt-5.4-mini"
         },
         "gpt-5.4": {
           "name": "gpt-5.4"
+        },
+        "gpt-5-nano": {
+          "name": "gpt-5-nano"
         },
         "claude-3.5-haiku": {
           "name": "claude-3.5-haiku"
@@ -882,20 +882,20 @@
         "o1": {
           "name": "o1"
         },
-        "deepseek-r1-distill-qwen-32b": {
-          "name": "deepseek-r1-distill-qwen-32b"
-        },
         "deepseek-v3.2": {
           "name": "deepseek-v3.2"
+        },
+        "deepseek-r1-distill-qwen-32b": {
+          "name": "deepseek-r1-distill-qwen-32b"
         },
         "gemma-3-4b-it": {
           "name": "gemma-3-4b-it"
         },
-        "gemini-embedding-001": {
-          "name": "gemini-embedding-001"
-        },
         "mistral-embed-2312": {
           "name": "mistral-embed-2312"
+        },
+        "gemini-embedding-001": {
+          "name": "gemini-embedding-001"
         },
         "gpt-4o-search-preview": {
           "name": "gpt-4o-search-preview"
@@ -1140,11 +1140,11 @@
         "qwen3-next-80b-a3b-instruct": {
           "name": "qwen3-next-80b-a3b-instruct"
         },
-        "qwen3-235b-a22b-2507": {
-          "name": "qwen3-235b-a22b-2507"
-        },
         "qwen3-coder-next": {
           "name": "qwen3-coder-next"
+        },
+        "qwen3-235b-a22b-2507": {
+          "name": "qwen3-235b-a22b-2507"
         },
         "qwen3-max-thinking": {
           "name": "qwen3-max-thinking"
@@ -1167,26 +1167,26 @@
         "qwen3.5-397b-a17b": {
           "name": "qwen3.5-397b-a17b"
         },
-        "qwen3.6-plus:free": {
-          "name": "qwen3.6-plus:free"
+        "qwen3.6-plus": {
+          "name": "qwen3.6-plus"
         },
         "qwen3-vl-30b-a3b-thinking": {
           "name": "qwen3-vl-30b-a3b-thinking"
         },
-        "qwen3-vl-30b-a3b-instruct": {
-          "name": "qwen3-vl-30b-a3b-instruct"
-        },
         "qwen3.5-35b-a3b": {
           "name": "qwen3.5-35b-a3b"
         },
-        "qwen3.5-27b": {
-          "name": "qwen3.5-27b"
+        "qwen3-vl-30b-a3b-instruct": {
+          "name": "qwen3-vl-30b-a3b-instruct"
+        },
+        "qwen3-vl-32b-instruct": {
+          "name": "qwen3-vl-32b-instruct"
         },
         "qwen3.5-9b": {
           "name": "qwen3.5-9b"
         },
-        "qwen3-vl-32b-instruct": {
-          "name": "qwen3-vl-32b-instruct"
+        "qwen3.5-27b": {
+          "name": "qwen3.5-27b"
         },
         "qwen3-vl-8b-thinking": {
           "name": "qwen3-vl-8b-thinking"

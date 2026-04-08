@@ -23,13 +23,24 @@
 
 - name: openai/qwen3-coder-plus
   edit_format: diff
-  weak_model_name: openai/qwen-3-coder-30b-a3b-instruct
+  weak_model_name: openai/qwen3-coder-next
   use_repo_map: false
   examples_as_sys_msg: true
   extra_params:
     max_tokens: 32000
   caches_by_default: true
-  editor_model_name: openai/qwen-3-coder-30b-a3b-instruct
+  editor_model_name: openai/qwen3-coder-next
+  editor_edit_format: editor-diff
+
+- name: openai/qwen3.6-pro-preview
+  edit_format: diff
+  weak_model_name: qwen3.6-pro-preview
+  use_repo_map: false
+  examples_as_sys_msg: true
+  extra_params:
+    max_tokens: 32000
+  caches_by_default: true
+  editor_model_name: openai/qwen3.6-pro-preview
   editor_edit_format: editor-diff
 
 - name: openai/deepseek-v3.2
@@ -44,6 +55,17 @@
   reasoning_tag: think
 
 - name: openai/claude-sonnet-4.6
+  edit_format: diff
+  weak_model_name: openai/claude-haiku-4.5
+  use_repo_map: true
+  extra_params:
+    max_tokens: 32000
+  use_temperature: false
+  editor_model_name: openai/claude-haiku-4.5
+  editor_edit_format: editor-diff
+  reasoning_tag: think
+
+- name: openai/glm-5
   edit_format: diff
   weak_model_name: openai/claude-haiku-4.5
   use_repo_map: true

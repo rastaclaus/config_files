@@ -234,6 +234,7 @@ mode "resize" {
 bindsym $mod+r mode "resize"
 bindsym $mod+i exec swaymsg bar mode toggle
 bindsym $mod+t exec ~/.config/sway/wallpapers.sh
+focus_follows_mouse no
 
 #
 # Status Bar:
@@ -255,6 +256,10 @@ bindsym $mod+t exec ~/.config/sway/wallpapers.sh
 #       inactive_workspace #323232 #323232 #5c5c5c
 #     }
 # }
+# Wine-specific settings to prevent focus-loss freezing
+# for_window [app_id="wine" title=".*Fallout.*"] idle_inhibitor enable
+# for_window [app_id="wine" title=".*ModOrganizer.*"] idle_inhibitor enable
+# for_window [app_id="wine"] focus_on_window_activation ignore
 bar {
     id bar1
     modifier $mod
@@ -268,6 +273,7 @@ bar {
       inactive_workspace #323232 #323232 #5c5c5c
     }
 }
+
 
 exec --no-startup-id nm-applet --indicator
 # exec --no-startup-id blueman-applet

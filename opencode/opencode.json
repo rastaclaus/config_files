@@ -52,6 +52,19 @@
     }
   },
   "provider": {
+    "ntech": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "NtechLab",
+      "options": {
+        "baseURL": "http://devbox10.lab.ntl:23333/v1",
+        "apiKey": "{env:NTECH_API_KEY}"
+      },
+      "models": {
+        "Qwen/Qwen3-Coder-30B-A3B-Instruct": {
+          "name": "Qwen/Qwen3-Coder-30B-A3B-Instruct"
+        }
+      }
+    },
     "bothub": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "BotHub",

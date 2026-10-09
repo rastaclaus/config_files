@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """Script for swaybar info output."""
 
-# ruff: noqa: T201, D103, D101, FA102
+# ruff: noqa: T201, D103, D101
 
 import datetime
 import json
+import os
+import sys
 import time
 import zoneinfo
 from dataclasses import dataclass
@@ -12,44 +14,59 @@ from dataclasses import dataclass
 import psutil  # type: ignore[import-untyped]
 import requests  # type: ignore[import-untyped]
 
-LAT, LON = 55.816078, 37.703576
+LAT = float(os.environ.get("WEATHER_LAT", "55.816078"))
+LON = float(os.environ.get("WEATHER_LON", "37.703576"))
 
-WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast"
+WEATHER_API_URL = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
+USER_AGENT = os.environ.get(
+    "WEATHER_USER_AGENT",
+    "swaybar-status/1.0 github.com/rastaclaus tema.rastaclaus@gmail.com",
+)
 WEATHER_UPDATE_INTERVAL = 600  # 10 minutes in seconds
 GENERAL_UPDATE_INTERVAL = 1  # 1 second
 
-WEATHER_CODES = {
-    0: "☀️",  # Clear sky
-    1: "🌤️",  # Mainly clear
-    2: "⛅",  # Partly cloudy
-    3: "☁️",  # Overcast
-    45: "🌫️",  # Foggy
-    48: "🌫️",  # Depositing rime fog
-    51: "🌧️",  # Light drizzle
-    53: "🌧️",  # Moderate drizzle
-    55: "🌧️",  # Dense drizzle
-    61: "🌧️",  # Slight rain
-    63: "🌧️",  # Moderate rain
-    65: "🌧️",  # Heavy rain
-    71: "🌨️",  # Slight snow
-    73: "🌨️",  # Moderate snow
-    75: "🌨️",  # Heavy snow
-    77: "🌨️",  # Snow grains
-    80: "🌧️",  # Slight rain showers
-    81: "🌧️",  # Moderate rain showers
-    82: "🌧️",  # Violent rain showers
-    85: "🌨️",  # Slight snow showers
-    86: "🌨️",  # Heavy snow showers
-    95: "⛈️",  # Thunderstorm
-    96: "⛈️",  # Thunderstorm with slight hail
-    99: "⛈️",  # Thunderstorm with heavy hail
+WEATHER_SYMBOLS = {
+    "clearsky": "☀️",  # Clear sky
+    "fair": "🌤️",  # Mainly clear
+    "partlycloudy": "⛅",  # Partly cloudy
+    "cloudy": "☁️",  # Overcast
+    "fog": "🌫️",  # Foggy
+    "lightrain": "🌦️",  # Slight rain
+    "rain": "🌧️",  # Rain
+    "heavyrain": "🌧️",  # Heavy rain
+    "lightrainshowers": "🌦️",  # Slight rain showers
+    "rainshowers": "🌧️",  # Rain showers
+    "heavyrainshowers": "🌧️",  # Heavy rain showers
+    "lightsleet": "🌨️",  # Slight sleet
+    "sleet": "🌨️",  # Sleet
+    "heavysleet": "🌨️",  # Heavy sleet
+    "lightsnow": "🌨️",  # Slight snow
+    "snow": "🌨️",  # Snow
+    "heavysnow": "🌨️",  # Heavy snow
+    "lightsleetshowers": "🌨️",  # Slight sleet showers
+    "sleetshowers": "🌨️",  # Sleet showers
+    "heavysleetshowers": "🌨️",  # Heavy sleet showers
+    "lightsnowshowers": "🌨️",  # Slight snow showers
+    "snowshowers": "🌨️",  # Snow showers
+    "heavysnowshowers": "🌨️",  # Heavy snow showers
 }
+
+
+def _symbol_emoji(code: str) -> str:
+    base = code
+    for suffix in ("_day", "_night", "_polartwilight"):
+        if base.endswith(suffix):
+            base = base[: -len(suffix)]
+            break
+    if "thunder" in base:
+        return "⛈️"
+    return WEATHER_SYMBOLS.get(base, "❓")
 
 
 @dataclass
 class WeatherData:
     temperature: float | None = None
-    weather_code: int | None = None
+    weather_code: str | None = None
     last_update: float = 0
 
 
@@ -69,27 +86,30 @@ def _get_weather(weather_data: WeatherData) -> str:
         try:
             response = requests.get(
                 WEATHER_API_URL,
-                params={
-                    "latitude": LAT,
-                    "longitude": LON,
-                    "current_weather": True,
-                    "temperature_unit": "celsius",
-                },
+                params={"lat": LAT, "lon": LON},
+                headers={"User-Agent": USER_AGENT},
                 timeout=5,
             )
             response.raise_for_status()
             data = response.json()
-            current = data.get("current_weather", {})
-            weather_data.temperature = current.get("temperature")
-            weather_data.weather_code = current.get("weathercode")
+            current = data["properties"]["timeseries"][0]["data"]
+            weather_data.temperature = current["instant"]["details"]["air_temperature"]
+            summary = (
+                current.get("next_1_hours")
+                or current.get("next_6_hours")
+                or current.get("next_12_hours")
+            )["summary"]["symbol_code"]
+            weather_data.weather_code = summary
             weather_data.last_update = current_time
-        except Exception:  # noqa: BLE001
+        except Exception as err:  # noqa: BLE001
+            print(err, file=sys.stderr)
+            weather_data.last_update = current_time
             return "N/A"
 
     if weather_data.temperature is None or weather_data.weather_code is None:
         return "N/A"
 
-    weather_icon = WEATHER_CODES.get(weather_data.weather_code, "❓")
+    weather_icon = _symbol_emoji(weather_data.weather_code)
     return f"{weather_icon} {weather_data.temperature}°C"
 
 

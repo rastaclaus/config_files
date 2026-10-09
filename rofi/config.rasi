@@ -1,7 +1,9 @@
 configuration {
-  modi: "combi,run,ssh";
+  terminal: "alacritty";
+  modi: "combi,run,ssh,emoji";
+  show-icons: true;
   font: "hack 10";
   combi-modi: "window,drun";
-  run-shell-command: "kitty -e zsh -ic '{cmd} && read'";
+  // run-command: "alacritty -e fish -c '{cmd}'";
 }
 @theme "gruvbox-dark-soft"

@@ -86,8 +86,10 @@ input "12538:768:USB_OPTICAL_MOUSE" {
 
     # Start your launcher
     #bindsym $mod+d exec wofi --gtk-dark -Imi --show drun,run,window
+    bindsym $mod+d exec rofi -show combi
+    bindsym $mod+Shift+u exec rofi -modi unicode -show unicode
+    bindsym $mod+Shift+s exec rofi -modi emoji -show emoji
 
-    bindsym $mod+d exec rofi -show combi -icon-theme "Papirus" -show-icons -run-shell-command 'kitty -e zsh -ic "{cmd} && read"'
     bindsym Alt+Tab exec i3wins
 
 
@@ -265,7 +267,7 @@ bar {
     modifier $mod
     # swaybar_command waybar
     mode hide
-    status_command ~/.config/sway/swaybar-status.py
+    status_command env WEATHER_USER_AGENT="swaybar-status/1.0 github.com/rastaclaus tema.rastaclaus@gmail.com" ~/.config/sway/swaybar-status.py
     workspace_buttons yes
     output *
     colors {

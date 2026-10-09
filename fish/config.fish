@@ -12,6 +12,7 @@ direnv hook fish | source
 set -x PROVIDER1_API_KEY (cat $HOME/.config/provider1_key)
 set -x OPENAI_API_KEY (cat $HOME/.config/provider1_key)
 set -x PROVIDER3_API_KEY (cat $HOME/.config/provider3_key)
+set -x PROVIDER2_API_KEY (cat $HOME/.config/provider2_key)
 
 if status is-interactive
     if [ -z $DISPLAY ] && [ "$(tty)" = /dev/tty1 ]

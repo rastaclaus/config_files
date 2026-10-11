@@ -1,0 +1,170 @@
+# =============================================================================
+# languages.toml — template / cheat-sheet for configuring LSP servers & formatters
+# =============================================================================
+#
+# This file is NOT loaded by Helix (only `languages.toml` is). Copy the blocks
+# you need into one of the real config locations below.
+#
+# Config locations (each later one MERGES over the previous):
+#   1. Built-in defaults (bundled with Helix)
+#   2. Global:  ~/.config/helix/languages.toml
+#   3. Project: <project-root>/.helix/languages.toml
+#
+# Only keys you specify are overridden; everything else is inherited.
+# Lists (e.g. language-servers) are REPLACED wholesale, not appended.
+#
+# Useful commands:
+#   helix --health <lang>        # show servers configured/detected for a language
+#   <server> --version           # verify the binary is on PATH
+#
+# -----------------------------------------------------------------------------
+# 1. Declare a language server
+# -----------------------------------------------------------------------------
+#
+# [language-server.<id>]
+# command = "binary-name"          # must be found on $PATH
+# args = ["--stdio"]               # server-specific startup args
+# timeout = 20                     # max seconds per request (default 20)
+# environment = { KEY = "value" }  # extra env vars for the server process
+# config = { ... }                 # LSP initializationOptions
+# required-root-patterns = ["pyproject.toml"]  # only start if one glob exists
+#
+# Example — a custom server + init options:
+#
+# [language-server.my-lsp]
+# command = "my-language-server"
+# args = ["--stdio"]
+# environment = { MY_LSP_LOG = "info" }
+# config = { provideFormatter = true }
+
+# -----------------------------------------------------------------------------
+# 2. Attach servers to a language
+# -----------------------------------------------------------------------------
+#
+# [[language]]
+# name = "python"
+# language-servers = ["ty", "ruff"]   # order matters: features resolved left->right
+#
+# Features (goto-definition, hover, format, ...) are taken from the FIRST server
+# that supports them. `diagnostics`, `code-action`, `completion`,
+# `document-symbols` and `workspace-symbols` are MERGED across all servers.
+#
+# Restrict which features a server is used for (useful with multiple servers):
+#
+# [[language]]
+# name = "typescript"
+# language-servers = [
+#   { name = "vscode-eslint-language-server", only-features = ["diagnostics", "code-action"] },
+#   "typescript-language-server",
+# ]
+#
+# ...or exclude some features instead:
+#
+# language-servers = [ { name = "typescript-language-server", except-features = ["format"] }, "efm-lsp-prettier" ]
+
+# -----------------------------------------------------------------------------
+# 3. Formatters
+# -----------------------------------------------------------------------------
+#
+# `formatter` takes precedence over LSP formatting. The buffer is piped to the
+# command via stdin and the result is read from stdout. Use `%{buffer_name}` in
+# args to pass the current file path.
+#
+# formatter = { command = "ruff", args = ["format", "--stdin-filename", "%{buffer_name}", "-"] }
+#
+# auto-format = true   # format on save. Omit/false to format manually with :format
+#
+# The `format` sub-table inside a server's `config` passes Document Formatting
+# options (server-specific), e.g. for typescript-language-server:
+#
+# [language-server.typescript-language-server]
+# config = { format = { semicolons = "insert", insertSpaceBeforeFunctionParenthesis = true } }
+
+# =============================================================================
+# 4. Common language examples (uncomment / adapt as needed)
+# =============================================================================
+
+# --- Rust -------------------------------------------------------------------
+# # rust-analyzer + rustfmt are configured by default. To disable auto-format:
+# [[language]]
+# name = "rust"
+# auto-format = false
+
+# --- Go ---------------------------------------------------------------------
+# # Defaults: gopls (+ golangci-lint-lsp). auto-format uses gofmt via gopls.
+# [[language]]
+# name = "go"
+# language-servers = ["gopls"]
+# formatter = { command = "gofumpt", args = [] }   # requires: go install mvdan.cc/gofumpt@latest
+
+# --- TypeScript / JavaScript -------------------------------------------------
+# # Default server: typescript-language-server. Add ESLint for diagnostics:
+# [language-server.vscode-eslint-language-server]
+# config = { validate = "on", run = "onType" }
+#
+# [[language]]
+# name = "typescript"
+# language-servers = [
+#   { name = "vscode-eslint-language-server", only-features = ["diagnostics"] },
+#   "typescript-language-server",
+# ]
+#
+# # Prettier as an explicit formatter (takes precedence over the LSP formatter):
+# [[language]]
+# name = "typescript"
+# formatter = { command = "prettier", args = ["--stdin-filepath", "%{buffer_name}"] }
+# auto-format = true
+
+# --- C / C++ -----------------------------------------------------------------
+# # Default server: clangd. Honours .clang-format / .clangd in the project root.
+# [[language]]
+# name = "cpp"
+# language-servers = ["clangd"]
+# formatter = { command = "clang-format", args = ["--assume-filename", "%{buffer_name}"] }
+
+# --- Nix ----------------------------------------------------------------------
+# # Defaults: nil + nixd. Pick one, or keep both (diagnostics merge):
+# [language-server.nixd]
+# command = "nixd"
+# config = { formatting = { command = ["nixfmt"] } }
+#
+# [[language]]
+# name = "nix"
+# language-servers = ["nixd"]
+# formatter = { command = "nixfmt" }
+
+# --- Markdown / YAML / TOML ---------------------------------------------------
+# # markdown: marksman (or markdown-oxide). Format with prettier:
+# [[language]]
+# name = "markdown"
+# language-servers = ["marksman"]
+# formatter = { command = "prettier", args = ["--stdin-filepath", "%{buffer_name}"] }
+#
+# # yaml: yaml-language-server is the default. Auto-format is off by default.
+# [[language]]
+# name = "yaml"
+# auto-format = true
+#
+# # toml: taplo is the default server; taplo can also format.
+# [[language]]
+# name = "toml"
+# formatter = { command = "taplo", args = ["fmt", "-"] }
+
+# =============================================================================
+# 5. Per-project overrides — <project-root>/.helix/languages.toml
+# =============================================================================
+#
+# A project-local file merges over the global config, so you can pin versions,
+# change servers, or tweak formatting for one repository without touching the
+# global setup. Example for a Python repo that wants a stricter ruff config and
+# no formatter changes:
+#
+# [language-server.ruff]
+# command = "ruff"
+# args = ["server"]
+#
+# [[language]]
+# name = "python"
+# language-servers = ["ty", "ruff"]
+# formatter = { command = "ruff", args = ["format", "--stdin-filename", "%{buffer_name}", "-"] }
+# auto-format = true

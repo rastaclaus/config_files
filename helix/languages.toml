@@ -9,9 +9,73 @@ args = ["server"]
 command = "ty"
 args = ["server"]
 
+[language-server.tombi]
+command = "tombi"
+args = ["lsp"]
+
+[language-server.fish-lsp]
+command = "fish-lsp"
+args = ["start"]
+
 # Python: type checking via ty, lint + formatting via ruff.
 # auto-format is intentionally left off; format manually with :format
 [[language]]
 name = "python"
 language-servers = ["ty", "ruff"]
 formatter = { command = "ruff", args = ["format", "--stdin-filename", "%{buffer_name}", "-"] }
+
+# The blocks below only override built-in defaults (servers/format). auto-format
+# is left off; format manually with :format.
+
+[[language]]
+name = "toml"
+language-servers = ["tombi"]
+formatter = { command = "tombi", args = ["format", "-"] }
+
+[[language]]
+name = "yaml"
+language-servers = ["yaml-language-server"]
+formatter = { command = "prettier", args = ["--stdin-filepath", "%{buffer_name}"] }
+
+[[language]]
+name = "dockerfile"
+language-servers = ["docker-langserver"]
+
+[[language]]
+name = "docker-compose"
+language-servers = ["docker-compose-langserver", "yaml-language-server"]
+formatter = { command = "prettier", args = ["--stdin-filepath", "%{buffer_name}"] }
+
+[[language]]
+name = "bash"
+language-servers = ["bash-language-server"]
+formatter = { command = "shfmt" }
+
+[[language]]
+name = "fish"
+language-servers = ["fish-lsp"]
+formatter = { command = "fish_indent" }
+
+[[language]]
+name = "json"
+language-servers = ["vscode-json-language-server"]
+formatter = { command = "prettier", args = ["--stdin-filepath", "%{buffer_name}"] }
+
+[[language]]
+name = "rust"
+language-servers = ["rust-analyzer"]
+
+[[language]]
+name = "c"
+language-servers = ["clangd"]
+formatter = { command = "clang-format" }
+
+[[language]]
+name = "cpp"
+language-servers = ["clangd"]
+formatter = { command = "clang-format" }
+
+[[language]]
+name = "go"
+language-servers = ["gopls"]
+formatter = { command = "gofmt" }

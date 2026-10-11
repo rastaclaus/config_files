@@ -1,0 +1,17 @@
+# Language server definitions (overrides built-in defaults).
+# See ./languages.toml.example for a template on adding more languages.
+
+[language-server.ruff]
+command = "ruff"
+args = ["server"]
+
+[language-server.ty]
+command = "ty"
+args = ["server"]
+
+# Python: type checking via ty, lint + formatting via ruff.
+# auto-format is intentionally left off; format manually with :format
+[[language]]
+name = "python"
+language-servers = ["ty", "ruff"]
+formatter = { command = "ruff", args = ["format", "--stdin-filename", "%{buffer_name}", "-"] }

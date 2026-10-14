@@ -3242,7 +3242,7 @@
         "environment": {
           "VISION_OPENAI_BASE_URL": "https://routerai.ru/api/v1",
           "VISION_OPENAI_API_KEY": "{env:ROUTERAI_API_KEY}",
-          "VISION_MODEL": "inclusionai/ling-3.0-flash-vl"
+          "VISION_MODEL": "qwen/qwen3-vl-8b-instruct"
         }
       },
       "context7": {

@@ -17,6 +17,13 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INSTALL_DIR="$REPO/install"
 
+# User-level install prefix for tooling that has no pacman/AUR package.
+# npm's global prefix defaults to /usr (node is packaged system-wide), which is
+# root-owned, so 'npm install -g' fails with EACCES for a normal user.
+# Installing into $HOME/.local puts bins in ~/.local/bin and modules in
+# ~/.local/lib/node_modules.
+LOCAL_PREFIX="${LOCAL_PREFIX:-$HOME/.local}"
+
 HOST=""
 PROFILE=""
 DO_PACKAGES=1
@@ -157,8 +164,12 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
   mapfile -t npms < <(read_list "$INSTALL_DIR/npm.txt")
   if [[ ${#npms[@]} -gt 0 ]]; then
     if command -v npm >/dev/null 2>&1 || [[ $DRY_RUN -eq 1 ]]; then
-      log "installing npm globals (${#npms[@]})"
-      run npm install -g "${npms[@]}" || warn "npm install failed (check npm prefix/permissions)"
+      log "installing npm globals (${#npms[@]}) -> $LOCAL_PREFIX"
+      run npm install -g --prefix "$LOCAL_PREFIX" "${npms[@]}" || warn "npm install failed (check npm prefix/permissions)"
+      case ":$PATH:" in
+        *":$LOCAL_PREFIX/bin:"*) ;;
+        *) warn "$LOCAL_PREFIX/bin is not in PATH; npm global bins will not be found" ;;
+      esac
     else
       warn "npm not found; skipping npm globals"
     fi

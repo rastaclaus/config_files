@@ -107,7 +107,8 @@ The installer:
 1. installs `yay` if missing,
 2. `yay -S --needed` from `packages/base.txt` (+ `packages/dev.txt` unless
    profile is `headless`, + `packages/gui.txt` for GUI, + `hosts/<host>/packages.txt`),
-3. `npm install -g` from `npm.txt`, `uv tool install` from `uv-tools.txt`,
+3. `npm install -g --prefix ~/.local` from `npm.txt` (npm's default prefix is
+   the root-owned `/usr`), `uv tool install` from `uv-tools.txt`,
 4. installs fisher + fish plugins,
 5. lays out symlinks per `symlinks.conf`, backing up anything it replaces to
    `~/.dotfiles-backup-<timestamp>/`.

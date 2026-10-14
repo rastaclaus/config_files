@@ -43,6 +43,7 @@ window#waybar {
 #cpu,
 #memory,
 #custom-weather,
+#battery,
 #tray,
 #window {
     padding: 0 8px;
@@ -51,5 +52,17 @@ window#waybar {
 
 #cpu.critical,
 #memory.critical {
+    color: @bar_critical;
+}
+
+/* Battery: status classes are charging/discharging/full/plugged, and "state"
+ * classes (warning/critical) come from the module's "states" thresholds. */
+#battery.charging,
+#battery.plugged,
+#battery.warning:not(.charging) {
+    color: @bar_accent;
+}
+
+#battery.critical:not(.charging) {
     color: @bar_critical;
 }

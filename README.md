@@ -85,7 +85,9 @@ Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
 The status bar is **waybar** on both compositors: `waybar/config-common.jsonc`
 holds shared options and modules, `config-sway` / `config-niri` add the
 compositor-specific workspace module, and `style.css` is themed by darkman
-(`dark-mode.d/` / `light-mode.d/`). Portals: sway keeps `xdg-desktop-portal-wlr`,
+(`dark-mode.d/` / `light-mode.d/`). The `battery` module (capacity, charging
+icon, time left) hides itself on hosts without a battery, so it lives in the
+shared config. Portals: sway keeps `xdg-desktop-portal-wlr`,
 niri uses `niri-portals.conf` (GNOME screencast backend).
 
 Dark/light switching is driven by **darkman**: `dark-mode.d/` and `light-mode.d/`

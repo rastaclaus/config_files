@@ -88,6 +88,21 @@ compositor-specific workspace module, and `style.css` is themed by darkman
 (`dark-mode.d/` / `light-mode.d/`). Portals: sway keeps `xdg-desktop-portal-wlr`,
 niri uses `niri-portals.conf` (GNOME screencast backend).
 
+Dark/light switching is driven by **darkman**: `dark-mode.d/` and `light-mode.d/`
+are run on every mode change (GTK theme `adw-gtk3-dark` / `adw-gtk3`, plus
+terminal / editor / rofi / waybar colors). Qt apps follow the GTK theme through
+Qt's GTK platform theme, which is read from the environment — a one-time manual
+step, since the repo does not manage `/etc/environment`:
+
+```sh
+sudo sed -i '/^QT_QPA_PLATFORMTHEME=/d' /etc/environment
+echo 'QT_QPA_PLATFORMTHEME=gtk3' | sudo tee -a /etc/environment
+```
+
+No Qt style engine (Kvantum) is used: it was the only package pulling the Qt
+stack into the GUI list, and its darkman hook could not work anyway — hooks run
+as child processes, so an `export` inside them never reaches the session.
+
 Key bindings are kept in sync between `sway/config` and `niri/config.kdl`
 (`Mod`+h/j/k/l, workspace `Mod`+1..0, terminal/launcher, screenshots, media
 keys). sway-only features that niri has no equivalent for (splits, stacking,

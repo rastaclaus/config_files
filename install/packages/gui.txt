@@ -23,7 +23,6 @@ rofi-emoji                   # плагин эмодзи для rofi
 
 # --- theme / appearance ---
 darkman                      # автопереключение светлой/тёмной темы
-kvantum                      # темизация Qt-приложений
 adw-gtk-theme                # тема GTK-приложений в стиле Adwaita (dark/light)
 
 # --- fonts ---

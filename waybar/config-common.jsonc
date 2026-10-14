@@ -12,7 +12,15 @@
     // Pick up theme changes written by darkman without restarting.
     "reload_style_on_change": true,
 
-    "modules-right": [ "clock", "cpu", "memory", "custom/weather" ],
+    "modules-right": [ "clock", "cpu", "memory", "custom/weather", "tray" ],
+
+    // StatusNotifier host for both sway and niri. Populates from DBus applets
+    // (nm-applet --indicator, swaync, blueman-applet, ...). Only one host may
+    // exist per session, which is fine since a single bar runs at a time.
+    "tray": {
+        "icon-size": 18,
+        "spacing": 8
+    },
 
     "clock": {
         "timezone": "Europe/Moscow",

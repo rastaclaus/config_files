@@ -43,6 +43,7 @@ window#waybar {
 #cpu,
 #memory,
 #custom-weather,
+#tray,
 #window {
     padding: 0 8px;
     color: @bar_fg;

@@ -30,9 +30,15 @@ input {
     }
 }
 
+// ------------------------------------------------------------- decorations
+// Ask applications to drop their client-side decorations (CSD), so windows
+// become rectangular and niri draws its own frame instead.
+prefer-no-csd
+
 // ---------------------------------------------------------------- layout
 layout {
-    gaps 16
+    // No outer/inner gaps: windows butt up against each other and the edges.
+    gaps 0
     center-focused-column "never"
 
     preset-column-widths {
@@ -44,7 +50,8 @@ layout {
     default-column-width { proportion 0.5; }
 
     focus-ring {
-        width 4
+        // Half the previous width (was 4).
+        width 2
         active-color "#7fc8ff"
         inactive-color "#505050"
     }

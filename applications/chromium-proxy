@@ -1,0 +1,6 @@
+#!/bin/sh
+if [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+    exec /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --proxy-server=socks5://localhost:2080 --user-data-dir="$HOME/.config/chromium-proxy" "$@"
+else
+    exec /usr/bin/chromium --proxy-server=socks5://localhost:2080 --user-data-dir="$HOME/.config/chromium-proxy" "$@"
+fi

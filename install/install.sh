@@ -215,6 +215,15 @@ merge_dir() { # merge_dir <common-dir> <host-dir> <target-dir>
       ensure_link "$c" "$target/$name"
     fi
   done <<< "$names"
+
+  # prune links whose repo source no longer exists (removed/renamed files)
+  local entry
+  for entry in "$target"/*; do
+    if [[ -L "$entry" && ! -e "$entry" ]]; then
+      run rm -f "$entry"
+      info "pruned stale link $entry"
+    fi
+  done
 }
 
 if [[ $DO_LINKS -eq 1 ]]; then

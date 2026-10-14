@@ -29,7 +29,8 @@ Package manifests (official repo + its AUR counterpart):
 | `packages/aur/base.txt`    | AUR version of `base.txt`          |
 | `packages/aur/dev.txt`     | AUR version of `dev.txt`           |
 | `packages/aur/gui.txt`     | AUR version of `gui.txt`           |
-| `hosts/<host>/packages.txt`| extra official packages for a host |
+| `hosts/<host>/packages.txt`| extra official packages for a host    |
+| `hosts/<host>/packages-aur.txt`| extra AUR packages for a host    |
 
 Common configs live at the repo root; a host only ships the files it overrides.
 
@@ -52,7 +53,7 @@ Otherwise the whole directory is a single symlink.
 | desktop | adesk    | gui      | Sway workstation               |
 | ambb    | ambb     | gui      | laptop                         |
 | alen    | alen     | gui      | laptop                         |
-| work    | (tbd)    | headless | SSH only, no GUI               |
+| work    | awdesk   | headless | SSH only, no GUI               |
 
 ## Install
 

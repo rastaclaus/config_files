@@ -2,7 +2,7 @@ configuration {
   terminal: "alacritty";
   modi: "combi,run,ssh,emoji";
   show-icons: true;
-  font: "hack 10";
+  font: "Source Code Pro 10";
   combi-modi: "window,drun";
   // run-command: "alacritty -e fish -c '{cmd}'";
 }

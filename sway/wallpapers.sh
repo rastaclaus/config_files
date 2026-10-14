@@ -1,26 +1,35 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# Set a random wallpaper on every active output.
+# Override the directory with WALLPAPER_DIR=<path>.
+set -euo pipefail
 
-# Каталог с изображениями
-WALLPAPER_DIR="$HOME/Wallpapers"
+WALLPAPER_DIR="${WALLPAPER_DIR:-$HOME/Wallpapers}"
 
-# Получаем случайное изображение из каталога
-IMAGE=$(ls "$WALLPAPER_DIR" | shuf -n 1)
+if [[ ! -d "$WALLPAPER_DIR" ]]; then
+    echo "wallpapers: no such directory: $WALLPAPER_DIR" >&2
+    exit 1
+fi
 
-# Полный путь к изображению
-IMAGE_PATH="$WALLPAPER_DIR/$IMAGE"
+mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
+    \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \) | sort)
 
-# Получаем размеры мониторов
-MONITOR1=$(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name' | sed -n '1p')
-MONITOR2=$(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name' | sed -n '2p')
+if (( ${#images[@]} == 0 )); then
+    echo "wallpapers: no images found in $WALLPAPER_DIR" >&2
+    exit 1
+fi
 
-echo $MONITOR1
-echo $MONITOR2
+mapfile -t outputs < <(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name')
 
-# Разделяем изображение на две части
-magick "$IMAGE_PATH" -crop 50%x100% +repage /tmp/%d_$IMAGE
+if (( ${#outputs[@]} == 0 )); then
+    echo "wallpapers: no active outputs" >&2
+    exit 1
+fi
 
-ls -alh /tmp/*.jpg
+image="${images[RANDOM % ${#images[@]}]}"
 
-# Устанавливаем обои
-swaybg -o "$MONITOR1" -i "/tmp/0_$IMAGE" --mode fill &
-swaybg -o "$MONITOR2" -i "/tmp/1_$IMAGE" --mode fill &
+pkill -x swaybg 2>/dev/null || true
+
+for output in "${outputs[@]}"; do
+    swaybg -o "$output" -i "$image" --mode fill &
+done

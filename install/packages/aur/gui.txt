@@ -2,6 +2,5 @@
 networkmanager-dmenu-git
 rofi-unicode
 sway-interactive-screenshot
-shotman
 ttf-devicons
 ttf-openwebicons

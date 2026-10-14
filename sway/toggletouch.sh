@@ -1,16 +1,26 @@
-#!/bin/bash
+#!/usr/bin/env bash
+#
+# Toggle the touchpad on/off. Pass an input identifier as $1 to target a
+# specific touchpad, otherwise the first touchpad is used.
+set -euo pipefail
 
-TOUCHPAD_ID="$(swaymsg -t get_inputs | grep 'identifier.*Touchpad' | cut -d'"' -f4)" #give me the touchpad identifier
+id="${1:-}"
+if [[ -z "$id" ]]; then
+    id="$(swaymsg -t get_inputs | jq -r '.[] | select(.type == "touchpad") | .identifier' | head -n1)"
+fi
 
-STATE="$(swaymsg -rt get_inputs | grep -B1 -A20 $TOUCHPAD_ID | grep send_events | cut -d'"' -f4)"
+if [[ -z "$id" ]]; then
+    notify-send "Touchpad" "No touchpad found"
+    exit 1
+fi
 
-echo state is $STATE
+state="$(swaymsg -t get_inputs \
+    | jq -r --arg id "$id" '.[] | select(.identifier == $id) | .libinput.send_events // "enabled"')"
 
-if [ $STATE = "enabled" ]
-then
-  swaymsg input "$TOUCHPAD_ID" events disabled
-  notify-send Touchpad disabled
+if [[ "$state" == "enabled" ]]; then
+    swaymsg input "$id" events disabled
+    notify-send "Touchpad disabled"
 else
-  swaymsg input "$TOUCHPAD_ID" events enabled
-  notify-send Touchpad enabled
+    swaymsg input "$id" events enabled
+    notify-send "Touchpad enabled"
 fi

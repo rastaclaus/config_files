@@ -67,7 +67,7 @@ def _symbol_emoji(code: str) -> str:
 class WeatherData:
     temperature: float | None = None
     weather_code: str | None = None
-    last_update: float = 0
+    last_attempt: float = 0
 
 
 def _get_current_time() -> str:
@@ -78,11 +78,8 @@ def _get_current_time() -> str:
 def _get_weather(weather_data: WeatherData) -> str:
     current_time = time.time()
 
-    if (
-        current_time - weather_data.last_update >= WEATHER_UPDATE_INTERVAL
-        or (weather_data.temperature is None
-        and weather_data.weather_code is None)
-    ):
+    if current_time - weather_data.last_attempt >= WEATHER_UPDATE_INTERVAL:
+        weather_data.last_attempt = current_time
         try:
             response = requests.get(
                 WEATHER_API_URL,
@@ -100,10 +97,8 @@ def _get_weather(weather_data: WeatherData) -> str:
                 or current.get("next_12_hours")
             )["summary"]["symbol_code"]
             weather_data.weather_code = summary
-            weather_data.last_update = current_time
         except Exception as err:  # noqa: BLE001
             print(err, file=sys.stderr)
-            weather_data.last_update = current_time
             return "N/A"
 
     if weather_data.temperature is None or weather_data.weather_code is None:

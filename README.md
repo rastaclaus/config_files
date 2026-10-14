@@ -8,10 +8,12 @@ Personal dotfiles. One branch, host-specific bits under `hosts/`.
 fish/ helix/ nvim/ opencode/ direnv/ alacritty/ rofi/ darkman/
 networkmanager-dmenu/ xdg-desktop-portal/ applications/
 dark-mode.d/ light-mode.d/ .tmux.conf .ruff.toml      # common (base)
+vpn/                                                  # VPN profile skeleton (see below)
 hosts/
   desktop/  ambb/  alen/  work/                       # host-specific overrides
 install/
   install.sh         # installer
+  install_vpn.sh     # VPN profile installer (ntech)
   hosts.conf         # hostname -> host dir + profile
   symlinks.conf      # src -> target map
   packages/*.txt     # pacman / AUR lists (see below)
@@ -77,3 +79,16 @@ The installer:
 The `headless` profile installs only the base set plus fish/opencode/editors
 and their dependencies — no GUI, no Sway. Dev/DevOps tooling can be opted in
 per host via `hosts/<host>/packages.txt`.
+
+## VPN
+
+The `ntech` OpenVPN/NetworkManager profile lives in the repo as a **secret-free
+skeleton** (`vpn/ntech.nmconnection.in`). Certificates/keys stay in `~/vpn`, the
+password stays in the keyring, and local login/endpoints come from the
+gitignored `vpn/local.env`. See `vpn/README.md` for details.
+
+```sh
+cp vpn/local.env.example vpn/local.env   # then edit
+./install/install_vpn.sh --check
+./install/install_vpn.sh
+```

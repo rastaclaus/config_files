@@ -36,6 +36,7 @@ terminus-font
 
 # --- network ---
 networkmanager
+networkmanager-openvpn
 network-manager-applet
 libnma-gtk4
 blueman

@@ -3,3 +3,7 @@ nvim/undodir/
 .aider*
 __pycache__/
 *.pyc
+
+# VPN secrets / local parameters (see vpn/README.md)
+*.pem
+vpn/local.env

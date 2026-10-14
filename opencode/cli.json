@@ -1,0 +1,22 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "theme": {
+    "name": "system"
+  },
+  "diffs": {
+    "wrap": "word",
+    "view": "auto"
+  },
+  "session": {
+    "sidebar": "auto",
+    "scrollbar": false,
+    "thinking": "show",
+    "verbosity": "medium"
+  },
+  "animations": true,
+  "keybinds": {
+    "leader": "ctrl+space",
+    "which-key.toggle": "<leader>k",
+    "which-key.pending.toggle": "<leader>o"
+  }
+}

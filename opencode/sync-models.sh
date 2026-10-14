@@ -25,9 +25,17 @@ declare -A API_KEYS=(
     [routerai]="ROUTERAI_API_KEY"
 )
 
-CONFIG_FILE="$HOME/.config/opencode/opencode.json"
+# V2-конфиг OpenCode: opencode.jsonc (JSONC — разрешены // и /* */ комментарии).
+# jq не умеет парсить JSONC, поэтому чтение/запись конфига делает python3 (функция write_provider_models).
+CONFIG_FILE="$HOME/.config/opencode/opencode.jsonc"
 BACKUP_FILE="$CONFIG_FILE.backup"
 PROVIDERS_TO_UPDATE=()
+
+# Vision-модели: к id, совпадающим с этим regexp (регистронезависимо), добавляется attachment:true
+# описания: -vl- / -vl$ -> qwen/vl-*  | glm-[0-9]…v -> glm-4.5v/4.6v/5v-turbo
+# ^google/gemini, ^openai/gpt-4o|gpt-4.1|gpt-5, ^anthropic/claude, ^x-ai/grok-[0-9]
+# исключаются (не vision): ...|embed|tts|image|claude-fable — см. jq-фильтр в update_provider
+VISION_REGEX='-vl-|-vl$|glm-[0-9][0-9a-z.-]*v($|-)|^google/gemini|^openai/gpt-4o|^openai/gpt-4\.1|^openai/gpt-5|^anthropic/claude|^x-ai/grok-[0-9]'
 
 # Парсинг аргументов
 parse_args() {
@@ -86,7 +94,7 @@ EOF
 # Проверка зависимостей
 check_dependencies() {
     log_debug "Проверка зависимостей..."
-    
+
     if ! command -v jq &> /dev/null; then
         log_error "jq не установлен. Установите: sudo apt install jq"
         exit 1
@@ -98,6 +106,12 @@ check_dependencies() {
         exit 1
     fi
     log_success "curl найден"
+
+    if ! command -v python3 &> /dev/null; then
+        log_error "python3 не установлен. Установите: sudo apt install python3"
+        exit 1
+    fi
+    log_success "python3 найден"
 }
 
 # Проверка конфига
@@ -121,7 +135,7 @@ check_api_key() {
     local provider=$1
     local env_var=${API_KEYS[$provider]}
     local key_value="${!env_var:-}"
-    
+
     if [ -z "$key_value" ]; then
         log_error "Переменная окружения $env_var не установлена для провайдера '$provider'"
         return 1
@@ -139,18 +153,18 @@ fetch_models() {
 
     # Выводим логирование в stderr чтобы не загрязнять вывод JSON
     log_info "Запрос моделей от $provider: $api_url/models" >&2
-    
+
     curl -s -X GET "$api_url/models" \
         -H "Authorization: Bearer $api_key" \
         -H "Content-Type: application/json"
 }
 
-# Обновление конфига для одного провайдера
+# Обновление конфига для одного провайdera
 update_provider() {
     local provider=$1
-    
+
     log_debug "Обновление провайдера: $provider"
-    
+
     # Проверка API ключа
     if ! check_api_key "$provider"; then
         return 1
@@ -186,44 +200,141 @@ update_provider() {
         log_error "Ошибка при подсчете моделей $provider"
         return 1
     }
-    
+
     log_success "Получено $model_count моделей от $provider API"
 
-    # Генерация секции models
+    # Генерация секции models: vision-моделям добавляется attachment:true
+    # (исключаются embed/tts/image/claude-fable — генеративные, embed- и аудио-модели)
     local models_section
-    models_section=$(echo "$models_json" | jq '.data | map({(.id): {name: .id}}) | add')
-    
+    models_section=$(echo "$models_json" | jq --arg vr "$VISION_REGEX" '
+      .data | map(
+        {(.id): {name: .id} + (
+          if (.id | test($vr; "i"))
+             and (.id | test("embed"; "i") | not)
+             and (.id | test("tts"; "i") | not)
+             and (.id | test("image"; "i") | not)
+             and (.id | test("claude-fable"; "i") | not)
+          then {attachment: true} else {} end
+        )}
+      ) | add')
+
     if [ -z "$models_section" ] || [ "$models_section" = "null" ]; then
         log_error "Ошибка при обработке моделей $provider"
         return 1
     fi
 
-    # Обновление конфига
-    local config_content
-    config_content=$(cat "$CONFIG_FILE")
-    
-    local updated_config
-    updated_config=$(echo "$config_content" | jq --argjson models "$models_section" \
-        --arg provider "$provider" \
-        '.provider[$provider].models = $models')
-    
-    if [ -z "$updated_config" ] || [ "$updated_config" = "null" ]; then
-        log_error "Ошибка при обновлении конфига для $provider"
-        return 1
-    fi
+    # Запись секции models в конфиг.
+    # Конфиг — JSONC (opencode.jsonc), jq его не парсит, поэтому правит python3.
+    # Касательно V2: моделям провайдера ставим .providers[$provider].models, не трогая остальные
+    # поля (name, env, package, settings).
+    local models_file
+    models_file=$(mktemp)
+    printf '%s' "$models_section" > "$models_file"
 
-    # Запись обновленного конфига
-    echo "$updated_config" > "$CONFIG_FILE" || {
+    log_info "Запись моделей в $CONFIG_FILE"
+    if ! python3 - "$CONFIG_FILE" "$provider" "$models_file" <<'PY'
+import sys, json
+
+def load_jsonc(text):
+    # 1) Убираем // и /* */ комментарии, не трогая содержимое строок.
+    out, i, n = [], 0, len(text)
+    in_str = esc = False
+    while i < n:
+        c = text[i]
+        if in_str:
+            out.append(c)
+            if esc:
+                esc = False
+            elif c == '\\':
+                esc = True
+            elif c == '"':
+                in_str = False
+            i += 1
+            continue
+        if c == '"':
+            in_str = True
+            out.append(c)
+            i += 1
+            continue
+        if c == '/' and i + 1 < n and text[i + 1] == '/':
+            while i < n and text[i] != '\n':
+                i += 1
+            continue
+        if c == '/' and i + 1 < n and text[i + 1] == '*':
+            i += 2
+            while i + 1 < n and not (text[i] == '*' and text[i + 1] == '/'):
+                i += 1
+            i += 2
+            continue
+        out.append(c)
+        i += 1
+    no_comments = ''.join(out)
+
+    # 2) Убираем завершающие запятые перед } или ].
+    o2, i, n = [], 0, len(no_comments)
+    in_str = esc = False
+    while i < n:
+        c = no_comments[i]
+        if in_str:
+            o2.append(c)
+            if esc:
+                esc = False
+            elif c == '\\':
+                esc = True
+            elif c == '"':
+                in_str = False
+            i += 1
+            continue
+        if c == '"':
+            in_str = True
+            o2.append(c)
+            i += 1
+            continue
+        if c == ',':
+            j = i + 1
+            while j < n and no_comments[j] in ' \t\r\n':
+                j += 1
+            if j < n and no_comments[j] in '}]':
+                i += 1
+                continue
+        o2.append(c)
+        i += 1
+
+    return json.loads(''.join(o2))
+
+path, provider, models_file = sys.argv[1], sys.argv[2], sys.argv[3]
+with open(models_file) as f:
+    models = json.load(f)
+
+try:
+    with open(path) as f:
+        cfg = load_jsonc(f.read())
+except FileNotFoundError:
+    cfg = {}
+
+cfg.setdefault('providers', {})
+cur = cfg['providers'].get(provider) or {}
+cur['models'] = models
+cfg['providers'][provider] = cur
+
+with open(path, 'w') as f:
+    json.dump(cfg, f, ensure_ascii=False, indent=2)
+    f.write('\n')
+print('ok')
+PY
+    then
+        rm -f "$models_file"
         log_error "Ошибка при записи конфига для $provider"
         return 1
-    }
+    fi
+    rm -f "$models_file"
 
     log_success "Конфиг обновлен для провайдера: $provider ($model_count моделей)"
 
     # Вывод примеров
     log_debug "Примеры моделей $provider:"
     echo "$models_json" | jq -r '.data[:3][].id' 2>/dev/null | sed 's/^/    - /'
-    
+
     echo ""
 }
 
@@ -257,7 +368,7 @@ main() {
     done
 
     echo ""
-    
+
     # Результаты
     if [ ${#failed_providers[@]} -eq 0 ]; then
         log_success "Все провайдеры успешно обновлены!"

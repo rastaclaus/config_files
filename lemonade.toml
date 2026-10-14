@@ -1,3 +1,0 @@
-port = 10512
-allow = '127.0.0.1'
-line-ending = 'cr'

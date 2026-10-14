@@ -31,6 +31,7 @@ noto-fonts                   # базовые шрифты Noto
 noto-fonts-emoji             # шрифт эмодзи Noto Color Emoji
 adobe-source-code-pro-fonts  # моноширинный шрифт Source Code Pro
 ttf-dejavu-nerd              # Nerd Font на базе DejaVu
+ttf-nerd-fonts-symbols       # только иконки Nerd Fonts (fallback для терминала)
 ttf-jetbrains-mono           # шрифт JetBrains Mono
 ttf-roboto                   # шрифт Roboto
 terminus-font                # моноширинный шрифт Terminus (консоль)

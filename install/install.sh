@@ -95,6 +95,31 @@ install_yay() {
   rm -rf "$tmp"
 }
 
+# rustup ships rustc/cargo only as shims: without a default toolchain every
+# cargo invocation fails ("rustup could not choose a version of cargo to run").
+# AUR packages that build with cargo (e.g. rofi-unicode) need one, so make sure
+# a default toolchain exists before the AUR phase.
+setup_rustup() {
+  command -v rustup >/dev/null 2>&1 || return 0
+  if rustup show active-toolchain >/dev/null 2>&1; then
+    return 0
+  fi
+  log "rustup: no default toolchain; installing stable"
+  run rustup default stable || warn "rustup: failed to set default stable toolchain"
+}
+
+# ttf-nerd-fonts-symbols ships its fontconfig rule disabled; symlink it into
+# conf.d so Nerd Font glyphs become a fallback for any font family (JetBrains
+# Mono, Roboto, ...) instead of leaving the font unused.
+setup_nerd_font_symbols() {
+  local src="/usr/share/fontconfig/conf.avail/10-nerd-font-symbols.conf"
+  local dst="/etc/fonts/conf.d/10-nerd-font-symbols.conf"
+  [[ -f "$src" ]] || return 0
+  [[ -e "$dst" || -L "$dst" ]] && return 0
+  log "enabling Nerd Font symbols fallback"
+  run sudo ln -s "$src" "$dst" || warn "failed to enable Nerd Font symbols fallback"
+}
+
 if [[ $DO_PACKAGES -eq 1 ]]; then
   install_yay
 
@@ -117,9 +142,16 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
     log "installing official packages (${#official[@]})"
     run yay -S --needed --noconfirm "${official[@]}"
   fi
+
+  setup_rustup
+
   if [[ ${#aur[@]} -gt 0 ]]; then
     log "installing AUR packages (${#aur[@]})"
     run yay -S --needed --noconfirm "${aur[@]}"
+  fi
+
+  if [[ "$PROFILE" == "gui" ]]; then
+    setup_nerd_font_symbols
   fi
 
   mapfile -t npms < <(read_list "$INSTALL_DIR/npm.txt")

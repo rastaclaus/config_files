@@ -1,0 +1,9 @@
+// Host: ambb
+// Host-specific input devices and pointer tuning.
+
+input {
+    keyboard {
+        repeat-delay 120
+        repeat-rate 90
+    }
+}

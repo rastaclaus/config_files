@@ -1,9 +1,9 @@
 # Python CLI tools installed as isolated uv tools: uv tool install <pkg>
-ruff
-ty
-basedpyright
-pre-commit
-pyproject-fmt
-twine
-tox
-grip
+ruff           # линтер и форматтер Python
+ty             # быстрая проверка типов Python (Astral)
+basedpyright   # проверка типов Python (форк pyright)
+pre-commit     # git-хуки для проверок перед коммитом
+pyproject-fmt  # форматтер pyproject.toml
+twine          # публикация пакетов на PyPI
+tox            # запуск тестов в изолированных окружениях
+grip           # предпросмотр GitHub Markdown локально

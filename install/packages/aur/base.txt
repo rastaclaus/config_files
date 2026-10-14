@@ -1,10 +1,10 @@
 # AUR packages installed on EVERY host (including the headless one).
 
 # --- editor tooling ---
-fish-lsp
-tree-sitter-html
-tree-sitter-yaml
+fish-lsp          # LSP для fish shell
+tree-sitter-html  # грамматика tree-sitter для HTML
+tree-sitter-yaml  # грамматика tree-sitter для YAML
 
 # --- python ---
-pyenv-virtualenv
-revdiff
+pyenv-virtualenv  # интеграция pyenv с virtualenv
+revdiff           # просмотр diff в редакторе из команды

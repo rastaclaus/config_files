@@ -1,4 +1,4 @@
 # Extra official-repo packages specific to host "desktop" (hostname: adesk).
 # One package per line. Examples:
-#   amd-ucode        # CPU microcode (match your CPU vendor)
-#   linux-headers    # kernel headers for dkms/out-of-tree modules
+#   amd-ucode        # микрокод CPU AMD (выбрать по вендору: intel-ucode для Intel)
+#   linux-headers    # заголовки ядра для dkms и внешних модулей

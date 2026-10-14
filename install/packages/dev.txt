@@ -4,19 +4,19 @@
 # One package per line; '#' starts a comment.
 
 # --- containers / virtualisation / cloud ---
-docker
-docker-buildx
-docker-compose
-buildah
-kubectl
-libvirt
-qemu-base
-postgresql-libs
-bind
+docker           # контейнеризация
+docker-buildx    # плагин BuildKit для сборки образов
+docker-compose   # запуск многоконтейнерных приложений (v2 CLI)
+buildah          # сборка OCI-образов без демона
+kubectl          # CLI для Kubernetes
+libvirt          # API/демон виртуализации (QEMU/KVM)
+qemu-base        # эмуляция и виртуализация QEMU (без GUI)
+postgresql-libs  # клиентские библиотеки PostgreSQL
+bind             # DNS-сервер и утилиты (dig, nslookup)
 
 # --- networking / debugging ---
-tcpdump
-openbsd-netcat
-sshfs
-speedtest-cli
-scanmem
+tcpdump          # перехват и анализ сетевого трафика
+openbsd-netcat   # nc для отладки TCP/UDP
+sshfs            # монтирование удалённых ФС через SSH
+speedtest-cli    # замер скорости интернета
+scanmem          # поиск и правка значений в памяти процессов

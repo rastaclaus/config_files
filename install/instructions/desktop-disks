@@ -1,0 +1,25 @@
+Disk /dev/sda: 931.51 GiB, 1000204886016 bytes, 1953525168 sectors
+Disk model: TOSHIBA HDWD110 
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 4096 bytes
+I/O size (minimum/optimal): 4096 bytes / 4096 bytes
+Disklabel type: gpt
+Disk identifier: 09827152-123E-664A-8771-39E31DC12963
+
+Device          Start        End    Sectors   Size Type
+/dev/sda1        2048 1886416895 1886414848 899.5G Linux user's home
+/dev/sda2  1886416896 1953525134   67108239    32G Linux swap
+
+
+Disk /dev/nvme0n1: 1.82 TiB, 2000398934016 bytes, 3907029168 sectors
+Disk model: KINGSTON SNV2S2000G                     
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: A7BA6D76-1E66-42DD-9989-8082C40E54FD
+
+Device             Start        End    Sectors Size Type
+/dev/nvme0n1p1      2048    1050623    1048576 512M EFI System
+/dev/nvme0n1p2   1050624  525336575  524285952 250G Linux filesystem
+/dev/nvme0n1p3 525336576 3907028991 3381692416 1.6T Linux filesystem

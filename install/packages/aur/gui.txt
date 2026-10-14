@@ -1,6 +1,6 @@
 # AUR packages installed only for profile=gui.
-networkmanager-dmenu-git
-rofi-unicode
-sway-interactive-screenshot
-ttf-devicons
-ttf-openwebicons
+networkmanager-dmenu-git     # выбор сети через dmenu/rofi
+rofi-unicode                 # поиск Unicode-символов в rofi
+sway-interactive-screenshot  # скриншот с выбором области и аннотацией
+ttf-devicons                 # шрифт Devicons (иконки для редакторов)
+ttf-openwebicons             # шрифт OpenWebIcons (иконки)

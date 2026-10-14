@@ -1,0 +1,347 @@
+# Установка Arch Linux на хост `ambb`
+
+Хост: **MAIBENBEN Smart S14B-R560UM** — AMD Ryzen 5 6600H (6c/12t),
+Radeon 660M, 16 ГБ DDR5, дисплей 3072×1920@120, Wi-Fi 5 + BT 5.0.
+
+Загрузчик **systemd-boot**, ФС **ext4**, без LUKS, `resume=` для гибернации.
+
+> **ВНИМАНИЕ: вся таблица разделов `/dev/nvme0n1` будет стёрта.**
+
+Порядок: загрузка (флешка или сеть) → разметка → pacstrap → chroot →
+systemd-boot → сеть → `install/install.sh` из этого репо.
+
+---
+
+## 0. Сверка диска
+
+Проверить, что диск — тот самый (KINGSTON OM8SEP4512N-A0, 476.94 GiB):
+
+```bash
+lsblk -o NAME,SIZE,MODEL,PTTYPE
+blkid
+```
+
+Эталонная разметка из `install/instructions/ambb-disks`:
+
+| раздел          | секторы                   | размер   | тип GPT          | ФС   | точка        |
+|-----------------|---------------------------|----------|------------------|------|--------------|
+| `/dev/nvme0n1p1`| 2048 – 1050623            | 512 MiB  | EFI System (`ef00`) | FAT32| `/boot`   |
+| `/dev/nvme0n1p2`| 1050624 – 966660095       | 460.4 GiB| Linux filesystem (`8300`) | ext4 | `/` |
+| `/dev/nvme0n1p3`| 966660096 – 1000214527    | 16 GiB   | Linux swap (`8200`)   | swap | —     |
+
+Диск: 1000215216 секторов по 512 B = 476.94 GiB.
+
+---
+
+## Вариант A. Загрузка с флешки
+
+Записать ISO (на машине с Linux; `of=` — именно весь диск флешки, не раздел):
+
+```bash
+sudo dd if=archlinux-x86_64.iso of=/dev/sdX bs=4M status=progress oflag=sync
+```
+
+Windows: Rufus (режим DD) или balenaEtcher.
+
+Прошивка (MAIBENBEN: **F2** вход в Setup, **F7** Boot Menu, **Del** Setup):
+- отключить **Secure Boot**;
+- Boot Mode = **UEFI**;
+- выбрать USB в Boot Menu → Arch ISO.
+
+В live-среде проверить UEFI и сеть:
+
+```bash
+cat /sys/firmware/efi/fw_platform_size   # ожидается 64
+ping -c1 archlinux.org
+timedatectl set-ntp true
+```
+
+---
+
+## Вариант B. Установка по локальной сети (PXE + HTTP)
+
+Нужен сервер (напр. `adesk`) в той же L2-сети. Отдаём TFTP (загрузчик +
+ядро) и HTTP (корень archiso). Роутер не трогаем — dnsmasq в proxy-DHCP.
+
+### B1. Сервер: образ и дерево
+
+```bash
+sudo pacman -S dnsmasq
+sudo mkdir -p /srv/tftp /srv/http/arch
+# монтируем ISO и копируем содержимое в HTTP-корень
+sudo mount -o loop archlinux-x86_64.iso /mnt/iso
+sudo cp -a /mnt/iso/. /srv/http/arch/
+sudo umount /mnt/iso
+```
+
+Структура, которую ждёт initramfs archiso:
+`/srv/http/arch/arch/boot/x86_64/vmlinuz-linux`,
+`.../initramfs-linux.img`, `/srv/http/arch/arch/x86_64/airootfs.sfs`.
+
+### B2. Сервер: dnsmasq (proxy-DHCP + TFTP + iPXE)
+
+`/etc/dnsmasq.d/pxe.conf`:
+
+```ini
+interface=eth0
+bind-interfaces
+# proxy-DHCP: раздаём только boot-опции, IP выдаёт основной роутер
+dhcp-range=eth0,0.0.0.0,proxy
+dhcp-no-override
+pxe-service=tag:!ipxe,x86-64_EFI,"Arch netboot",ipxe.efi
+enable-tftp
+tftp-root=/srv/tftp
+log-dhcp
+```
+
+```bash
+sudo systemctl enable --now dnsmasq
+# iPXE EFI-бинарь в TFTP
+sudo curl -L https://boot.ipxe.org/ipxe.efi -o /srv/tftp/ipxe.efi
+```
+
+`/srv/tftp/boot.ipxe` (подставить IP сервера):
+
+```
+#!ipxe
+dhcp
+kernel http://192.168.1.10/arch/arch/boot/x86_64/vmlinuz-linux \
+  ip=dhcp archisobasedir=arch archiso_http_srv=http://192.168.1.10/arch/ \
+  copytoram=auto
+initrd http://192.168.1.10/arch/arch/boot/x86_64/initramfs-linux.img
+boot
+```
+
+Клиент (ambb): Boot Menu → PXE/UEFI Network Boot → выбрать «Arch netboot».
+`copytoram=auto` копирует airootfs в ОЗУ (на 16 ГБ ОЗУ ок; при нехватке убрать).
+
+---
+
+## 1. Разметка диска (полная)
+
+```bash
+# стереть старую таблицу
+sgdisk --zap-all /dev/nvme0n1
+
+# p1: EFI System, 512 MiB
+sgdisk -n 1:2048:1050623 -t 1:ef00 -c 1:"EFI system partition" /dev/nvme0n1
+
+# p2: Linux root, 460.4 GiB
+sgdisk -n 2:1050624:966660095 -t 2:8300 -c 2:"Linux filesystem" /dev/nvme0n1
+
+# p3: Linux swap, 16 GiB
+sgdisk -n 3:966660096:1000214527 -t 3:8200 -c 3:"Linux swap" /dev/nvme0n1
+
+# применить и обновить узлы устройств
+partprobe /dev/nvme0n1
+udevadm settle
+```
+
+Форматирование:
+
+```bash
+mkfs.fat -F32 /dev/nvme0n1p1
+mkfs.ext4 /dev/nvme0n1p2
+mkswap /dev/nvme0n1p3
+```
+
+Проверка совпадения с `ambb-disks`:
+
+```bash
+sgdisk -p /dev/nvme0n1
+lsblk -f /dev/nvme0n1
+```
+
+---
+
+## 2. Монтирование и pacstrap
+
+```bash
+mount /dev/nvme0n1p2 /mnt
+mount --mkdir /dev/nvme0n1p1 /mnt/boot
+swapon /dev/nvme0n1p3
+
+pacstrap -K /mnt base base-devel linux linux-firmware amd-ucode \
+  git networkmanager vim
+
+genfstab -U /mnt >> /mnt/etc/fstab
+```
+
+- `amd-ucode` — микрокод CPU AMD (Ryzen 5 6600H).
+- `base-devel` даёт `sudo` и `makepkg` (нужны `install.sh` для сборки `yay`).
+- `git` обязателен для бутстрапа `yay` в `install.sh`.
+- `networkmanager` — Wi-Fi/провод после установки.
+
+Проверить, что swap попал в fstab:
+
+```bash
+grep swap /mnt/etc/fstab
+```
+
+---
+
+## 3. chroot и базовая настройка
+
+```bash
+arch-chroot /mnt
+```
+
+```bash
+# время
+ln -sf /usr/share/zoneinfo/Europe/Moscow /etc/localtime
+hwclock --systohc
+
+# локали
+sed -i 's/^#\(en_US.UTF-8\)/\1/; s/^#\(ru_RU.UTF-8\)/\1/' /etc/locale.gen
+locale-gen
+echo 'LANG=en_US.UTF-8' > /etc/locale.conf
+
+# консоль (ru — по желанию)
+echo 'KEYMAP=us' > /etc/vconsole.conf
+# echo 'KEYMAP=ru' > /etc/vconsole.conf
+# echo 'FONT=cyr-sun16' >> /etc/vconsole.conf
+
+# hostname
+echo ambb > /etc/hostname
+cat > /etc/hosts <<'EOF'
+127.0.0.1  localhost
+::1        localhost
+127.0.1.1  ambb.localdomain ambb
+EOF
+
+# root
+passwd
+
+# пользователь (wheel — для sudo; логин согласовать с install.sh/репо)
+useradd -m -G wheel -s /bin/bash artems
+passwd artems
+sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
+
+# initramfs (дефолтные хуки содержат microcode)
+mkinitcpio -P
+```
+
+Выход по желанию позже; далее загрузчик.
+
+---
+
+## 4. Загрузчик systemd-boot
+
+```bash
+bootctl --path=/boot install
+```
+
+`/boot/loader/loader.conf`:
+
+```
+default  arch.conf
+timeout  4
+console-mode max
+editor   no
+```
+
+`/boot/loader/entries/arch.conf` — подставить PARTUUID из `blkid`:
+
+```bash
+blkid -s PARTUUID -o value /dev/nvme0n1p2   # root
+blkid -s PARTUUID -o value /dev/nvme0n1p3   # swap (resume)
+```
+
+```
+title   Arch Linux
+linux   /vmlinuz-linux
+initrd  /initramfs-linux.img
+options root=PARTUUID=<PARTUUID-p2> resume=PARTUUID=<PARTUUID-p3> rw quiet
+```
+
+- Хук `microcode` уже в дефолтном `mkinitcpio.conf`, поэтому отдельная строка
+  `initrd /amd-ucode.img` **не нужна** (микрокод упакован в основной initramfs).
+- ESP смонтирован в `/boot` → ядро/initramfs обновляются автоматически.
+
+---
+
+## 5. Гибернация (опционально)
+
+`resume=PARTUUID=<p3>` уже прописан в boot-опции выше — этого достаточно,
+чтобы ядро находило swap для resume.
+
+Автоматический «suspend, затем hibernate» после простоя:
+
+```bash
+mkdir -p /etc/systemd/logind.conf.d
+cat > /etc/systemd/logind.conf.d/idle-action.conf <<'EOF'
+[Login]
+IdleAction=suspend-then-hibernate
+IdleActionSec=15min
+EOF
+```
+
+Ограничения на этом ноутбуке:
+- **16 ГБ swap ровно под 16 ГБ ОЗУ** — гибернация возможна, только если занятая
+  память помещается в swap; при нехватке — увеличить p3.
+- swap **не зашифрован**: в дампе ОЗУ остаются ключи и пароли. Для ноутбука это
+  аргумент за LUKS (см. отдельную задачу).
+- Включённый kernel lockdown/Secure Boot отключает гибернацию.
+- При чёрном экране после resume — убрать раннюю инициализацию GPU (`kms`/`MODULES`).
+
+---
+
+## 6. Сеть и первый запуск
+
+```bash
+systemctl enable NetworkManager
+systemctl enable bluetooth
+
+exit                 # выйти из chroot
+umount -R /mnt
+swapoff --all
+reboot
+```
+
+---
+
+## 7. Пост-установка: конфиги этого репо
+
+После перезагрузки, под пользователем `artems`:
+
+```bash
+# ключи SSH нужны для приватного remote (github.com:rastaclaus/config_files)
+git clone git@github.com:rastaclaus/config_files.git ~/config_files
+cd ~/config_files
+
+./install/install.sh --dry-run      # проверка
+./install/install.sh                # пакеты + npm/uv + fisher + симлинки
+```
+
+`install.sh` сам определит хост: hostname `ambb` → `hosts/ambb`, профиль `gui`
+(см. `install/hosts.conf`). Дальше раскомментировать нужное в
+`hosts/ambb/packages.txt` (напр. `linux-headers`) и перезапустить
+`./install/install.sh --no-links`.
+
+Композитор на tty1 (это делает `fish/config.fish`):
+
+```bash
+wm niri      # или: wm sway  (применится при следующем входе)
+```
+
+VPN-профиль (по необходимости):
+
+```bash
+cp vpn/local.env.example vpn/local.env   # заполнить
+./install/install_vpn.sh
+```
+
+---
+
+## 8. Чек-лист проверки
+
+```bash
+lsblk -f /dev/nvme0n1          # p1 vfat /boot, p2 ext4 /, p3 swap
+sgdisk -p /dev/nvme0n1         # разметка = ambb-disks
+efibootmgr -v                  # запись Arch / systemd-boot
+bootctl status                 # entries: arch.conf
+systemctl is-enabled NetworkManager
+ip -brief addr                 # сеть поднялась
+cat /proc/swaps                # swap активен
+niri-session                   # или sway: рабочий стол стартует
+```

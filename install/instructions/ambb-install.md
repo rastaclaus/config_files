@@ -80,27 +80,76 @@ sudo umount /mnt/iso
 
 ### B2. Сервер: dnsmasq (proxy-DHCP + TFTP + iPXE)
 
-`/etc/dnsmasq.d/pxe.conf`:
+Сначала узнать **реальное имя интерфейса** и IP сервера в LAN (на Arch это почти
+никогда не `eth0`):
+
+```bash
+ip -br addr
+# напр. enp3s0  192.168.1.10/24
+```
+
+По умолчанию Arch-шный `/etc/dnsmasq.conf` **не** читает `/etc/dnsmasq.d/`
+(строка `conf-dir` там закомментирована). Включить каталог (иначе `pxe.conf`
+молча игнорируется, и `dnsmasq --test` тоже его не увидит):
+
+```bash
+grep -q '^conf-dir=' /etc/dnsmasq.conf \
+  || echo 'conf-dir=/etc/dnsmasq.d/,*.conf' | sudo tee -a /etc/dnsmasq.conf
+grep '^conf-dir' /etc/dnsmasq.conf     # должно вывести conf-dir=/etc/dnsmasq.d/,*.conf
+```
+
+`/etc/dnsmasq.d/pxe.conf` (подставить имя интерфейса и адрес сервера):
 
 ```ini
-interface=eth0
+interface=enp3s0
 bind-interfaces
-# proxy-DHCP: раздаём только boot-опции, IP выдаёт основной роутер
-dhcp-range=eth0,0.0.0.0,proxy
-dhcp-no-override
-pxe-service=tag:!ipxe,x86-64_EFI,"Arch netboot",ipxe.efi
+port=0                     # DNS не нужен; снимает конфликт за порт :53
+
+# proxy-DHCP: IP раздаёт основной роутер, dnsmasq — только boot-опции.
+# Первый аргумент — адрес самого сервера (не 0.0.0.0), имя интерфейса
+# в dhcp-range не пишется.
+dhcp-range=192.168.1.10,proxy
+
 enable-tftp
 tftp-root=/srv/tftp
 log-dhcp
+
+# UEFI x86-64. ВАЖНО: arch у клиента бывает 7 (EFI BC) и 9 (EFI x86-64) —
+# матчить оба. pxe-service тут НЕ использовать: у UEFI-клиентов CSA часто
+# не совпадает, и тогда boot-файл не отдаётся (клиент "не видит" PXE).
+dhcp-match=set:efi-x86_64,option:client-arch,7
+dhcp-match=set:efi-x86_64,option:client-arch,9
+dhcp-boot=tag:efi-x86_64,tag:!ipxe,ipxe.efi        # 1-й шаг: грузим iPXE
+
+# старые BIOS-клиенты (опционально)
+dhcp-match=set:bios,option:client-arch,0
+dhcp-boot=tag:bios,tag:!ipxe,undionly.kpxe
+
+# 2-й шаг: iPXE (option 175) получает URL скрипта
+dhcp-match=set:ipxe,175
+dhcp-boot=tag:ipxe,http://192.168.1.10/boot.ipxe
 ```
 
 ```bash
-sudo systemctl enable --now dnsmasq
-# iPXE EFI-бинарь в TFTP
+sudo mkdir -p /srv/tftp
 sudo curl -L https://boot.ipxe.org/ipxe.efi -o /srv/tftp/ipxe.efi
+
+sudo dnsmasq --test                 # проверка синтаксиса (уже видит pxe.conf)
+sudo systemctl enable --now dnsmasq
+systemctl status dnsmasq --no-pager
 ```
 
-`/srv/tftp/boot.ipxe` (подставить IP сервера):
+Проверить, что каталог реально подключён:
+
+```bash
+grep '^conf-dir' /etc/dnsmasq.conf           # директива раскомментирована
+# доказательство, что pxe.conf читается: впиши заведомо битую строку --
+echo 'bogus-option=1' | sudo tee -a /etc/dnsmasq.d/pxe.conf
+sudo dnsmasq --test                          # должен упасть -> файл читается
+sudo sed -i '/bogus-option/d' /etc/dnsmasq.d/pxe.conf
+```
+
+`/srv/http/boot.ipxe` (подставить IP сервера):
 
 ```
 #!ipxe
@@ -112,8 +161,37 @@ initrd http://192.168.1.10/arch/arch/boot/x86_64/initramfs-linux.img
 boot
 ```
 
-Клиент (ambb): Boot Menu → PXE/UEFI Network Boot → выбрать «Arch netboot».
+Клиент (ambb): Boot Menu → PXE/UEFI Network Boot.
 `copytoram=auto` копирует airootfs в ОЗУ (на 16 ГБ ОЗУ ок; при нехватке убрать).
+
+Типичные причины, по которым dnsmasq не стартует или клиент не видит PXE:
+
+- **`conf-dir` не раскомментирован** в `/etc/dnsmasq.conf` — файлы в
+  `/etc/dnsmasq.d/` вообще не читаются, а `--test` при этом «проходит»;
+- **архитектура не совпадает**: `pxe-service=X86-64_EFI` (arch 9) не срабатывает
+  для клиента с `PXEClient:Arch:00007` (EFI BC) — меню пустое, dnsmasq отдаёт
+  только опцию 60. Лечится `dhcp-match`+`dhcp-boot` по `option:client-arch`
+  (матчить **и 7, и 9**);
+- `dhcp-range` с именем интерфейса (`eth0,...`) или `0.0.0.0` — неверный синтаксис;
+- `interface=` указывает на несуществующий NIC (`eth0` вместо `enp5s0`) —
+  юнит падает с `unknown interface` / `no interfaces available`;
+- занят порт `:53` (если рядом `systemd-resolved`) — лечится `port=0`;
+- не создан `tftp-root` (`/srv/tftp`) — TFTP-сервер не поднимается.
+
+Диагностика:
+
+```bash
+sudo dnsmasq --test                               # ошибки конфига
+systemctl status dnsmasq ; journalctl -xeu dnsmasq -n 50
+# ключевое: видеть в логе boot-файл/URL, а не одну опцию 60
+journalctl -u dnsmasq | grep -iE 'PXE|client-arch|boot|tftp|proxy'
+# в логе PXE-запрос клиента:
+#   vendor class: PXEClient:Arch:00007:UNDI:003016   <- arch 7 = EFI BC
+#   sent ... option: 60 vendor-class ...             <- БЕЗ boot-файла => мимо
+ss -lunp | grep -E ':(53|67|69|4011)'             # занятость портов
+ip -br addr show                                  # имя/адрес интерфейса
+curl -s tftp://<IP-сервера>/ipxe.efi -o /dev/null && echo "TFTP OK"   # TFTP
+```
 
 ---
 
@@ -158,11 +236,13 @@ lsblk -f /dev/nvme0n1
 
 ```bash
 mount /dev/nvme0n1p2 /mnt
-mount --mkdir /dev/nvme0n1p1 /mnt/boot
+# ESP: маски 0077 — иначе bootctl предупреждает про world-accessible random-seed.
+# FAT не хранит права: они задаются при монтировании (fmask — файлы, dmask — каталоги).
+mount --mkdir -o fmask=0177,dmask=0077 /dev/nvme0n1p1 /mnt/boot
 swapon /dev/nvme0n1p3
 
 pacstrap -K /mnt base base-devel linux linux-firmware amd-ucode \
-  git networkmanager vim
+  git networkmanager vim terminus-font
 
 genfstab -U /mnt >> /mnt/etc/fstab
 ```
@@ -171,12 +251,17 @@ genfstab -U /mnt >> /mnt/etc/fstab
 - `base-devel` даёт `sudo` и `makepkg` (нужны `install.sh` для сборки `yay`).
 - `git` обязателен для бутстрапа `yay` в `install.sh`.
 - `networkmanager` — Wi-Fi/провод после установки.
+- `terminus-font` — крупный консольный шрифт с **кириллицей** (см. раздел 3).
 
-Проверить, что swap попал в fstab:
+`genfstab` переносит маски ESP в `/etc/fstab` (в строке — `fmask=0177,dmask=0077`).
+Проверить, что swap и маски попали в fstab:
 
 ```bash
-grep swap /mnt/etc/fstab
+grep -E 'swap|fmask' /mnt/etc/fstab
 ```
+
+> Если маски в fstab не оказались, впиши их вручную позже — иначе `bootctl`
+> будет ругаться на world-accessible `random-seed` (см. раздел 4).
 
 ---
 
@@ -185,6 +270,12 @@ grep swap /mnt/etc/fstab
 ```bash
 arch-chroot /mnt
 ```
+
+> `-S` (systemd-режим): `arch-chroot -S /mnt` запускает shell без pid-namespace,
+> и тогда `bootctl install` сам создаст запись в NVRAM (не будет сообщения
+> про контейнер, см. раздел 4). Но `-S` требует работающего systemd в live-среде
+> (в archiso он есть) — если сомневаешься, заходим обычным `arch-chroot` и делаем
+> `efibootmgr --create` вручную.
 
 ```bash
 # время
@@ -196,10 +287,14 @@ sed -i 's/^#\(en_US.UTF-8\)/\1/; s/^#\(ru_RU.UTF-8\)/\1/' /etc/locale.gen
 locale-gen
 echo 'LANG=en_US.UTF-8' > /etc/locale.conf
 
-# консоль (ru — по желанию)
+# консоль: раскладка + крупный шрифт с кириллицей (HiDPI, 3072×1920)
+# ВНИМАНИЕ: FONT=ter-132b кириллицу НЕ содержит (только latin1; это отдельная
+# «комбинированная» раскладка, а не Unicode). Кириллица есть в ter-v*.
 echo 'KEYMAP=us' > /etc/vconsole.conf
-# echo 'KEYMAP=ru' > /etc/vconsole.conf
-# echo 'FONT=cyr-sun16' >> /etc/vconsole.conf
+# echo 'KEYMAP=ru' >> /etc/vconsole.conf
+echo 'FONT=ter-v32b' >> /etc/vconsole.conf
+# Фолбэк без terminus-font (то же 8x16, кириллица есть, но мельче):
+#   echo 'FONT=cyr-sun16' >> /etc/vconsole.conf
 
 # hostname
 echo ambb > /etc/hostname
@@ -221,6 +316,18 @@ sed -i 's/^# %wheel ALL=(ALL:ALL) ALL/%wheel ALL=(ALL:ALL) ALL/' /etc/sudoers
 mkinitcpio -P
 ```
 
+Проверить шрифт прямо сейчас (не выходя из chroot): `setfont ter-v32b`.
+Кириллица появится сразу; `-m 8859-5` **не нужен** — консоль Arch работает в
+UTF-8, а `ter-v*` содержит встроенную Unicode-таблицу (проверено:
+`psfgettable /usr/share/kbd/consolefonts/ter-v32b.psf.gz` даёт 146 кириллических
+кодовых точек, `ter-132b` — ноль). `-m <кодовая страница>` нужен только для
+не-UTF-8 режима.
+
+Если хочется крупный шрифт уже **на этапе загрузки ядра** (надпись tty до
+загрузки `vconsole.conf`), добавь в boot-опции `fbcon=font:TER16x32` — это
+встроенный в ядро шрифт (16×32, на базе Terminus), кириллицу показывает без
+пакета `terminus-font`.
+
 Выход по желанию позже; далее загрузчик.
 
 ---
@@ -229,6 +336,37 @@ mkinitcpio -P
 
 ```bash
 bootctl --path=/boot install
+```
+
+`bootctl install` штампует три «пугающих» сообщения — **все три безобидны**
+(подтверждено по исходникам systemd, `bootctl-random-seed.c` / `bootctl-install.c`):
+
+1. `Mount point '/boot' which backs the random seed file is world accessible` —
+   предупреждение: у каталога/файла `random-seed` на ESP стоят мировые биты
+   (права FAT берутся из опций монтирования). Лечится монтированием ESP с
+   `fmask=0177,dmask=0077` (см. раздел 2) — тогда предупреждения нет.
+2. `Random seed file '/boot/loader/random-seed' is world accessible` — то же
+   самое, из-за мировых бит; `bootctl` создаёт файл `0600`, но FAT эти права не
+   хранит. Тоже снимается `fmask=0177`.
+3. `Not booted with EFI or running in a container, skipping EFI variable
+   modifications` — `bootctl` не трогает EFI-переменные (не создаёт запись в
+   Boot-меню). Причина: `arch-chroot` запускает shell **в pid-namespace**, и
+   `bootctl` считает это контейнером. Установка НЕ падает, boot-файлы на ESP
+   копируются; запись в NVRAM делаем вручную (см. ниже) или входим через
+   `arch-chroot -S` (systemd-режим, тогда `bootctl` сам создаст запись).
+
+Проверка, что всё скопировалось на ESP, несмотря на предупреждения:
+
+```bash
+ls -l /boot/EFI/systemd/systemd-bootx64.efi /boot/EFI/BOOT/BOOTX64.EFI /boot/loader/loader.conf
+```
+
+Запись в Boot-меню вручную (`p1` = номер раздела, здесь `1`; `--part` — это
+**номер раздела**, не PARTUUID):
+
+```bash
+efibootmgr --create --disk /dev/nvme0n1 --part 1 \
+  --loader '\EFI\systemd\systemd-bootx64.efi' --label "Linux Boot Manager" --unicode
 ```
 
 `/boot/loader/loader.conf`:

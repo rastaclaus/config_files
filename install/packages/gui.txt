@@ -24,9 +24,7 @@ rofi-emoji                   # плагин эмодзи для rofi
 # --- theme / appearance ---
 darkman                      # автопереключение светлой/тёмной темы
 kvantum                      # темизация Qt-приложений
-arc-gtk-theme                # GTK-тема Arc
-arc-icon-theme               # набор иконок Arc
-adw-gtk-theme                # тема GTK-приложений в стиле Adwaita
+adw-gtk-theme                # тема GTK-приложений в стиле Adwaita (dark/light)
 
 # --- fonts ---
 noto-fonts                   # базовые шрифты Noto

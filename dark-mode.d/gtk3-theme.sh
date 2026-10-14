@@ -1,6 +1,5 @@
 #!/bin/sh
 
-# Note: The names for the Arc theme variations are terrible.
-# "Darker" is actually LESS DARK than "Dark".
-gsettings set org.gnome.desktop.interface gtk-theme Arc-Dark
+# GTK-тема для тёмного режима (adw-gtk-theme, official repo).
+gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark
 gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'

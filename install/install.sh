@@ -126,7 +126,7 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
   if [[ ${#npms[@]} -gt 0 ]]; then
     if command -v npm >/dev/null 2>&1 || [[ $DRY_RUN -eq 1 ]]; then
       log "installing npm globals (${#npms[@]})"
-      run npm install -g "${npms[@]}"
+      run npm install -g "${npms[@]}" || warn "npm install failed (check npm prefix/permissions)"
     else
       warn "npm not found; skipping npm globals"
     fi
@@ -136,7 +136,7 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
     while read -r tool; do
       [[ -z "$tool" ]] && continue
       log "uv tool install $tool"
-      run uv tool install "$tool"
+      run uv tool install "$tool" || warn "uv tool install $tool failed"
     done < <(read_list "$INSTALL_DIR/uv-tools.txt")
   else
     warn "uv not found; skipping uv tools"
@@ -145,12 +145,12 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
   if command -v fish >/dev/null 2>&1 || [[ $DRY_RUN -eq 1 ]]; then
     if ! fish -c 'type -q fisher' 2>/dev/null; then
       log "installing fisher"
-      run fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher'
+      run fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher' || warn "failed to install fisher"
     fi
     while read -r plugin; do
       [[ -z "$plugin" ]] && continue
       log "fisher install $plugin"
-      run fish -c "fisher install $plugin"
+      run fish -c "fisher install $plugin" || warn "fisher install $plugin failed"
     done < <(read_list "$REPO/fish/fish_plugins")
   fi
 else

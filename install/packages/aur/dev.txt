@@ -1,7 +1,6 @@
 # AUR dev / DevOps tooling. Installed for profile=gui by default.
 
 nodejs-compose-language-service
-kanban
 bridge-utils
 hey-bin
 bun-bin

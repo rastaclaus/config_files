@@ -3,8 +3,8 @@
     // Included by config-sway / config-niri (include is a per-bar option, so
     // each compositor picks its own workspace module on top of these defaults).
     "layer": "top",
-    "position": "top",
-    "height": 30,
+    "position": "bottom",
+    "height": 26,
     "spacing": 6,
     "fixed-center": false,
     // The bar is always visible; ignore the default hide/show on SIGUSR1.

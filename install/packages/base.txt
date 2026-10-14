@@ -35,7 +35,6 @@ fzf
 fd
 ripgrep
 direnv
-the_silver_searcher
 yazi
 ueberzugpp
 
@@ -78,7 +77,6 @@ python-pyopenssl
 python-requests
 python-scipy
 python-yaml
-mypy
 uv
 pyenv
 luarocks
@@ -87,8 +85,6 @@ tree-sitter-python
 
 # --- cli helpers ---
 opencode
-gemini-cli
-qwen-code
 glow
 tree-sitter-cli
 imagemagick

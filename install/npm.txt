@@ -1,6 +1,4 @@
 # Global npm packages with no repo/AUR equivalent.
 # (node language servers / formatters are installed via pacman, see packages/base.txt)
 @redocly/cli
-cline
 markserv
-pdf2md

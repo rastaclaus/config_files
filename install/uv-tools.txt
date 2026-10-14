@@ -7,7 +7,3 @@ pyproject-fmt
 twine
 tox
 grip
-aider-chat
-tir-csv
-tir-gfm-lite
-tir-pukiwiki

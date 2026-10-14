@@ -127,6 +127,16 @@ setup_nerd_font_symbols() {
   run sudo ln -s "$src" "$dst" || warn "failed to enable Nerd Font symbols fallback"
 }
 
+# $LOCAL_PREFIX/bin is added to PATH by fish (fish_user_paths), not by this bash
+# script, so checking $PATH alone reports a false negative. Consult fish too.
+have_local_bin_in_path() {
+  case ":$PATH:" in *":$LOCAL_PREFIX/bin:"*) return 0 ;; esac
+  if command -v fish >/dev/null 2>&1; then
+    fish -c 'contains -- $argv[1] $fish_user_paths' "$LOCAL_PREFIX/bin" >/dev/null 2>&1 && return 0
+  fi
+  return 1
+}
+
 if [[ $DO_PACKAGES -eq 1 ]]; then
   install_yay
 
@@ -166,10 +176,9 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
     if command -v npm >/dev/null 2>&1 || [[ $DRY_RUN -eq 1 ]]; then
       log "installing npm globals (${#npms[@]}) -> $LOCAL_PREFIX"
       run npm install -g --prefix "$LOCAL_PREFIX" "${npms[@]}" || warn "npm install failed (check npm prefix/permissions)"
-      case ":$PATH:" in
-        *":$LOCAL_PREFIX/bin:"*) ;;
-        *) warn "$LOCAL_PREFIX/bin is not in PATH; npm global bins will not be found" ;;
-      esac
+      if ! have_local_bin_in_path; then
+        warn "$LOCAL_PREFIX/bin is not in PATH; npm global bins will not be found"
+      fi
     else
       warn "npm not found; skipping npm globals"
     fi

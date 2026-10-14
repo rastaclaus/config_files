@@ -1,8 +1,12 @@
-if command -q darkman
-    if test (darkman get) = "light"
-        fish_config theme choose "Snow Day"
-    else
-        fish_config theme choose "dark"
+# darkman answers only while its daemon runs. Without the socket the call fails
+# and its empty output used to spam every non-interactive 'fish -c' (fisher,
+# plugins, install.sh) with "test: Missing argument".
+if status is-interactive; and command -q darkman
+    switch (darkman get 2>/dev/null)
+        case light
+            fish_config theme choose "Snow Day"
+        case dark
+            fish_config theme choose "dark"
     end
 end
 

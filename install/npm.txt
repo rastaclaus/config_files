@@ -1,9 +1,6 @@
-# Global npm packages (language servers / formatters used by editors),
-# installed with: npm install -g <pkg>
-bash-language-server
-dockerfile-language-server
-vscode-json-languageserver
-yaml-language-server
-fish-lsp
-prettier
-@mermaid-js/mermaid-cli
+# Global npm packages with no repo/AUR equivalent.
+# (node language servers / formatters are installed via pacman, see packages/base.txt)
+@redocly/cli
+cline
+markserv
+pdf2md

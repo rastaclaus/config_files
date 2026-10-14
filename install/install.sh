@@ -102,12 +102,16 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
   aur=()
   official+=( $(read_list "$INSTALL_DIR/packages/base.txt") )
   aur+=(      $(read_list "$INSTALL_DIR/packages/aur/base.txt") )
-  official+=( $(read_list "$HOST_DIR/packages.txt") )
-  aur+=(      $(read_list "$HOST_DIR/packages-aur.txt") )
+  if [[ "$PROFILE" != "headless" ]]; then
+    official+=( $(read_list "$INSTALL_DIR/packages/dev.txt") )
+    aur+=(      $(read_list "$INSTALL_DIR/packages/aur/dev.txt") )
+  fi
   if [[ "$PROFILE" == "gui" ]]; then
     official+=( $(read_list "$INSTALL_DIR/packages/gui.txt") )
     aur+=(      $(read_list "$INSTALL_DIR/packages/aur/gui.txt") )
   fi
+  official+=( $(read_list "$HOST_DIR/packages.txt") )
+  aur+=(      $(read_list "$HOST_DIR/packages-aur.txt") )
 
   if [[ ${#official[@]} -gt 0 ]]; then
     log "installing official packages (${#official[@]})"

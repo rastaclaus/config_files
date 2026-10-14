@@ -1,0 +1,16 @@
+# AUR dev / DevOps tooling. Installed for profile=gui by default.
+
+nodejs-compose-language-service
+kanban
+bridge-utils
+hey-bin
+bun-bin
+mongodb-tools-bin
+mongosh-bin
+multipass
+
+# --- cross toolchain (ARM) ---
+arm-linux-gnueabihf-binutils-bin
+arm-linux-gnueabihf-gcc-bin
+arm-linux-gnueabihf-glibc-bin
+arm-linux-gnueabihf-glibc-headers-bin

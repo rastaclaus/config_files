@@ -1,3 +1,4 @@
-# Extra official-repo packages for host "alen" (laptop).
-amd-ucode
-brightnessctl
+# Extra official-repo packages specific to host "alen" (laptop).
+# One package per line. Examples:
+#   amd-ucode        # CPU microcode (match your CPU vendor)
+#   linux-headers    # kernel headers for dkms/out-of-tree modules

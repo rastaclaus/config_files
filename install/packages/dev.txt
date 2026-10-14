@@ -1,0 +1,22 @@
+# Dev / DevOps tooling.
+# Installed for profile=gui by default. A headless host can opt in by listing
+# the wanted packages in its own hosts/<host>/packages.txt.
+# One package per line; '#' starts a comment.
+
+# --- containers / virtualisation / cloud ---
+docker
+docker-buildx
+docker-compose
+buildah
+kubectl
+libvirt
+qemu-base
+postgresql-libs
+bind
+
+# --- networking / debugging ---
+tcpdump
+openbsd-netcat
+sshfs
+speedtest-cli
+scanmem

@@ -1,3 +1,10 @@
-# AUR packages installed on EVERY host (incl. headless).
+# AUR packages installed on EVERY host (including the headless one).
+
+# --- editor tooling ---
+fish-lsp
+tree-sitter-html
+tree-sitter-yaml
+
+# --- python ---
 pyenv-virtualenv
 revdiff

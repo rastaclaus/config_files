@@ -8,6 +8,10 @@ swaylock
 swaync
 gammastep
 brightnessctl
+geoclue
+mesa-utils
+vulkan-mesa-layers
+radeontop
 
 # --- terminal / launcher ---
 alacritty
@@ -20,27 +24,36 @@ kvantum
 arc-gtk-theme
 arc-icon-theme
 adw-gtk-theme
+
+# --- fonts ---
+noto-fonts
 noto-fonts-emoji
-ttf-dejavu
 adobe-source-code-pro-fonts
+ttf-dejavu-nerd
 ttf-jetbrains-mono
+ttf-roboto
+terminus-font
 
 # --- network ---
 networkmanager
 network-manager-applet
+libnma-gtk4
 blueman
 bluez-utils
 
 # --- audio ---
 pipewire
+pipewire-alsa
 pipewire-pulse
 wireplumber
 pavucontrol
 
-# --- wayland utils / portals ---
+# --- wayland utils / portals / notifications ---
 wl-clipboard
 wtype
 grim
 slurp
+libnotify
+xorg-xwayland
+xdg-desktop-portal
 xdg-desktop-portal-gtk
-xdg-desktop-portal-wlr

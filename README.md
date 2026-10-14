@@ -14,10 +14,22 @@ install/
   install.sh         # installer
   hosts.conf         # hostname -> host dir + profile
   symlinks.conf      # src -> target map
-  packages/*.txt     # pacman / AUR lists
+  packages/*.txt     # pacman / AUR lists (see below)
   npm.txt            # global npm packages
   uv-tools.txt       # uv tool install list
 ```
+
+Package manifests (official repo + its AUR counterpart):
+
+| file                       | installed on                       |
+|----------------------------|------------------------------------|
+| `packages/base.txt`        | every host (incl. headless)        |
+| `packages/dev.txt`         | profile `gui` (opt-in on headless) |
+| `packages/gui.txt`         | profile `gui` only                 |
+| `packages/aur/base.txt`    | AUR version of `base.txt`          |
+| `packages/aur/dev.txt`     | AUR version of `dev.txt`           |
+| `packages/aur/gui.txt`     | AUR version of `gui.txt`           |
+| `hosts/<host>/packages.txt`| extra official packages for a host |
 
 Common configs live at the repo root; a host only ships the files it overrides.
 
@@ -54,12 +66,13 @@ Otherwise the whole directory is a single symlink.
 
 The installer:
 1. installs `yay` if missing,
-2. `yay -S --needed` from `packages/base.txt` (+ `packages/gui.txt` for GUI,
-   + `hosts/<host>/packages.txt`),
+2. `yay -S --needed` from `packages/base.txt` (+ `packages/dev.txt` unless
+   profile is `headless`, + `packages/gui.txt` for GUI, + `hosts/<host>/packages.txt`),
 3. `npm install -g` from `npm.txt`, `uv tool install` from `uv-tools.txt`,
 4. installs fisher + fish plugins,
 5. lays out symlinks per `symlinks.conf`, backing up anything it replaces to
    `~/.dotfiles-backup-<timestamp>/`.
 
 The `headless` profile installs only the base set plus fish/opencode/editors
-and their dependencies — no GUI, no Sway.
+and their dependencies — no GUI, no Sway. Dev/DevOps tooling can be opted in
+per host via `hosts/<host>/packages.txt`.

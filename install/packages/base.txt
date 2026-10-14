@@ -1,5 +1,8 @@
-# Core CLI + development tooling. Installed on EVERY host (incl. headless).
+# Official-repo packages installed on EVERY host (including the headless one).
 # One package per line; '#' starts a comment.
+#   gui.txt  -> Wayland/GUI only
+#   dev.txt  -> dev/DevOps tooling (gui profile; opt-in for headless hosts)
+#   hosts/<host>/packages.txt -> host-specific extras
 
 # --- base system / build ---
 base
@@ -16,11 +19,14 @@ tree
 less
 man-db
 unzip
+7zip
+unrar
 htop
 pkgconf
 make
 cmake
 clang
+lld
 
 # --- shell / prompt / navigation ---
 fish
@@ -29,33 +35,64 @@ fzf
 fd
 ripgrep
 direnv
-zoxide
+the_silver_searcher
+yazi
+ueberzugpp
 
-# --- editors + their LSPs / formatters ---
+# --- editors + LSP / formatters (node LSPs come from pacman, not npm) ---
 neovim
 helix
 lua-language-server
+lua-jsregexp
+lua51-jsregexp
 stylua
 selene
+shfmt
+vim-devicons
 marksman
 tombi
-shfmt
 gopls
 rust-analyzer
-python-pip
-python-setuptools
-mypy
+bash-language-server
+dockerfile-language-server
+vscode-json-languageserver
+yaml-language-server
+prettier
+mermaid-cli
 
 # --- languages / runtimes ---
 go
 rustup
+cargo-expand
 nodejs
 npm
+yarn
 python
+python-pip
+python-setuptools
+python-debugpy
+python-pillow
+python-psutil
+python-pynvim
+python-pyopenssl
+python-requests
+python-scipy
+python-yaml
+mypy
 uv
 pyenv
+luarocks
+tree-sitter
+tree-sitter-python
 
-# --- ai / CLI helpers ---
+# --- cli helpers ---
 opencode
+gemini-cli
+qwen-code
 glow
 tree-sitter-cli
+imagemagick
+github-cli
+lazygit
+mercurial
+httpie

@@ -1,0 +1,46 @@
+# GUI / Wayland session packages. Installed only for profile=gui.
+
+# --- compositor + helpers ---
+sway
+swaybg
+swayidle
+swaylock
+swaync
+gammastep
+brightnessctl
+
+# --- terminal / launcher ---
+alacritty
+rofi
+rofi-emoji
+
+# --- theme / appearance ---
+darkman
+kvantum
+arc-gtk-theme
+arc-icon-theme
+adw-gtk-theme
+noto-fonts-emoji
+ttf-dejavu
+adobe-source-code-pro-fonts
+ttf-jetbrains-mono
+
+# --- network ---
+networkmanager
+network-manager-applet
+blueman
+bluez-utils
+
+# --- audio ---
+pipewire
+pipewire-pulse
+wireplumber
+pavucontrol
+
+# --- wayland utils / portals ---
+wl-clipboard
+wtype
+grim
+slurp
+xdg-desktop-portal-gtk
+xdg-desktop-portal-wlr

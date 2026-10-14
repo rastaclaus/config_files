@@ -1,0 +1,61 @@
+# Core CLI + development tooling. Installed on EVERY host (incl. headless).
+# One package per line; '#' starts a comment.
+
+# --- base system / build ---
+base
+base-devel
+git
+git-lfs
+git-delta
+openssh
+rsync
+curl
+wget
+jq
+tree
+less
+man-db
+unzip
+htop
+pkgconf
+make
+cmake
+clang
+
+# --- shell / prompt / navigation ---
+fish
+tmux
+fzf
+fd
+ripgrep
+direnv
+zoxide
+
+# --- editors + their LSPs / formatters ---
+neovim
+helix
+lua-language-server
+stylua
+selene
+marksman
+tombi
+shfmt
+gopls
+rust-analyzer
+python-pip
+python-setuptools
+mypy
+
+# --- languages / runtimes ---
+go
+rustup
+nodejs
+npm
+python
+uv
+pyenv
+
+# --- ai / CLI helpers ---
+opencode
+glow
+tree-sitter-cli

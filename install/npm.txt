@@ -1,0 +1,9 @@
+# Global npm packages (language servers / formatters used by editors),
+# installed with: npm install -g <pkg>
+bash-language-server
+dockerfile-language-server
+vscode-json-languageserver
+yaml-language-server
+fish-lsp
+prettier
+@mermaid-js/mermaid-cli

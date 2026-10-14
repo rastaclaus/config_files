@@ -1,0 +1,10 @@
+# Python CLI tools installed as isolated uv tools: uv tool install <pkg>
+ruff
+ty
+basedpyright
+pre-commit
+pyproject-fmt
+twine
+tox
+grip
+aider-chat

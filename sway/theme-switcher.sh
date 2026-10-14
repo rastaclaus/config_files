@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 notify-send "Switch to $1 mode"
 
 # GTK

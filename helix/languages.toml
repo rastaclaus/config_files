@@ -9,6 +9,14 @@ args = ["server"]
 command = "ty"
 args = ["server"]
 
+# ty answers `workspace/configuration` with section "ty"; Helix serves the
+# `[language-server.ty.config]` table for it, so keys are nested under `ty.`.
+# `experimental.rename`/`experimental.autoImport` from the old config no longer
+# exist (rename is always on; autoImport moved under completions).
+[language-server.ty.config]
+ty.diagnosticMode = "workspace"
+ty.completions.autoImport = true
+
 [language-server.tombi]
 command = "tombi"
 args = ["lsp"]
@@ -17,12 +25,18 @@ args = ["lsp"]
 command = "fish-lsp"
 args = ["start"]
 
+# Rust: surface `cargo clippy` lints through rust-analyzer.
+[language-server.rust-analyzer.config]
+check.command = "clippy"
+
 # Python: type checking via ty, lint + formatting via ruff.
 # auto-format is intentionally left off; format manually with :format
 [[language]]
 name = "python"
+roots = ["pyproject.toml", ".git", "setup.py"]
 language-servers = ["ty", "ruff"]
 formatter = { command = "ruff", args = ["format", "--stdin-filename", "%{buffer_name}", "-"] }
+indent = { tab-width = 4, unit = "    " }   # auto-indent = 4 spaces (PEP 8)
 
 # The blocks below only override built-in defaults (servers/format). auto-format
 # is left off; format manually with :format.

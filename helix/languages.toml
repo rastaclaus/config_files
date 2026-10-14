@@ -9,13 +9,18 @@ args = ["server"]
 command = "ty"
 args = ["server"]
 
-# ty answers `workspace/configuration` with section "ty"; Helix serves the
-# `[language-server.ty.config]` table for it, so keys are nested under `ty.`.
+# Helix uses `[language-server.ty.config]` for BOTH the `initializationOptions`
+# of the `initialize` request and the reply to ty's `workspace/configuration`
+# request. ty accepts these dynamic settings (diagnosticMode, completions, ...)
+# in the initialization options too, but warns about any unrecognized top-level
+# key. Wrapping them in a `ty` table (as the `workspace/configuration` *section*
+# name would suggest) therefore triggers "Received unknown options during
+# initialization", so the keys must stay at the top level here.
 # `experimental.rename`/`experimental.autoImport` from the old config no longer
 # exist (rename is always on; autoImport moved under completions).
 [language-server.ty.config]
-ty.diagnosticMode = "workspace"
-ty.completions.autoImport = true
+diagnosticMode = "workspace"
+completions.autoImport = true
 
 [language-server.tombi]
 command = "tombi"

@@ -1,0 +1,15 @@
+require('fzf-lua').setup({})
+-- vim.cmd("FzfLua register_ui_select")
+
+vim.keymap.set("n", "<leader>ff", ":FzfLua files<CR>", { desc = "Find file" })
+vim.keymap.set("n", "<leader>fg", ":FzfLua grep_project<CR>", { desc = "Grep project" })
+vim.keymap.set("n", "<leader>fb", ":FzfLua buffers<CR>", { desc = "Find buffer" })
+vim.keymap.set("n", "<leader>fqq", ":FzfLua diagnostics_document<CR>", { desc = "Find diagnostics document" })
+vim.keymap.set("n", "<leader>fqw", ":FzfLua diagnostics_workspace<CR>", { desc = "Find diagnostics workspace" })
+
+vim.keymap.set("n", "gra", ":FzfLua lsp_code_actions<CR>", { desc = "LSP code actions" })
+vim.keymap.set("n", "gd", ":FzfLua lsp_definitions<CR>", { desc = "LSP definitions" })
+vim.keymap.set("n", "gD", ":FzfLua lsp_declarations<CR>", { desc = "LSP declarations" })
+vim.keymap.set("n", "grr", ":FzfLua lsp_references<CR>", { desc = "LSP references" })
+vim.keymap.set("n", "gri", ":FzfLua lsp_implementations<CR>", { desc = "LSP implementations" })
+vim.keymap.set("n", "grt", ":FzfLua lsp_typedefs<CR>", { desc = "LSP type definitions" })

@@ -1,7 +1,5 @@
 nvim/plugin/
 nvim/undodir/
 .aider*
-opencode/commands/*
-opencode/plugins/*
-opencode/tools/*
-
+__pycache__/
+*.pyc

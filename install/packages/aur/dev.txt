@@ -2,14 +2,7 @@
 
 nodejs-compose-language-service        # LSP для docker-compose
 bridge-utils                           # утилиты для сетевых мостов (brctl)
-hey-bin                                # нагрузочное тестирование HTTP (hey)
 bun-bin                                # быстрый JS/TS-рантайм и менеджер пакетов
 mongodb-tools-bin                      # CLI MongoDB (mongodump, mongorestore и др.)
 mongosh-bin                            # оболочка MongoDB
 multipass                              # запуск VM Ubuntu из CLI
-
-# --- cross toolchain (ARM) ---
-arm-linux-gnueabihf-binutils-bin       # binutils для кросс-сборки под ARM (hard-float)
-arm-linux-gnueabihf-gcc-bin            # кросс-компилятор GCC под ARM
-arm-linux-gnueabihf-glibc-bin          # glibc для ARM-таргета
-arm-linux-gnueabihf-glibc-headers-bin  # заголовки glibc для ARM-таргета

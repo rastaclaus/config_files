@@ -1,0 +1,3 @@
+# Extra official-repo packages for host "alen" (laptop).
+amd-ucode
+brightnessctl

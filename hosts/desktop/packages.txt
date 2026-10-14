@@ -1,0 +1,2 @@
+# Extra official-repo packages for host "desktop" (hostname: adesk).
+# amd-ucode

@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 #
 # Set a random wallpaper on every active output.
+#
+# Works under both sway (via swaymsg) and niri (via niri msg). Wallpapers are
+# drawn with swaybg, which runs on both compositors.
+#
 # Override the directory with WALLPAPER_DIR=<path>.
 set -euo pipefail
 
@@ -19,7 +23,15 @@ if (( ${#images[@]} == 0 )); then
     exit 1
 fi
 
-mapfile -t outputs < <(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name')
+# Detect the running compositor and list its active outputs.
+if [[ -n "${SWAYSOCK:-}" ]]; then
+    mapfile -t outputs < <(swaymsg -t get_outputs | jq -r '.[] | select(.active) | .name')
+elif [[ -n "${NIRI_SOCKET:-}" ]]; then
+    mapfile -t outputs < <(niri msg --json outputs | jq -r 'to_entries[] | select(.value.active == true) | .key')
+else
+    echo "wallpapers: neither sway nor niri is running" >&2
+    exit 1
+fi
 
 if (( ${#outputs[@]} == 0 )); then
     echo "wallpapers: no active outputs" >&2

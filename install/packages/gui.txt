@@ -2,6 +2,9 @@
 
 # --- compositor + helpers ---
 sway
+niri
+waybar
+xwayland-satellite
 swaybg
 swayidle
 swaylock
@@ -58,3 +61,4 @@ libnotify
 xorg-xwayland
 xdg-desktop-portal
 xdg-desktop-portal-gtk
+xdg-desktop-portal-gnome

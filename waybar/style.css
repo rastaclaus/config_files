@@ -1,0 +1,54 @@
+/* Waybar style for sway and niri.
+ *
+ * Colors are declared with @define-color so the light/dark theme scripts
+ * (dark-mode.d/waybar-theme.sh, light-mode.d/waybar-theme.sh) can switch them
+ * with a simple sed. Waybar reloads the style automatically because
+ * reload_style_on_change is enabled in config-common.jsonc.
+ */
+
+@define-color bar_bg #282828;
+@define-color bar_fg #ebdbb2;
+@define-color bar_accent #fabd2f;
+@define-color bar_inactive #928374;
+@define-color bar_critical #fb4934;
+
+* {
+    font-family: "Source Code Pro", monospace;
+    font-size: 12px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: @bar_bg;
+    color: @bar_fg;
+}
+
+#workspaces button {
+    padding: 0 6px;
+    color: @bar_inactive;
+    background: transparent;
+    border: none;
+}
+
+#workspaces button.focused,
+#workspaces button.active {
+    color: @bar_accent;
+}
+
+#workspaces button.urgent {
+    color: @bar_critical;
+}
+
+#clock,
+#cpu,
+#memory,
+#custom-weather,
+#window {
+    padding: 0 8px;
+    color: @bar_fg;
+}
+
+#cpu.critical,
+#memory.critical {
+    color: @bar_critical;
+}

@@ -1,0 +1,37 @@
+{
+    // Shared bar options and modules for both sway and niri.
+    // Included by config-sway / config-niri (include is a per-bar option, so
+    // each compositor picks its own workspace module on top of these defaults).
+    "layer": "top",
+    "position": "top",
+    "height": 30,
+    "spacing": 6,
+    "fixed-center": false,
+    // The bar is always visible; ignore the default hide/show on SIGUSR1.
+    "on-sigusr1": "noop",
+    // Pick up theme changes written by darkman without restarting.
+    "reload_style_on_change": true,
+
+    "modules-right": [ "clock", "cpu", "memory", "custom/weather" ],
+
+    "clock": {
+        "timezone": "Europe/Moscow",
+        "format": "Time: {:%A %Y-%m-%d %H:%M:%S}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "interval": 1
+    },
+    "cpu": {
+        "format": "CPU: {usage}%",
+        "interval": 2
+    },
+    "memory": {
+        "format": "Mem: {percentage}%",
+        "interval": 2
+    },
+    "custom/weather": {
+        "exec": "~/.config/waybar/weather.py",
+        "interval": 600,
+        "return-type": "json",
+        "format": "Weather: {}"
+    }
+}

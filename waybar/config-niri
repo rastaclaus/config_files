@@ -1,0 +1,15 @@
+{
+    "include": [ "~/.config/waybar/config-common.jsonc" ],
+    "name": "bar-niri",
+    "modules-left": [ "niri/workspaces" ],
+    "modules-center": [ "niri/window" ],
+
+    "niri/workspaces": {
+        "disable-scroll": true,
+        "format": "{index}"
+    },
+    "niri/window": {
+        "format": "{}",
+        "max-length": 60
+    }
+}

@@ -1,0 +1,226 @@
+// niri configuration — a scrollable-tiling Wayland compositor.
+// Docs: https://niri-wm.github.io/niri/  (see also `man niri` / `niri validate`).
+//
+// Shared settings live here; host-specific bits are included from
+// ~/.config/niri/config.d/ (shipped from hosts/<host>/config/niri/config.d/
+// by the installer). Key bindings mirror the sway setup where niri has an
+// equivalent action; sway-only bindings live in sway/config.
+
+// Relative includes resolve next to this file (~/.config/niri/config.d/).
+include "config.d/10-outputs.kdl"
+include "config.d/20-inputs.kdl"
+
+// ---------------------------------------------------------------- input
+input {
+    // Portable keyboard settings (apply to any keyboard, incl. laptop ones).
+    keyboard {
+        xkb {
+            model "pc105"
+            layout "us,ru"
+            // Caps Lock switches the layout, mirroring the sway setup.
+            options "grp:caps_toggle,grp_led:caps"
+        }
+    }
+
+    // Touchpad defaults: tap-to-click + disable-while-typing.
+    // (Pointing-device sections are not merged across includes.)
+    touchpad {
+        tap
+        dwt
+    }
+}
+
+// ---------------------------------------------------------------- layout
+layout {
+    gaps 16
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        width 4
+        active-color "#7fc8ff"
+        inactive-color "#505050"
+    }
+}
+
+// ---------------------------------------------------------------- startup
+spawn-at-startup "nm-applet" "--indicator"
+spawn-at-startup "swaync"
+spawn-at-startup "gammastep" "-l" "55.817521:37.695987"
+spawn-at-startup "~/.config/wayland/wallpapers.sh"
+spawn-sh-at-startup "waybar -c ~/.config/waybar/config-niri -s ~/.config/waybar/style.css"
+
+// Idle: lock after 5 min, screen off after 10, suspend after 30.
+spawn-sh-at-startup "swayidle -w timeout 300 'swaylock -f -c 000000' timeout 600 'niri msg action power-off-monitors' timeout 1800 'systemctl suspend' before-sleep 'swaylock -f -c 000000'"
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+// Screenshots go to the same place as the sway setup.
+screenshot-path "~/screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
+
+// ---------------------------------------------------------------- binds
+// niri does not fill this section with defaults, so the full set is spelled out.
+binds {
+    // --- programs / session ---
+    Mod+Return hotkey-overlay-title="Terminal: alacritty" { spawn "alacritty"; }
+    Mod+D hotkey-overlay-title="Launcher: rofi" { spawn "rofi" "-show" "combi"; }
+    Mod+Shift+U { spawn "rofi" "-modi" "unicode" "-show" "unicode"; }
+    Mod+Shift+S { spawn "rofi" "-modi" "emoji" "-show" "emoji"; }
+    Alt+Tab { spawn "rofi" "-show" "window"; }
+    Mod+N { spawn "networkmanager_dmenu"; }
+    Mod+T { spawn "~/.config/wayland/wallpapers.sh"; }
+
+    Ctrl+Alt+L { spawn "swaylock" "-f" "-c" "000000"; }
+    Mod+Shift+E { quit; }
+    Ctrl+Alt+BackSpace { quit; }
+
+    Mod+Shift+Slash { show-hotkey-overlay; }
+    Mod+Shift+Q { close-window; }
+
+    // --- overview ---
+    Mod+O repeat=false { toggle-overview; }
+
+    // --- focus (columns / windows) ---
+    Mod+H { focus-column-left; }
+    Mod+J { focus-window-down; }
+    Mod+K { focus-window-up; }
+    Mod+L { focus-column-right; }
+    Mod+Left  { focus-column-left; }
+    Mod+Down  { focus-window-down; }
+    Mod+Up    { focus-window-up; }
+    Mod+Right { focus-column-right; }
+
+    // --- move focused window / column ---
+    Mod+Shift+H { move-column-left; }
+    Mod+Shift+J { move-window-down; }
+    Mod+Shift+K { move-window-up; }
+    Mod+Shift+L { move-column-right; }
+    Mod+Shift+Left  { move-column-left; }
+    Mod+Shift+Down  { move-window-down; }
+    Mod+Shift+Up    { move-window-up; }
+    Mod+Shift+Right { move-column-right; }
+
+    // --- monitors (the desktop has two; harmless on a single-screen laptop) ---
+    Mod+Ctrl+H { focus-monitor-left; }
+    Mod+Ctrl+J { focus-monitor-down; }
+    Mod+Ctrl+K { focus-monitor-up; }
+    Mod+Ctrl+L { focus-monitor-right; }
+    Mod+Ctrl+Left  { focus-monitor-left; }
+    Mod+Ctrl+Down  { focus-monitor-down; }
+    Mod+Ctrl+Up    { focus-monitor-up; }
+    Mod+Ctrl+Right { focus-monitor-right; }
+
+    Mod+Ctrl+Shift+H { move-column-to-monitor-left; }
+    Mod+Ctrl+Shift+J { move-column-to-monitor-down; }
+    Mod+Ctrl+Shift+K { move-column-to-monitor-up; }
+    Mod+Ctrl+Shift+L { move-column-to-monitor-right; }
+
+    Mod+Home { focus-column-first; }
+    Mod+End  { focus-column-last; }
+    Mod+Ctrl+Home { move-column-to-first; }
+    Mod+Ctrl+End  { move-column-to-last; }
+
+    // --- workspaces ---
+    Mod+Page_Down { focus-workspace-down; }
+    Mod+Page_Up   { focus-workspace-up; }
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+0 { focus-workspace 10; }
+
+    Mod+Shift+1 { move-column-to-workspace 1; }
+    Mod+Shift+2 { move-column-to-workspace 2; }
+    Mod+Shift+3 { move-column-to-workspace 3; }
+    Mod+Shift+4 { move-column-to-workspace 4; }
+    Mod+Shift+5 { move-column-to-workspace 5; }
+    Mod+Shift+6 { move-column-to-workspace 6; }
+    Mod+Shift+7 { move-column-to-workspace 7; }
+    Mod+Shift+8 { move-column-to-workspace 8; }
+    Mod+Shift+9 { move-column-to-workspace 9; }
+    Mod+Shift+0 { move-column-to-workspace 10; }
+
+    Mod+Ctrl+Page_Down { move-column-to-workspace-down; }
+    Mod+Ctrl+Page_Up   { move-column-to-workspace-up; }
+
+    // --- consume / expel windows into columns ---
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+    Mod+Comma  { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+
+    // --- column width ---
+    Mod+R { switch-preset-column-width; }
+    Mod+Shift+R { switch-preset-column-width-back; }
+
+    // --- fullscreen / maximize / expand ---
+    Mod+F { fullscreen-window; }
+    Mod+Shift+F { maximize-column; }
+    Mod+M { maximize-window-to-edges; }
+    Mod+E { expand-column-to-available-width; }
+
+    // --- centering / fine sizing ---
+    Mod+C { center-column; }
+    Mod+Ctrl+C { center-visible-columns; }
+    Mod+Minus { set-column-width "-10%"; }
+    Mod+Equal { set-column-width "+10%"; }
+    Mod+Shift+Minus { set-window-height "-10%"; }
+    Mod+Shift+Equal { set-window-height "+10%"; }
+
+    // --- tabbed columns ---
+    Mod+W { toggle-column-tabbed-display; }
+
+    // --- floating ---
+    Mod+Shift+Space { toggle-window-floating; }
+    Mod+Space { switch-focus-between-floating-and-tiling; }
+    Mod+V { toggle-window-floating; }
+    Mod+Shift+V { switch-focus-between-floating-and-tiling; }
+
+    // --- screenshots (native niri UI; also saved to screenshot-path) ---
+    Print { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print { screenshot-window; }
+
+    // --- escape hatch for keyboard-shortcut inhibitors (VMs, remote desktop) ---
+    Mod+Escape allow-inhibiting=false { toggle-keyboard-shortcuts-inhibit; }
+
+    // --- monitors off ---
+    Mod+Shift+P { power-off-monitors; }
+
+    // --- audio / brightness / touchpad ---
+    XF86AudioMute allow-when-locked=true { spawn "pactl" "set-sink-mute" "@DEFAULT_SINK@" "toggle"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "-5%"; }
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "pactl" "set-sink-volume" "@DEFAULT_SINK@" "+5%"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "set" "+5%"; }
+    XF86TouchpadToggle { spawn "~/.config/wayland/toggletouch.sh"; }
+
+    // --- mouse wheel: workspaces / columns (matches niri defaults) ---
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
+    Mod+Ctrl+WheelScrollDown cooldown-ms=150 { move-column-to-workspace-down; }
+    Mod+Ctrl+WheelScrollUp   cooldown-ms=150 { move-column-to-workspace-up; }
+    Mod+WheelScrollRight { focus-column-right; }
+    Mod+WheelScrollLeft  { focus-column-left; }
+    Mod+Ctrl+WheelScrollRight { move-column-right; }
+    Mod+Ctrl+WheelScrollLeft  { move-column-left; }
+}
+
+// Runtime touchpad toggle: ~/.config/wayland/toggletouch.sh writes here on
+// niri releases that predate the built-in "toggle-touchpad" action. Included
+// last so its touchpad section takes precedence. Missing by default.
+include "config.d/50-touchpad.kdl" optional=true

@@ -7,6 +7,7 @@ Personal dotfiles. One branch, host-specific bits under `hosts/`.
 ```
 fish/ helix/ nvim/ opencode/ direnv/ alacritty/ rofi/ darkman/
 networkmanager-dmenu/ xdg-desktop-portal/ applications/
+sway/ niri/ waybar/ wayland/                          # Wayland sessions (gui)
 dark-mode.d/ light-mode.d/ .tmux.conf .ruff.toml      # common (base)
 vpn/                                                  # VPN profile skeleton (see below)
 hosts/
@@ -52,10 +53,45 @@ Otherwise the whole directory is a single symlink.
 
 | host    | hostname | profile  | notes                          |
 |---------|----------|----------|--------------------------------|
-| desktop | adesk    | gui      | Sway workstation               |
+| desktop | adesk    | gui      | Sway/niri workstation          |
 | ambb    | ambb     | gui      | laptop                         |
 | alen    | alen     | gui      | laptop                         |
 | work    | awdesk   | headless | SSH only, no GUI               |
+
+## Compositors (sway / niri)
+
+Both compositors are installed for the `gui` profile. On a TTY (tty1) fish
+starts the one selected by the `WAYLAND_COMPOSITOR` universal variable
+(default `sway`); niri runs through `niri-session`:
+
+```sh
+wm niri    # switch for the next login
+wm sway
+```
+
+Layering mirrors the rest of the repo:
+
+- `sway/config`            — shared sway config (`include`s the host `config.d/`).
+- `niri/config.kdl`        — shared niri config, with `include "config.d/..."`.
+- `hosts/<host>/config/{sway,niri}/config.d/` — per-host outputs/inputs.
+
+Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
+`wayland/`:
+
+- `wallpapers.sh` — random `swaybg` wallpaper on every active output.
+- `toggletouch.sh` — touchpad toggle (`niri msg action toggle-touchpad` or
+  `swaymsg input ... events`).
+
+The status bar is **waybar** on both compositors: `waybar/config-common.jsonc`
+holds shared options and modules, `config-sway` / `config-niri` add the
+compositor-specific workspace module, and `style.css` is themed by darkman
+(`dark-mode.d/` / `light-mode.d/`). Portals: sway keeps `xdg-desktop-portal-wlr`,
+niri uses `niri-portals.conf` (GNOME screencast backend).
+
+Key bindings are kept in sync between `sway/config` and `niri/config.kdl`
+(`Mod`+h/j/k/l, workspace `Mod`+1..0, terminal/launcher, screenshots, media
+keys). sway-only features that niri has no equivalent for (splits, stacking,
+focus-parent, scratchpad, a resize mode) stay in `sway/config`.
 
 ## Install
 

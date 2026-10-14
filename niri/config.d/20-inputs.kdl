@@ -1,0 +1,5 @@
+// Host-specific input devices and pointer tweaks.
+//
+// Shared default is empty; the keyboard/touchpad settings live in
+// niri/config.kdl. A host that needs extra input tuning ships its own copy of
+// this file from hosts/<host>/config/niri/config.d/20-inputs.kdl.

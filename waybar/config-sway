@@ -1,0 +1,12 @@
+{
+    "include": [ "~/.config/waybar/config-common.jsonc" ],
+    "name": "bar-sway",
+    "modules-left": [ "sway/workspaces" ],
+    "modules-center": [ ],
+
+    "sway/workspaces": {
+        "disable-scroll": true,
+        "all-outputs": false,
+        "format": "{name}"
+    }
+}

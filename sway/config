@@ -143,7 +143,7 @@ input type:keyboard {
 
     bindsym XF86MonBrightnessDown exec brightnessctl set 5%-
     bindsym XF86MonBrightnessUp exec brightnessctl set +5%
-    bindsym XF86TouchpadToggle exec ~/.config/sway/toggletouch.sh
+    bindsym XF86TouchpadToggle exec ~/.config/wayland/toggletouch.sh
 
     bindsym XF86AudioMute exec pactl set-sink-mute @DEFAULT_SINK@ toggle
     bindsym XF86AudioLowerVolume exec pactl set-sink-volume @DEFAULT_SINK@ -5%
@@ -173,29 +173,17 @@ mode "resize" {
     bindsym Escape mode "default"
 }
 bindsym $mod+r mode "resize"
-bindsym $mod+i exec swaymsg bar mode toggle
-bindsym $mod+t exec ~/.config/sway/wallpapers.sh
+bindsym $mod+t exec ~/.config/wayland/wallpapers.sh
 focus_follows_mouse no
 
-# Status Bar:
-# Read `man 5 sway-bar` for more information about this section.
-bar {
-    id bar1
-    modifier $mod
-    mode hide
-    status_command env WEATHER_USER_AGENT="swaybar-status/1.0 github.com/rastaclaus tema.rastaclaus@gmail.com" WEATHER_LAT=55.817521 WEATHER_LON=37.695987 ~/.config/sway/swaybar-status.py
-    workspace_buttons yes
-    output *
-    colors {
-      background #222222
-      inactive_workspace #323232 #323232 #5c5c5c
-    }
-}
+# Status Bar: provided by waybar (shared config with the niri setup).
+# Waybar is always visible (no hide-on-modifier); see ~/.config/waybar/.
 
 exec --no-startup-id nm-applet --indicator
 exec --no-startup-id swaync
 exec --no-startup-id gammastep -l 55.817521:37.695987
-exec --no-startup-id $HOME/.config/sway/wallpapers.sh
+exec --no-startup-id $HOME/.config/wayland/wallpapers.sh
+exec --no-startup-id waybar -c ~/.config/waybar/config-sway -s ~/.config/waybar/style.css
 
 include /etc/sway/config.d/*
 include ~/.config/sway/config.d/*.conf

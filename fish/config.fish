@@ -10,6 +10,9 @@ if status is-interactive; and command -q darkman
     end
 end
 
+set -gx PYENV_ROOT $HOME/.pyenv
+fish_add_path -g $HOME/.local/bin $HOME/.cargo/bin
+
 pyenv init - fish | source
 direnv hook fish | source
 

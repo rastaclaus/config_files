@@ -3236,7 +3236,9 @@
       "vision": {
         "type": "local",
         "command": [
-          "mcp-vision-bridge"
+          "sh",
+          "-c",
+          "exec node \"$(npm root -g)/mcp-vision-bridge/dist/index.js\""
         ],
         "environment": {
           "VISION_OPENAI_BASE_URL": "https://routerai.ru/api/v1",

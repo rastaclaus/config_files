@@ -287,12 +287,14 @@ if [[ $DO_LINKS -eq 1 ]]; then
     fi
     src_abs="$REPO/$src"
     target_abs="${target/#\~/$HOME}"
-    [[ -e "$src_abs" ]] || { warn "missing source: $src"; continue; }
     host_src="$(host_source_for "$target_abs")"
     if [[ -d "$host_src" ]]; then
       info "merging host override for $target_abs"
       merge_dir "$src_abs" "$host_src" "$target_abs"
+    elif [[ -f "$host_src" || -L "$host_src" ]]; then
+      ensure_link "$host_src" "$target_abs"
     else
+      [[ -e "$src_abs" ]] || { warn "missing source: $src"; continue; }
       ensure_link "$src_abs" "$target_abs"
     fi
   done < "$INSTALL_DIR/symlinks.conf"

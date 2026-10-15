@@ -3236,8 +3236,7 @@
       "vision": {
         "type": "local",
         "command": [
-          "node",
-          "/home/artems/.local/lib/node_modules/mcp-vision-bridge/dist/index.js"
+          "mcp-vision-bridge"
         ],
         "environment": {
           "VISION_OPENAI_BASE_URL": "https://routerai.ru/api/v1",

@@ -27,6 +27,7 @@ make                        # сборка проектов по Makefile
 cmake                       # генератор систем сборки (C/C++)
 clang                       # компилятор C/C++ из LLVM
 lld                         # быстрый линкер LLVM
+pacman-contrib              # paccache/pactree: чистка кэша pacman, анализ зависимостей
 
 # --- shell / prompt / navigation ---
 fish                        # интерактивный shell (основной в этом репо)
@@ -36,7 +37,6 @@ fd                          # быстрый аналог find
 ripgrep                     # быстрый аналог grep (rg)
 direnv                      # автозагрузка переменных окружения из .envrc
 yazi                        # TUI-файловый менеджер
-ueberzugpp                  # превью изображений в терминале (для yazi)
 
 # --- editors + LSP / formatters (node LSPs come from pacman, not npm) ---
 neovim                      # редактор (конфиг в nvim/)
@@ -57,7 +57,6 @@ dockerfile-language-server  # LSP для Dockerfile
 vscode-json-languageserver  # LSP для JSON
 yaml-language-server        # LSP для YAML
 prettier                    # форматтер JS/TS/JSON/CSS/Markdown
-mermaid-cli                 # рендер диаграмм Mermaid (mmdc)
 
 # --- languages / runtimes ---
 go                          # язык Go и его toolchain
@@ -92,3 +91,11 @@ github-cli                  # официальный CLI GitHub (gh)
 lazygit                     # TUI для Git
 mercurial                   # распределённая VCS (hg)
 httpie                      # дружелюбный HTTP-клиент (http)
+
+# --- containers / orchestration ---
+# Держим в base: docker и kubectl нужны на каждом хосте, включая headless.
+# GUI-зависимостей нет (проверено по sync-базе: ни chromium, ни gtk, ни mesa).
+docker                      # контейнеризация (демон + CLI)
+docker-buildx               # плагин BuildKit для сборки образов
+docker-compose              # запуск многоконтейнерных приложений (v2 CLI)
+kubectl                     # CLI для Kubernetes

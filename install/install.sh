@@ -18,18 +18,10 @@
 #
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-INSTALL_DIR="$REPO/install"
-
-# Runtime state lives outside the repo so that the repo stays read-only.
-STATE_DIR="$HOME/.local/state/dotfiles"
-
-# User-level install prefix for tooling that has no pacman/AUR package.
-# npm's global prefix defaults to /usr (node is packaged system-wide), which is
-# root-owned, so 'npm install -g' fails with EACCES for a normal user.
-# Installing into $HOME/.local puts bins in ~/.local/bin and modules in
-# ~/.local/lib/node_modules.
-LOCAL_PREFIX="${LOCAL_PREFIX:-$HOME/.local}"
+# Общие помощники (log/info/warn/die, read_list, resolve_host,
+# collect_packages) и пути REPO/INSTALL_DIR/STATE_DIR/LOCAL_PREFIX.
+# shellcheck source=install/lib.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib.sh"
 
 HOST=""
 PROFILE=""
@@ -37,11 +29,6 @@ DO_PACKAGES=1
 DO_LINKS=1
 DO_FISHER=1
 DRY_RUN=0
-
-log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
-info() { printf '    %s\n' "$*"; }
-warn() { printf '\033[1;33m warn \033[0m%s\n' "$*" >&2; }
-die()  { printf '\033[1;31merror \033[0m%s\n' "$*" >&2; exit 1; }
 
 run() {
   if [[ $DRY_RUN -eq 1 ]]; then printf '    [dry-run] %s\n' "$*"; else "$@"; fi
@@ -64,41 +51,10 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-HOSTS_CONF="$INSTALL_DIR/hosts.conf"
-
 # ---------------------------------------------------------------- host resolve
-detect_hostname() {
-  local hn=""
-  hn="$(hostnamectl --static 2>/dev/null || true)"
-  [[ -n "$hn" ]] || hn="$(cat /etc/hostname 2>/dev/null || true)"
-  printf '%s' "${hn:-unknown}"
-}
-
-if [[ -z "$HOST" ]]; then
-  HN="$(detect_hostname)"
-  while read -r name dir prof _; do
-    [[ -z "$name" || "$name" == \#* ]] && continue
-    if [[ "$name" == "$HN" ]]; then HOST="$dir"; PROFILE="$prof"; break; fi
-  done < "$HOSTS_CONF"
-  [[ -n "$HOST" ]] || die "cannot detect host for hostname '$HN'; pass --host <name>"
-  info "detected hostname '$HN' -> host '$HOST'"
-fi
-
-if [[ -z "$PROFILE" ]]; then
-  PROFILE="$(awk -v d="$HOST" '!/^#/ && $2==d {print $3; exit}' "$HOSTS_CONF")"
-  PROFILE="${PROFILE:-gui}"
-fi
-
-HOST_DIR="$REPO/hosts/$HOST"
-[[ -d "$HOST_DIR" ]] || die "unknown host dir: hosts/$HOST (see install/hosts.conf)"
+resolve_host "$HOST" "$PROFILE"
 
 log "host=$HOST profile=$PROFILE repo=$REPO"
-
-# ------------------------------------------------------------------ list files
-read_list() { # file -> one entry per line (comments/blanks stripped)
-  [[ -f "$1" ]] || return 0
-  sed -e 's/#.*//' "$1" | tr -s '[:space:]' '\n' | grep -v '^[[:space:]]*$' || true
-}
 
 # -------------------------------------------------------------------- packages
 install_yay() {
@@ -213,18 +169,7 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
 
   official=()
   aur=()
-  official+=( $(read_list "$INSTALL_DIR/packages/base.txt") )
-  aur+=(      $(read_list "$INSTALL_DIR/packages/aur/base.txt") )
-  if [[ "$PROFILE" != "headless" ]]; then
-    official+=( $(read_list "$INSTALL_DIR/packages/dev.txt") )
-    aur+=(      $(read_list "$INSTALL_DIR/packages/aur/dev.txt") )
-  fi
-  if [[ "$PROFILE" == "gui" ]]; then
-    official+=( $(read_list "$INSTALL_DIR/packages/gui.txt") )
-    aur+=(      $(read_list "$INSTALL_DIR/packages/aur/gui.txt") )
-  fi
-  official+=( $(read_list "$HOST_DIR/packages.txt") )
-  aur+=(      $(read_list "$HOST_DIR/packages-aur.txt") )
+  collect_packages "$PROFILE" "$HOST_DIR" official aur
 
   if [[ ${#official[@]} -gt 0 ]]; then
     log "installing official packages (${#official[@]})"

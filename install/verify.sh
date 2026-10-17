@@ -157,6 +157,21 @@ esac
 "$REPO/wayland/theme-sync" "$cur"
 ok "restored mode: $cur"
 
+# ------------------------------- 8. дрейф пакетов (только по CLEANUP_CHECK=1)
+# Не фатально: на личной машине вне манифестов нормально живут приложения.
+if [[ "${CLEANUP_CHECK:-0}" == "1" ]]; then
+    if out="$("$REPO/install/cleanup.sh" --check 2>&1)"; then
+        ok "no package drift"
+    else
+        rc=$?
+        if [[ $rc -eq 2 ]]; then
+            warn "package drift: $(tail -1 <<< "$out")"
+        else
+            warn "cleanup.sh --check failed (rc=$rc): $(tail -1 <<< "$out")"
+        fi
+    fi
+fi
+
 if [[ $fail -eq 0 ]]; then
     echo "verify: OK"
 else

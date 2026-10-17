@@ -23,6 +23,20 @@ alacritty                    # терминал на GPU (конфиг alacritty
 rofi                         # лаунчер и меню (конфиг rofi/)
 rofi-emoji                   # плагин эмодзи для rofi
 
+# --- browser ---
+# Объявлен явно: на него ссылаются applications/chromium-{wayland,proxy}.
+# Раньше приезжал транзитивно как зависимость mermaid-cli.
+chromium                     # браузер (обёртки Wayland/прокси в applications/)
+
+# --- messengers / chat ---
+telegram-desktop             # мессенджер Telegram (Qt6)
+element-desktop              # клиент Matrix (Element, electron)
+mattermost-desktop           # клиент Mattermost (electron)
+
+# --- diagrams / previews (gui only: тянут chromium и opencv/ffmpeg) ---
+mermaid-cli                  # рендер диаграмм Mermaid (mmdc) -> chromium
+ueberzugpp                   # превью изображений в терминале (для yazi)
+
 # --- theme / appearance ---
 darkman                      # автопереключение светлой/тёмной темы
 adw-gtk-theme                # тема GTK-приложений в стиле Adwaita (dark/light)

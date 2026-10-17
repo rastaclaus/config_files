@@ -1,0 +1,55 @@
+# Пакеты, которые cleanup.sh не должен трогать на host=desktop.
+# Формат: одно имя пакета на строку, без комментария.
+#
+# Черновик создан cleanup.sh --init-keep. Все строки закомментированы,
+# чтобы поведение не изменилось; раскомментируйте нужное.
+
+# amneziavpn-bin                        230.7 MiB
+# arm-linux-gnueabihf-binutils-bin      41.9 MiB
+# arm-linux-gnueabihf-gcc-bin           259.6 MiB
+# arm-linux-gnueabihf-glibc-bin         167.5 MiB
+# arm-linux-gnueabihf-glibc-headers-bin 13.5 MiB
+# code                                  767.6 MiB
+cups                                  12.8 MiB
+# eog                                    9.3 MiB
+# ex-vi-compat                           1.2 KiB
+# fbreader                               5.8 MiB
+# fluidsynth                            863.3 KiB
+# gimp                                  151.2 MiB
+# hey-bin                                6.9 MiB
+# kdl-lsp                                4.2 MiB
+# libreoffice-fresh                     423.0 MiB
+# mattermost                            271.2 MiB
+# mypy                                  25.8 MiB
+pantum-driver                         36.0 MiB
+# pdftricks                             814.1 KiB
+# qutebrowser                           11.4 MiB
+# ranger                                 2.6 MiB
+# ruff                                  24.9 MiB
+# sane-airscan                          459.5 KiB
+# sd                                     2.4 MiB
+# simple-scan                            5.7 MiB
+# steam                                 19.5 MiB
+# texlive-langcyrillic                  12.0 MiB
+# texlive-latex                         12.3 MiB
+# texlive-latexextra                    113.0 MiB
+# texlive-latexrecommended              16.9 MiB
+# the_silver_searcher                   105.6 KiB
+throne-bin                            176.0 MiB
+# tk                                    12.3 MiB
+# transmission-gtk                       4.5 MiB
+vlc                                   42.2 MiB
+# w3m                                    1.8 MiB
+# wine                                  589.2 MiB
+# winetricks                            875.1 KiB
+# wofi                                  131.6 KiB
+# wol                                   52.8 KiB
+# wol-systemd                            239.0 B
+# xonotic                               10.9 MiB
+# xonotic-data                           1.1 GiB
+# yandex-browser                        503.0 MiB
+zathura                                1.8 MiB
+zathura-djvu                          28.1 KiB
+zathura-gruvbox-git                    9.4 KiB
+zathura-pdf-mupdf                     32.4 KiB
+zathura-ps                            20.1 KiB

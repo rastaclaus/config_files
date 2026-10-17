@@ -16,10 +16,14 @@ hosts/
   desktop/  ambb/  alen/  work/                       # host-specific overrides
 install/
   install.sh         # installer
+  lib.sh             # shared helpers (host resolution, manifests)
+  cleanup.sh         # removes packages that are not in the manifests
   install_vpn.sh     # VPN profile installer (ntech)
   hosts.conf         # hostname -> host dir + profile
   symlinks.conf      # src -> target map (+ gui/merge tags)
   volatile.conf      # runtime files copied into merge dirs, not linked
+  protected.txt      # system packages cleanup.sh never removes
+  cleanup-paths.conf # leftover config/state paths per package
   verify.sh          # read-only sanity checks
   packages/*.txt     # pacman / AUR lists (see below)
   npm.txt            # global npm packages
@@ -38,6 +42,18 @@ Package manifests (official repo + its AUR counterpart):
 | `packages/aur/gui.txt`     | AUR version of `gui.txt`           |
 | `hosts/<host>/packages.txt`| extra official packages for a host    |
 | `hosts/<host>/packages-aur.txt`| extra AUR packages for a host    |
+
+Host-specific exceptions for cleanup live in `hosts/<host>/keep.txt` (see
+**Cleanup** below).
+
+`base` holds everything that must exist on **every** host, including the
+headless one — that is why `docker`, `docker-buildx`, `docker-compose` and
+`kubectl` live there: their dependency closure (79 packages, ~600 MiB) contains
+no GUI libraries. Everything that pulls Chromium, GTK, Mesa or OpenCV stays in
+`gui.txt`: `chromium` (used by the wrapper entries in `applications/`),
+`mermaid-cli` (depends on `chromium`) and `ueberzugpp` (depends on
+`opencv`/`ffmpeg`). Keeping those in `base` used to drag 163 extra packages
+(~1.5 GiB) into a headless install.
 
 Common configs live at the repo root; a host only ships the files it overrides.
 
@@ -266,6 +282,94 @@ The installer:
 The `headless` profile installs only the base set plus fish/opencode/editors
 and their dependencies — no GUI, no Sway. Dev/DevOps tooling can be opted in
 per host via `hosts/<host>/packages.txt`.
+
+Installing a package does not start it: after a fresh install enable the Docker
+daemon and add yourself to its group (relogin required):
+
+```sh
+sudo systemctl enable --now docker
+sudo usermod -aG docker "$USER"
+```
+
+## Cleanup (packages not in the manifests)
+
+`install/cleanup.sh` is the counterpart of the installer: it removes packages
+that are explicitly installed but absent from the manifests, and optionally
+cleans up what they leave behind (configs, state, caches, services). It uses
+the same `install/lib.sh` and the same host/profile resolution, so the
+"install" and "keep" sets can never drift apart.
+
+```sh
+./install/cleanup.sh                     # dry-run: таблица кандидатов
+./install/cleanup.sh --check             # exit 0 — drift-free, 2 — drift
+./install/cleanup.sh --apply             # ask once, then remove
+./install/cleanup.sh --apply --purge-configs --purge-caches
+./install/cleanup.sh --apply --interactive   # ask per package
+./install/cleanup.sh --init-keep         # draft hosts/<host>/keep.txt
+```
+
+The candidate set is `pacman -Qqe` minus:
+
+1. **desired** — the manifests for the current host/profile (base, +dev unless
+   `headless`, +gui, +host extras);
+2. **protected** — `install/protected.txt`: kernel, bootloader, firmware, init,
+   auth, network stack, `yay`. Nothing here is ever removed;
+3. **keep** — `hosts/<host>/keep.txt` (personal applications) plus `--keep <pkg>`.
+   The format is one name per line; everything after `#` is ignored, so the
+   draft from `--init-keep` (`# pkg  # 12.8 MiB`) can be uncommented as is;
+4. packages that something remaining depends on. This is evaluated to a fixed
+   point over `pacman -Qi → Required By` (which includes provides-based
+   dependencies, e.g. `fuse2 ← ntfs-3g`), then verified by pacman itself with
+   `pacman -Rs --print`; anything it refuses is reported under "остаются в
+   системе" with the reason.
+
+`--apply` disables the removed packages' systemd units first (their unit files
+vanish with the package), then runs one `pacman -Rns` transaction (falling back
+to per-package removals), removes the dependencies that just became orphans
+(`pacman -Qtdq`, disable with `--no-orphans`), and deletes dangling `*.wants`
+symlinks.
+
+Nothing is deleted outright. `--purge-configs` and `--purge-system` **move**
+the leftover paths into a quarantine directory and never touch anything managed
+by the dotfiles repo (symlinks into the repo, `symlinks.conf` targets, the state
+dir) or shipped by a still-installed package (`pacman -Qo`). Paths come from
+`install/cleanup-paths.conf` plus a heuristic that matches top-level
+`~/.config`, `~/.local/share`, `~/.local/state`, `~/.cache` entries by package
+name ignoring case and separators (`Code` ~ `code`). The heuristic backs off when
+a directory could belong to a package that stays (`~/.config/Mattermost` is left
+alone while only the `mattermost` server is removed but `mattermost-desktop`
+stays).
+
+The `--purge-*` flags take effect only together with `--apply`; in dry-run they
+print what would move and how large it is. They work on the union of the current
+candidate set and the `removed.txt` of **all** previous runs, so leftovers can be
+purged after the packages are already gone — `cleanup.sh --apply --purge-configs`
+is valid even when it reports "удалять нечего".
+
+`--purge-caches` cleans package caches and rebuildable data (`paccache -r -k3`,
+`yay -Sc`, journal → 500 MiB, npm/uv/pip caches, thumbnails, fontconfig,
+`web-docs-mcp` cache); `--purge-modcache` additionally drops the Go module cache
+and the Cargo registry cache (both re-download on next build); `--purge-tools`
+removes npm globals, `uv tool`s and fisher plugins that are not listed in
+`npm.txt`, `uv-tools.txt` and `fish/fish_plugins`.
+
+Every applied run leaves `~/.local/state/dotfiles/cleanup/<timestamp>/` with
+`removed.txt`, `orphans.txt`, `log.txt`, `report.md`, an executable
+`restore.sh` (`yay -S --needed …`) and the quarantine itself:
+
+```sh
+~/.local/state/dotfiles/cleanup/20261017-180000/
+  removed.txt  orphans.txt  log.txt  report.md  restore.sh
+  quarantine/home/.config/Code/...      # moved, not deleted
+  quarantine/root/var/lib/...           # --purge-system only
+```
+
+`restore.sh` is created only when the run actually removed packages; a
+purge-only run leaves an empty `removed.txt` and reports «в этом прогоне
+удаления не было».
+
+`CLEANUP_CHECK=1 ./install/verify.sh` additionally reports package drift as a
+warning (it is not fatal: a personal machine is expected to carry extra apps).
 
 ## VPN
 

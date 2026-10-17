@@ -211,12 +211,17 @@ BACKUP="$HOME/.dotfiles-backup-$(date +%Y%m%d-%H%M%S)"
 
 backup_path() { # move an existing path out of the way
   local p="$1"
-  mkdir -p "$BACKUP"
   local base dest; base="$(basename "$p")"; dest="$BACKUP/$base"
   local i=1
   while [[ -e "$dest" || -L "$dest" ]]; do dest="$BACKUP/${base}.$i"; i=$((i+1)); done
+  # не создаём каталог бэкапов в --dry-run: там ничего не перемещается
+  [[ $DRY_RUN -eq 1 ]] || mkdir -p "$BACKUP"
   run mv "$p" "$dest"
-  info "backed up $p -> $dest"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    info "would back up $p -> $dest"
+  else
+    info "backed up $p -> $dest"
+  fi
 }
 
 ensure_link() { # ensure_link <src> <target>

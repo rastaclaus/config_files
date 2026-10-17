@@ -1,0 +1,7 @@
+# Фрагмент конфигурации Alacritty для светлой темы.
+# Копируется в ~/.local/state/dotfiles/alacritty.toml скриптом theme-sync.
+[general]
+import = ["~/.config/alacritty/themes/themes/gruvbox_light.toml"]
+
+[window]
+opacity = 1.0

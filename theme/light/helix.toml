@@ -1,0 +1,2 @@
+# Тема Helix: переключается только через inherits.
+inherits = "gruvbox_light"

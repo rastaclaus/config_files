@@ -1,0 +1,6 @@
+/* Палитра ironbar для тёмной темы. Импортируется сгенерированной обёрткой. */
+@define-color bar_bg #282828;
+@define-color bar_fg #ebdbb2;
+@define-color bar_accent #fabd2f;
+@define-color bar_inactive #928374;
+@define-color bar_critical #fb4934;

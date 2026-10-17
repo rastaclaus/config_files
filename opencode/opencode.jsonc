@@ -3246,9 +3246,18 @@
           "VISION_MODEL": "qwen/qwen3-vl-8b-instruct"
         }
       },
-      "context7": {
+      "web-docs": {
+        "type": "local",
+        "command": [
+          "sh",
+          "-c",
+          "MCP_DIR=\"${WEB_DOCS_MCP_DIR:-${LOCAL_PREFIX:-$HOME/.local}/share/web-docs-mcp}\"; export DOCS_DIR=\"$MCP_DIR/docs\" CACHE_DIR=\"${XDG_CACHE_HOME:-$HOME/.cache}/web-docs-mcp\" DEFAULT_SAVE_TO_DOCS=true; exec node \"$MCP_DIR/build/index.js\""
+        ]
+      },
+      "deepwiki": {
         "type": "remote",
-        "url": "https://mcp.context7.com/mcp"
+        "url": "https://mcp.deepwiki.com/mcp",
+        "oauth": false
       },
       "docs": {
         "type": "remote",

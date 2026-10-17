@@ -146,6 +146,68 @@ have_local_bin_in_path() {
   return 1
 }
 
+# web-docs-mcp (opencode MCP "web-docs") is not published on npm: it is cloned
+# from GitHub and runs from the pre-built build/index.js. Dependencies still
+# have to be installed, so this needs git + npm (both from the base packages).
+# DOCS_DIR/CACHE_DIR point outside the clone so `git pull` never touches data.
+install_web_docs_mcp() {
+  local dst="$LOCAL_PREFIX/share/web-docs-mcp"
+  local repo="https://github.com/Aleksandrr/web-docs-mcp"
+
+  if command -v npm >/dev/null 2>&1 || [[ $DRY_RUN -eq 1 ]]; then
+    :
+  else
+    warn "npm not found; skipping web-docs-mcp"
+    return 0
+  fi
+
+  if [[ -d "$dst/.git" ]]; then
+    log "updating web-docs-mcp -> $dst"
+    # The local enum patch below makes those two files dirty; restore just them
+    # before pulling (never the whole tree, so saved docs are untouched). A
+    # failed pull (offline, diverged) is not fatal.
+    run git -C "$dst" checkout -- build/lib/zod-to-json.js src/lib/zod-to-json.ts || true
+    run git -C "$dst" pull --ff-only || warn "web-docs-mcp: git pull failed, keeping current checkout"
+  elif [[ -e "$dst" ]]; then
+    warn "$dst exists but is not a git checkout; skipping web-docs-mcp"
+    return 0
+  else
+    log "cloning web-docs-mcp -> $dst"
+    run mkdir -p "$(dirname "$dst")"
+    run git clone --depth 1 "$repo" "$dst" || { warn "web-docs-mcp: clone failed"; return 0; }
+  fi
+
+  if [[ ! -d "$dst/node_modules" ]]; then
+    log "installing web-docs-mcp dependencies"
+    run npm install --prefix "$dst" --omit=dev --no-audit --no-fund ||
+      warn "web-docs-mcp: npm install failed"
+  fi
+
+  # Upstream ships a hand-rolled zod->JSON-Schema converter written for zod 3
+  # while pinning zod 4. z.enum() stores its options in `_def.entries`, so every
+  # enum reaches tools/list as `"enum": []` and calls that pass `ecosystem`,
+  # `target` or `subdir` are rejected as invalid arguments. Patch the shipped
+  # build (what actually runs) and the source next to it, idempotently.
+  if [[ $DRY_RUN -eq 0 ]]; then
+    local conv_js="$dst/build/lib/zod-to-json.js"
+    local conv_ts="$dst/src/lib/zod-to-json.ts"
+    if [[ -f "$conv_js" ]] && ! grep -q '_def.*entries' "$conv_js"; then
+      log "patching web-docs-mcp zod v4 enum handling"
+      sed -i 's/def\._def?\.values/def._def \&\& def._def.entries ? Object.keys(def._def.entries) : def._def?.values/' "$conv_js" ||
+        warn "web-docs-mcp: failed to patch $conv_js"
+    fi
+    if [[ -f "$conv_ts" ]] && ! grep -q '_def.*entries' "$conv_ts"; then
+      sed -i 's/(def as any)\._def?\.values/(def as any)._def?.entries ? Object.keys((def as any)._def.entries) : (def as any)._def?.values/' "$conv_ts" ||
+        warn "web-docs-mcp: failed to patch $conv_ts"
+    fi
+  fi
+
+  run mkdir -p "$dst/docs"
+  if [[ $DRY_RUN -eq 0 && ! -f "$dst/build/index.js" ]]; then
+    warn "web-docs-mcp: $dst/build/index.js is missing; MCP server will not start"
+  fi
+}
+
 if [[ $DO_PACKAGES -eq 1 ]]; then
   install_yay
 
@@ -192,6 +254,8 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
       warn "npm not found; skipping npm globals"
     fi
   fi
+
+  install_web_docs_mcp
 
   if command -v uv >/dev/null 2>&1 || [[ $DRY_RUN -eq 1 ]]; then
     while read -r tool; do

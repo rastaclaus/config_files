@@ -205,6 +205,37 @@ leaves `git status` unchanged (it is read-only and restores the current mode).
 theme on the next prompt, helix on `SIGUSR1` (new helix windows pick it up
 immediately), rofi on its next launch.
 
+## OpenCode / MCP
+
+`opencode/` is linked to `~/.config/opencode`. The MCP servers are declared under
+`mcp.servers` in `opencode/opencode.jsonc`:
+
+| server     | transport | purpose                                                                   |
+|------------|-----------|---------------------------------------------------------------------------|
+| `vision`   | local     | `analyze_image` through any multimodal model (`mcp-vision-bridge`)        |
+| `web-docs` | local     | API/library docs: `lib_docs`, `search_docs`, `fetch_url`, `web_search`, `list_docs` |
+| `deepwiki` | remote    | `read_wiki_structure`, `read_wiki_contents`, `ask_wiki_question` for public GitHub repos |
+| `docs`     | remote    | internal documentation MCP                                               |
+
+`web-docs` is not published on npm, so the installer clones
+[web-docs-mcp](https://github.com/Aleksandrr/web-docs-mcp) into
+`~/.local/share/web-docs-mcp` (override with `WEB_DOCS_MCP_DIR` or
+`LOCAL_PREFIX`), installs its runtime dependencies and patches one upstream bug:
+its zod v3-era schema converter leaves every `enum` empty under zod v4, which
+made `ecosystem`, `target` and `subdir` unusable (the patch only touches those
+two files and is restored before `git pull`, then reapplied). Fetched markdown
+goes to `~/.local/share/web-docs-mcp/docs`, the TTL cache to
+`~/.cache/web-docs-mcp` — outside both the clone and the dotfiles repo, so
+updates never touch saved docs and the configs stay read-only.
+
+`deepwiki` is the official free remote server (`https://mcp.deepwiki.com/mcp`,
+no authentication, `oauth: false`). It only accepts `owner/repo`; the
+package-name → repository mapping comes from `web-docs` (`lib_docs` returns a
+`repository` field).
+
+The split is codified in `opencode/AGENTS.md`: `web-docs` for API facts,
+`deepwiki` for architecture and deeper analysis, and only then the sources.
+
 ## Install
 
 ```sh
@@ -220,7 +251,9 @@ The installer:
 2. `yay -S --needed` from `packages/base.txt` (+ `packages/dev.txt` unless
    profile is `headless`, + `packages/gui.txt` for GUI, + `hosts/<host>/packages.txt`),
 3. `npm install -g --prefix ~/.local` from `npm.txt` (npm's default prefix is
-   the root-owned `/usr`), `uv tool install` from `uv-tools.txt`,
+   the root-owned `/usr`), `uv tool install` from `uv-tools.txt`, and clones
+   `web-docs-mcp` into `~/.local/share/web-docs-mcp` with its runtime deps and
+   the zod-4 enum patch (the `web-docs` MCP server; no npm package exists),
 4. lays out symlinks per `symlinks.conf` — merge directories are expanded into
    real dirs with per-file links, volatile files are copied — backing up
    anything it replaces to `~/.dotfiles-backup-<timestamp>/`,

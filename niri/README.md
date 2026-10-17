@@ -11,12 +11,15 @@
 
 ## 1. Запуск и переключение композитора
 
-Композитор выбирается на TTY (tty1) через universal-переменную fish
-`WAYLAND_COMPOSITOR` (по умолчанию `sway`):
+Композитор выбирается на TTY (tty1) по файлу
+`~/.local/state/dotfiles/compositor` (`sway`, `niri` или `none`). Значение
+пишет установщик из колонки `compositor` в `install/hosts.conf`, дальше им
+владеет `wm`:
 
 ```sh
 wm niri    # переключить на niri (со следующего логина)
 wm sway
+wm none    # не поднимать композитор на tty1
 ```
 
 niri стартует через `niri-session`. Проверить версию и валидность конфига:

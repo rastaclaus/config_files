@@ -8,7 +8,7 @@
 #   INSTALL_DIR   $REPO/install
 #   STATE_DIR     ~/.local/state/dotfiles (рантайм-состояние, вне репозитория)
 #   LOCAL_PREFIX  префикс пользовательских установок (~/.local)
-#   HOST, HOST_DIR, PROFILE   заполняет resolve_host
+#   HOST, HOST_DIR, PROFILE, COMPOSITOR   заполняет resolve_host
 #
 # shellcheck shell=bash
 
@@ -55,7 +55,11 @@ conf_profile_for() { # conf_profile_for <host-dir> -> profile from hosts.conf
   awk -v d="$1" '!/^#/ && $2==d {print $3; exit}' "$INSTALL_DIR/hosts.conf"
 }
 
-# resolve_host [<host>] [<profile>] -> HOST, PROFILE, HOST_DIR
+conf_compositor_for() { # conf_compositor_for <host-dir> -> compositor from hosts.conf
+  awk -v d="$1" '!/^#/ && $2==d {print $4; exit}' "$INSTALL_DIR/hosts.conf"
+}
+
+# resolve_host [<host>] [<profile>] -> HOST, PROFILE, HOST_DIR, COMPOSITOR
 # An explicit <host> disables hostname detection; an explicit <profile>
 # overrides the one from hosts.conf.
 resolve_host() {
@@ -81,6 +85,19 @@ resolve_host() {
 
   HOST_DIR="$REPO/hosts/$HOST"
   [[ -d "$HOST_DIR" ]] || die "unknown host dir: hosts/$HOST (see install/hosts.conf)"
+
+  COMPOSITOR="$(conf_compositor_for "$HOST")"
+  # headless — это «графики нет по определению»: даже если в hosts.conf по
+  # ошибке написано sway, композитор там не поднимается.
+  if [[ "$PROFILE" == "headless" ]]; then
+    COMPOSITOR=none
+  else
+    case "${COMPOSITOR:-sway}" in
+      sway|niri|none) COMPOSITOR="${COMPOSITOR:-sway}" ;;
+      *) warn "hosts.conf: unknown compositor '${COMPOSITOR}' for $HOST; using sway"
+         COMPOSITOR=sway ;;
+    esac
+  fi
 }
 
 # collect_packages <profile> <host-dir> <official-array> <aur-array>

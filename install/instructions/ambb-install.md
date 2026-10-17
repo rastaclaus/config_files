@@ -456,10 +456,15 @@ cd ~/config_files
 `hosts/ambb/packages.txt` (напр. `linux-headers`) и перезапустить
 `./install/install.sh --no-links`.
 
+Установщик сам делает fish login shell (`sudo chsh`; `--no-shell`, если не
+нужно) — без этого шага вход на tty1 уходил в bash, а композитор так и не
+поднимался.
+
 Композитор на tty1 (это делает `fish/config.fish`):
 
 ```bash
-wm niri      # или: wm sway  (применится при следующем входе)
+cat ~/.local/state/dotfiles/compositor   # записан установщиком: sway|niri|none
+wm niri      # или: wm sway / wm none  (применится при следующем входе)
 ```
 
 VPN-профиль (по необходимости):
@@ -481,5 +486,7 @@ bootctl status                 # entries: arch.conf
 systemctl is-enabled NetworkManager
 ip -brief addr                 # сеть поднялась
 cat /proc/swaps                # swap активен
+getent passwd artems | cut -d: -f7   # /usr/bin/fish
+cat ~/.local/state/dotfiles/compositor
 niri-session                   # или sway: рабочий стол стартует
 ```

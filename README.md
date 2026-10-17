@@ -86,14 +86,23 @@ linked, so writes never reach the repo.
 ## Compositors (sway / niri)
 
 Both compositors are installed for the `gui` profile. On a TTY (tty1) fish
-starts the one selected by the `WAYLAND_COMPOSITOR` universal variable
-(default `sway`, stored locally in `fish_variables`); niri runs through
-`niri-session`:
+starts the compositor named in `~/.local/state/dotfiles/compositor` (`sway`,
+`niri` or `none`). The value is written by the installer from the `compositor`
+column of `install/hosts.conf`, and from then on `wm` owns it — so editing that
+column does not move an already configured host. `none` means "no compositor"
+and is forced for the `headless` profile. niri runs through `niri-session`:
 
 ```sh
 wm niri    # switch for the next login
 wm sway
+wm none    # console-only: do not start a compositor on tty1
 ```
+
+If the chosen compositor is not installed (or the state file holds garbage),
+fish prints a message and leaves a working shell instead of ending the session.
+The file is the single source of truth: the old `WAYLAND_COMPOSITOR` universal
+variable is gone, and the installer erases it (plus its copy in the `systemd
+--user` environment) when it finds one.
 
 Layering mirrors the rest of the repo:
 
@@ -210,8 +219,9 @@ the repo stylesheet, re-run `theme-sync` (or touch the wrapper) to reload.
 **Fish.** `fish_variables` and the fisher plugins are local to `~/.config/fish`
 and not in git; the declarative plugin list stays in `fish/fish_plugins`.
 `fish/conf.d/theme.fish` applies the theme from `background-mode` on the prompt,
-so the old universal `background_mode` variable is gone. `wm` still writes
-`WAYLAND_COMPOSITOR` as a universal variable — locally, which is intended.
+so the old universal `background_mode` variable is gone. `wm` writes
+`~/.local/state/dotfiles/compositor` — the same file the installer seeds — and
+no longer touches universal variables.
 
 **Waybar.** It does not take part in switching and stays in rollback mode with
 its static palette. To bring it back, do the same thing: generate a wrapper in
@@ -284,6 +294,7 @@ build; renaming the file always forces a fresh one).
 ./install/install.sh --dry-run       # show actions only
 ./install/install.sh --no-packages   # only (re)link configs
 ./install/install.sh --no-links      # only install packages
+./install/install.sh --no-shell      # keep the current login shell
 ```
 
 The installer:
@@ -297,11 +308,15 @@ The installer:
 4. lays out symlinks per `symlinks.conf` — merge directories are expanded into
    real dirs with per-file links, volatile files are copied — backing up
    anything it replaces to `~/.dotfiles-backup-<timestamp>/`,
-5. creates `~/.local/state/dotfiles/` and links `~/.config/helix/runtime` to it,
-6. installs fisher + the plugins from `fish/fish_plugins` into `~/.config/fish`
+5. creates `~/.local/state/dotfiles/`, links `~/.config/helix/runtime` to it,
+   and writes `compositor` (see [Compositors](#compositors-sway--niri)) —
+   seeded once from an existing `WAYLAND_COMPOSITOR`, then owned by `wm`,
+6. makes fish the login shell (`sudo chsh`; skip with `--no-shell`) — the whole
+   GUI path starts from `fish/config.fish`, so a bash login leaves a black TTY,
+7. installs fisher + the plugins from `fish/fish_plugins` into `~/.config/fish`
    (after the links; skipped for `headless` and with `--no-fisher`),
-7. applies the current darkman mode via `wayland/theme-sync`
-   (`--no-packages` still performs steps 4–7).
+8. applies the current darkman mode via `wayland/theme-sync`
+   (`--no-packages` still performs steps 4–8).
 
 The `headless` profile installs only the base set plus fish/opencode/editors
 and their dependencies — no GUI, no Sway. Dev/DevOps tooling can be opted in

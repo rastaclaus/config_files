@@ -17,15 +17,29 @@ set -x NTECH_API_KEY (cat $HOME/.config/ntech_key)
 set -x ROUTERAI_API_KEY (cat $HOME/.config/router_ai_key)
 
 if status is-interactive
-    if test -z "$DISPLAY"; and test "$(tty)" = /dev/tty1
-        # Pick the Wayland compositor for the console session.
-        # Set it persistently with:  wm sway   |   wm niri
-        set -q WAYLAND_COMPOSITOR; or set -Ux WAYLAND_COMPOSITOR sway
-        switch $WAYLAND_COMPOSITOR
+    if test -z "$DISPLAY"; and test -z "$WAYLAND_DISPLAY"; and test "$(tty)" = /dev/tty1
+        # Какой композитор поднимать, решает установщик (install/hosts.conf) и
+        # команда `wm`; значение живёт в state, а не в universal-переменных.
+        set -l comp sway
+        set -l comp_file $HOME/.local/state/dotfiles/compositor
+        if test -r $comp_file
+            set comp (string trim -- (command cat $comp_file 2>/dev/null))
+        end
+        switch $comp
+            case none
+                # headless-хост: композитора нет намеренно
             case niri
-                exec niri-session
+                if command -q niri-session
+                    exec niri-session
+                end
+                echo "dotfiles: niri-session не найден; остаюсь в shell" >&2
+            case sway
+                if command -q sway
+                    exec sway
+                end
+                echo "dotfiles: sway не найден; остаюсь в shell" >&2
             case '*'
-                exec sway
+                echo "dotfiles: неизвестный compositor '$comp' в $comp_file" >&2
         end
     end
 end

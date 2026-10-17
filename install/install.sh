@@ -10,6 +10,7 @@
 #   --no-packages     skip package installation
 #   --no-links        skip symlink setup
 #   --no-fisher       skip fish plugin installation (fisher)
+#   --no-shell        do not change the login shell to fish
 #   --dry-run         print what would happen, change nothing
 #   -h, --help
 #
@@ -28,6 +29,7 @@ PROFILE=""
 DO_PACKAGES=1
 DO_LINKS=1
 DO_FISHER=1
+DO_SHELL=1
 DRY_RUN=0
 
 run() {
@@ -35,7 +37,7 @@ run() {
 }
 
 usage() {
-  sed -n '3,14p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '3,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 while [[ $# -gt 0 ]]; do
@@ -45,6 +47,7 @@ while [[ $# -gt 0 ]]; do
     --no-packages) DO_PACKAGES=0; shift ;;
     --no-links)    DO_LINKS=0;    shift ;;
     --no-fisher)   DO_FISHER=0;   shift ;;
+    --no-shell)    DO_SHELL=0;    shift ;;
     --dry-run)     DRY_RUN=1;     shift ;;
     -h|--help)     usage; exit 0 ;;
     *) die "unknown option: $1 (try --help)" ;;
@@ -358,6 +361,42 @@ cleanup_legacy_hooks() { # старые хуки darkman: только симл�
   done
 }
 
+write_compositor() {
+  local f="$STATE_DIR/compositor" cur="" want=""
+  [[ -f "$f" ]] && cur="$(tr -d '[:space:]' < "$f")"
+
+  if [[ "$PROFILE" == "headless" ]]; then
+    # headless — всегда none, даже если state приехал с другой машины.
+    want=none
+    [[ -n "$cur" && "$cur" != "none" ]] &&
+      warn "compositor=$cur на headless-хосте; ставлю none"
+  elif [[ "$cur" == "sway" || "$cur" == "niri" || "$cur" == "none" ]]; then
+    # Уже сделанный выбор (установщик или `wm`) не перетираем: hosts.conf —
+    # это дефолт для новой машины, а не приказ уже настроенной.
+    return 0
+  else
+    [[ -n "$cur" ]] && warn "битое значение compositor '$cur' в $f; перезаписываю"
+    # Миграция: раньше выбор жил в universal-переменной fish и оттуда попадал
+    # в окружение, поэтому читаем и env, и universal-скоуп.
+    case "${WAYLAND_COMPOSITOR:-}" in sway|niri|none) want="$WAYLAND_COMPOSITOR" ;; esac
+    if [[ -z "$want" ]] && command -v fish >/dev/null 2>&1; then
+      local legacy
+      legacy="$(fish -c 'echo -- $WAYLAND_COMPOSITOR' 2>/dev/null || true)"
+      case "$legacy" in sway|niri|none) want="$legacy" ;; esac
+    fi
+    want="${want:-$COMPOSITOR}"
+  fi
+
+  run mkdir -p "$STATE_DIR"
+  if [[ $DRY_RUN -eq 1 ]]; then
+    info "[dry-run] write $f = $want"
+  else
+    printf '%s\n' "$want" > "$f.tmp"
+    mv "$f.tmp" "$f"
+    info "compositor: $want"
+  fi
+}
+
 if [[ $DO_LINKS -eq 1 ]]; then
   log "setting up symlinks"
   while read -r src target tags _; do
@@ -385,11 +424,74 @@ if [[ $DO_LINKS -eq 1 ]]; then
   log "preparing runtime state in $STATE_DIR"
   run mkdir -p "$STATE_DIR/alacritty" "$STATE_DIR/helix/runtime/themes" "$STATE_DIR/ironbar"
   ensure_link "$STATE_DIR/helix/runtime" "$HOME/.config/helix/runtime"
+  write_compositor
 
   cleanup_legacy_hooks
 else
   log "skipping symlinks (--no-links)"
 fi
+
+# ---------------------------------------------------------------- login shell
+# Вся графика стартует из fish/config.fish (exec на tty1), поэтому fish должен
+# быть login shell. В инструкции этого шага не было: после установки ambb
+# человек логинился в bash, композитор не поднимался, и диагностировать это
+# на чёрном экране нечем.
+setup_login_shell() {
+  local fish_bin cur user="${USER:-$(id -un)}"
+  fish_bin="$(command -v fish 2>/dev/null || true)"
+  [[ -n "$fish_bin" ]] || { warn "fish не установлен; login shell не меняю"; return 0; }
+  cur="$(getent passwd "$user" | cut -d: -f7)"
+  if [[ "$cur" == "$fish_bin" ]]; then
+    info "login shell уже $fish_bin"
+    return 0
+  fi
+  grep -qx "$fish_bin" /etc/shells 2>/dev/null ||
+    warn "$fish_bin нет в /etc/shells; chsh может отказать"
+  log "login shell: ${cur:-?} -> $fish_bin"
+  # chsh спрашивает пароль: в неинтерактивном прогоне это не должно валить
+  # установку симлинков, поэтому warn, а не die.
+  run sudo chsh -s "$fish_bin" "$user" || warn "не удалось сменить shell; выполните: chsh -s $fish_bin"
+}
+
+if [[ $DO_SHELL -eq 1 ]]; then
+  setup_login_shell
+else
+  log "skipping login shell (--no-shell)"
+fi
+
+# ----------------------------------------------- legacy compositor variable
+# Раньше выбор композитора жил в universal-переменной fish и оттуда
+# экспортировался в системное окружение (systemd --user), поэтому одной
+# `set -e -U` мало: значение продолжает приходить из окружения сессии.
+# Источник истины теперь state-файл — переменную убираем везде, где можем.
+drop_legacy_compositor_var() {
+  command -v fish >/dev/null 2>&1 || return 0
+  # Без state-файла переменную не трогаем: она ещё единственный носитель
+  # выбора (например, при --no-links).
+  [[ -f "$STATE_DIR/compositor" ]] || return 0
+
+  local changed=0
+  # Только universal-скоуп: `set -q WAYLAND_COMPOSITOR` был бы истинным и для
+  # значения, унаследованного из окружения, и `set -e -U` тогда «падает»,
+  # хотя стирать нечего.
+  if fish -c 'set -q -U WAYLAND_COMPOSITOR' 2>/dev/null; then
+    log "removing legacy WAYLAND_COMPOSITOR universal variable"
+    run fish -c 'set -e -U WAYLAND_COMPOSITOR' || warn "could not erase WAYLAND_COMPOSITOR"
+    changed=1
+  fi
+  # Уже после переезда в state переменная могла остаться в окружении
+  # systemd --user (её туда импортировали из экспортированной fish).
+  if command -v systemctl >/dev/null 2>&1 &&
+     systemctl --user show-environment 2>/dev/null | grep -q '^WAYLAND_COMPOSITOR='; then
+    log "unsetting WAYLAND_COMPOSITOR in the systemd user environment"
+    run systemctl --user unset-environment WAYLAND_COMPOSITOR ||
+      warn "could not unset WAYLAND_COMPOSITOR in the user manager"
+    changed=1
+  fi
+  (( changed )) || info "legacy WAYLAND_COMPOSITOR not set"
+}
+
+drop_legacy_compositor_var
 
 # ------------------------------------------------------------- fish plugins
 # Fisher пишет в ~/.config/fish, поэтому запускается после раскладки merge-

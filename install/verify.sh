@@ -12,6 +12,11 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STATE="$HOME/.local/state/dotfiles"
 fail=0
 
+# Общие помощники (detect_hostname и т.п.); свои bad/ok/warn определяем ниже,
+# чтобы вывод verify оставался в его формате.
+# shellcheck source=install/lib.sh
+source "$REPO/install/lib.sh"
+
 bad()  { printf 'FAIL: %s\n' "$*" >&2; fail=1; }
 ok()   { printf 'ok: %s\n' "$*"; }
 warn() { printf 'warn: %s\n' "$*" >&2; }
@@ -28,6 +33,28 @@ case "$mode" in
     *)          bad "bad background-mode: '$mode'" ;;
 esac
 orig_mode="$mode"
+
+# Композитор и login shell: без них графика на tty1 просто не стартует.
+comp="$(tr -d '[:space:]' < "$STATE/compositor" 2>/dev/null || true)"
+case "$comp" in
+    sway|niri|none) ok "compositor=$comp" ;;
+    *)              bad "missing or invalid $STATE/compositor: '$comp'" ;;
+esac
+
+# На headless-хосте композитор не поднимается по определению.
+hn="$(detect_hostname)"
+declared_profile="$(awk -v n="$hn" '!/^#/ && $1==n {print $3; exit}' "$REPO/install/hosts.conf")"
+if [[ "$declared_profile" == "headless" && "$comp" != "none" ]]; then
+    bad "compositor=$comp on headless host '$hn'; expected none"
+fi
+
+fish_bin="$(command -v fish 2>/dev/null || true)"
+login_shell="$(getent passwd "$USER" | cut -d: -f7)"
+if [[ -n "$fish_bin" && "$login_shell" == "$fish_bin" ]]; then
+    ok "login shell is fish ($fish_bin)"
+else
+    bad "login shell is '${login_shell:-?}', expected fish (${fish_bin:-not installed})"
+fi
 
 # --------------------------------------------------------------- 2. симлинки
 if [[ -L "$HOME/.config/helix/runtime" ]]; then

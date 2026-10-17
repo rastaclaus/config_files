@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Name=Chromium+Wayland
-Exec=sh -c "if [ "$XDG_SESSION_TYPE" = "wayland" ]; then /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland %U ; else /usr/bin/chromium %U ; fi"
+Exec=chromium-wayland %U
 StartupNotify=true
 Terminal=false
 Icon=chromium
@@ -11,7 +11,9 @@ MimeType=application/pdf;application/rdf+xml;application/rss+xml;application/xht
 Actions=new-window;new-private-window;
 
 [Desktop Action new-window]
-Exec=if [ "$XDG_SESSION_TYPE" = "wayland" ]; then /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland ; else /usr/bin/chromium ; fi
+Name=New Window
+Exec=chromium-wayland %U
 
 [Desktop Action new-private-window]
-Exec=if [ "$XDG_SESSION_TYPE" = "wayland" ]; then /usr/bin/chromium --enable-features=UseOzonePlatform --ozone-platform=wayland --incognito; else /usr/bin/chromium --incognito; fi
+Name=New Private Window
+Exec=chromium-wayland --incognito %U

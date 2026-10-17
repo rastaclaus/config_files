@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Name=Chromium+Proxy
-Exec=/home/artems/.local/bin/chromium-proxy %U
+Exec=chromium-proxy %U
 StartupNotify=true
 Terminal=false
 Icon=chromium
@@ -12,8 +12,8 @@ Actions=new-window;new-private-window;
 
 [Desktop Action new-window]
 Name=New Window
-Exec=/home/artems/.local/bin/chromium-proxy
+Exec=chromium-proxy %U
 
 [Desktop Action new-private-window]
 Name=New Private Window
-Exec=/home/artems/.local/bin/chromium-proxy --incognito
+Exec=chromium-proxy --incognito %U

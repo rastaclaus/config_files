@@ -28,7 +28,10 @@ declare -A API_KEYS=(
 # V2-конфиг OpenCode: opencode.jsonc (JSONC — разрешены // и /* */ комментарии).
 # jq не умеет парсить JSONC, поэтому чтение/запись конфига делает python3 (функция write_provider_models).
 CONFIG_FILE="$HOME/.config/opencode/opencode.jsonc"
-BACKUP_FILE="$CONFIG_FILE.backup"
+# Бэкап — вне репозитория: ~/.config/opencode — симлинк в repo, а рядом лежащий
+# *.backup попал бы в рабочее дерево со старыми путями.
+BACKUP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/opencode"
+BACKUP_FILE="$BACKUP_DIR/opencode.jsonc.$(date +%Y%m%d-%H%M%S)"
 PROVIDERS_TO_UPDATE=()
 
 # Vision-модели: к id, совпадающим с этим regexp (регистронезависимо), добавляется attachment:true
@@ -126,6 +129,7 @@ check_config() {
 
 # Создание backup
 create_backup() {
+    mkdir -p "$BACKUP_DIR"
     cp "$CONFIG_FILE" "$BACKUP_FILE"
     log_success "Backup создан: $BACKUP_FILE"
 }

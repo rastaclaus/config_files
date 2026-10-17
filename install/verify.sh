@@ -109,7 +109,28 @@ else
     bad "ironbar wrapper is missing imports (expected colors.css and $REPO/ironbar/style.css)"
 fi
 
-# ---------------------------------------- 5. переключение не трогает репозиторий
+# ------------------------------------- 5. нет хардкода домашнего пути
+# Exec в .desktop не раскрывает ~/$HOME, поэтому туда легко вписать /home/<user>.
+# Ловим такие пути в трекаемых файлах; документация — исключение.
+hardcoded="$(git -C "$REPO" grep -nI -E '/home/[A-Za-z0-9._-]+' -- . ':(exclude)*.md' || true)"
+if [[ -n "$hardcoded" ]]; then
+    while IFS= read -r line; do bad "hardcoded home path: $line"; done <<< "$hardcoded"
+else
+    ok "no hardcoded home paths in tracked files"
+fi
+
+# ---------------------------------- 6. .desktop читается GLib (rofi/gio/drun)
+# GKeyFile отвергает строковое значение с недопустимой escape-последовательностью
+# (в Exec это "\$" и "\""), и тогда запись не загружается вовсе — пункт меню
+# молча перестаёт работать. Поэтому в Exec не должно быть обратных слэшей.
+dirty="$(grep -nHE '^Exec=.*\\' "$REPO"/applications/*.desktop || true)"
+if [[ -n "$dirty" ]]; then
+    while IFS= read -r line; do bad "desktop Exec has a backslash (GLib rejects such entry): $line"; done <<< "$dirty"
+else
+    ok "desktop Exec lines have no backslashes"
+fi
+
+# ---------------------------------------- 7. переключение не трогает репозиторий
 before="$(git -C "$REPO" status --porcelain)"
 [[ -z "$before" ]] || warn "repo has uncommitted changes; checking they stay unchanged"
 

@@ -5,7 +5,11 @@
 #
 #   theme-sync dark|light
 #
+# В конце (в reload-ветке) переключает обои на подходящие под режим:
+# wayland/wallpapers.sh выбирает только файлы *_dark / *_light.
+#
 # THEME_SYNC_NO_RELOAD=1 — только записать файлы (используется verify.sh).
+# THEME_SYNC_NO_WALLPAPER=1 — не трогать обои.
 set -euo pipefail
 
 SCRIPT="$(readlink -f "${BASH_SOURCE[0]}")"
@@ -106,3 +110,20 @@ fi
 # rofi / fish / ironbar подхватывают изменения сами:
 # rofi — при следующем запуске, fish — на следующем промпте,
 # ironbar — watcher обёртки.
+
+# Обои под новый режим: иначе в dark останется светлая картинка (и наоборот).
+# Запускаем фоново — первый выбор панорамных нарезает половинки и не должен
+# тормозить переключение темы. THEME_SYNC_NO_WALLPAPER=1 — не трогать обои.
+# Композитор проверяется по живому сокету: при запуске из TTY/verify.sh
+# wallpapers.sh иначе ругнётся "neither sway nor niri is running".
+if [[ -z "${THEME_SYNC_NO_WALLPAPER:-}" ]] \
+    && { [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] \
+        || [[ -n "${SWAYSOCK:-}" && -S "${SWAYSOCK}" ]]; }; then
+    wlog="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/wallpapers.log"
+    if command -v setsid >/dev/null 2>&1; then
+        setsid -f "$REPO/wayland/wallpapers.sh" >>"$wlog" 2>&1 || true
+    else
+        nohup "$REPO/wayland/wallpapers.sh" >>"$wlog" 2>&1 &
+        disown 2>/dev/null || true
+    fi
+fi

@@ -61,7 +61,8 @@ layout {
 spawn-at-startup "nm-applet" "--indicator"
 spawn-at-startup "swaync"
 spawn-at-startup "gammastep" "-l" "55.817521:37.695987"
-spawn-at-startup "~/.config/wayland/wallpapers.sh"
+// Обои не запускаются отдельно: их выставляет theme-sync в конце (см. ниже),
+// иначе на старте было бы два независимых выбора.
 // Status bar: ironbar (shared config with sway). The waybar config is kept in
 // ~/.config/waybar/ for a one-line rollback.
 // spawn-sh-at-startup "waybar -c ~/.config/waybar/config-niri -s ~/.config/waybar/style.css"

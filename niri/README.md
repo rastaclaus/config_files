@@ -64,7 +64,7 @@ niri validate -c ./config.kdl # проверить конкретный файл
 | `Mod+Shift+S`          | rofi: эмодзи                               |
 | `Alt+Tab`              | rofi: переключатель окон                   |
 | `Mod+N`                | networkmanager-dmenu                       |
-| `Mod+T`                | Сменить обои (случайные из `~/Wallpapers`) |
+| `Mod+T`                | Сменить обои (случайные под текущую тему)  |
 | `Ctrl+Alt+L`           | Заблокировать (swaylock)                   |
 | `Mod+Shift+E` / `Ctrl+Alt+BackSpace` | Выйти из niri                |
 | `Mod+Shift+Q`          | Закрыть окно                               |
@@ -234,12 +234,8 @@ niri msg --json workspaces | jq .   # машиночитаемый вывод
 - `nm-applet` — апплет NetworkManager;
 - `swaync` — центр уведомлений;
 - `gammastep` — ночная цветовая температура (Москва, ~55.82/37.70);
-- `wayland/wallpapers.sh` — случайные обои на все активные выходы; выбирается
-  один случайный файл из `~/Wallpapers` и ставится на все мониторы. Рисует
-  **awww** (демон `awww-daemon` поднимается самим скриптом, если его нет);
-  **swaybg** остаётся fallback'ом, если awww недоступен или демон не завёлся.
-  Скрипт молчит при успехе; вывод бэкенда пишется в
-  `$XDG_RUNTIME_DIR/wallpapers.log` и показывается, только если он упал;
+- обои (`wayland/wallpapers.sh`) отдельной строкой **не** запускаются: их
+  выставляет `theme-sync` в конце своего запуска, см. ниже;
 - `ironbar` — статусбар (общий `~/.config/ironbar/config.yaml` с sway; старый
   waybar-запуск закомментирован рядом для отката);
 - `swayidle -w` — блокировка через 5 мин, гашение экрана через 10, suspend
@@ -247,6 +243,32 @@ niri msg --json workspaces | jq .   # машиночитаемый вывод
 
 Скриншот-портал: `niri-portals.conf` (GNOME screencast backend), см.
 `xdg-desktop-portal/`.
+
+### Обои и тема
+
+Файлы в `~/Wallpapers` названы по шаблону `desktop_<WxH>_<n>_<light|dark>.<ext>`
+(например `desktop_5120x1440_2_light.jpg`). `wayland/wallpapers.sh` читает
+режим из `~/.local/state/dotfiles/background-mode` (его пишет `theme-sync`) и
+выбирает **только** файлы с нужным суффиксом — тёмная тема не получает светлую
+картинку и наоборот. Если под режим ничего не нашлось, берутся все обои и в
+stderr выводится одна строка.
+
+`theme-sync` вызывает скрипт в конце переключения темы (фоново, через `setsid`),
+поэтому обои меняются вместе с темой. `Mod+T` меняет их вручную в пределах
+текущего режима.
+
+Панорамные обои (aspect совпадает с общим боксом мониторов ±1%) разрезаются по
+выходам, чтобы картинка шла единым полотном. Половинки кэшируются в
+`~/Wallpapers/.slices/<layout>/` как `left_<имя>.jpg` / `right_<имя>.jpg`, где
+`<layout>` — подпись раскладки (`DP-1_2560x1440+2560+0~HDMI-A-1_2560x1440+0+0`).
+Повторный выбор тех же обоев на той же раскладке использует готовые половинки,
+без ImageMagick. Другое разрешение/расположение мониторов даёт другой каталог —
+старые половинки не переиспользуются. Удалить кэш: `rm -rf ~/Wallpapers/.slices`.
+
+Переменные: `WALLPAPER_MODE=dark|light` — принудительный режим,
+`WALLPAPER_IMAGE=<path>` — конкретная картинка, `WALLPAPER_NO_SLICES=1` — не
+кэшировать половинки (резать во временный `$XDG_RUNTIME_DIR/wallpapers.d`, как
+раньше), `WALLPAPER_DIR`, `WALLPAPER_BG` — каталог и цвет полей.
 
 ---
 
@@ -299,7 +321,11 @@ wallpapers: no active outputs
 - в ветке `swaybg` обои ставит **один** процесс без `-o` (сразу на все выходы),
   поэтому больше нет строк `Could not find config for output ...`;
 - вывод бэкенда не сыплется на консоль, а пишется в
-  `$XDG_RUNTIME_DIR/wallpapers.log` и показывается только при падении.
+  `$XDG_RUNTIME_DIR/wallpapers.log` и показывается только при падении;
+- тема: выбираются только `*_dark.*` / `*_light.*` под текущий
+  `background-mode`; половинки панорамных кэшируются в
+  `~/Wallpapers/.slices/<layout>/` (`left_*` / `right_*`) и переиспользуются,
+  пока раскладка мониторов не изменилась.
 
 **Проверить:**
 
@@ -309,6 +335,8 @@ pgrep -a awww-daemon                # демон awww (основной путь
 awww query                          # список выходов и текущая картинка
 pgrep -a swaybg                     # только для fallback-ветки
 cat "$XDG_RUNTIME_DIR/wallpapers.log"
+cat ~/.local/state/dotfiles/background-mode   # какой режим сейчас
+ls ~/Wallpapers/.slices/*/           # закэшированные половинки
 ```
 
 При переподключении монитора awww **сам** восстанавливает последнюю картинку

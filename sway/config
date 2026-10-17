@@ -189,7 +189,7 @@ exec --no-startup-id ironbar -t $HOME/.local/state/dotfiles/ironbar/style.css
 exec --no-startup-id nm-applet --indicator
 exec --no-startup-id swaync
 exec --no-startup-id gammastep -l 55.817521:37.695987
-exec --no-startup-id $HOME/.config/wayland/wallpapers.sh
+# Обои выставляет theme-sync (выше), чтобы на старте не было двойного выбора.
 
 include /etc/sway/config.d/*
 include ~/.config/sway/config.d/*.conf

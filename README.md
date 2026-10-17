@@ -104,8 +104,11 @@ Layering mirrors the rest of the repo:
 Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
 `wayland/`:
 
-- `wallpapers.sh` — random wallpaper via `awww` (falls back to `swaybg`) on
-  every active output.
+- `wallpapers.sh` — wallpaper via `awww` (falls back to `swaybg`) on every
+  active output; picks only `*_dark.*` or `*_light.*` files to match the
+  current theme (see `Runtime state`), and caches the halves of a panoramic
+  picture in `~/Wallpapers/.slices/<layout>/` so they are reused instead of
+  being re-sliced.
 - `toggletouch.sh` — touchpad toggle (`niri msg action toggle-touchpad` or
   `swaymsg input ... events`).
 
@@ -177,7 +180,9 @@ rewrites the files above and then:
   `alacritty msg config` (`live_config_reload` watches only the main config,
   not imported files); new windows read the state import themselves;
 - sends `SIGUSR1` to helix (it reloads config and theme);
-- tells running Neovim to `set background=...` via `nvim-ctrl`.
+- tells running Neovim to `set background=...` via `nvim-ctrl`;
+- re-runs `wayland/wallpapers.sh` in the background, so the wallpaper switches
+  to a picture of the matching mode (`THEME_SYNC_NO_WALLPAPER=1` opts out).
 
 rofi picks the theme up on its next launch, fish applies it on the next prompt,
 and ironbar hot-reloads because the generated wrapper changed. No application

@@ -6,11 +6,11 @@
  * reload_style_on_change is enabled in config-common.jsonc.
  */
 
-@define-color bar_bg #282828;
-@define-color bar_fg #ebdbb2;
-@define-color bar_accent #fabd2f;
+@define-color bar_bg #fbf1c7;
+@define-color bar_fg #3c3836;
+@define-color bar_accent #b57614;
 @define-color bar_inactive #928374;
-@define-color bar_critical #fb4934;
+@define-color bar_critical #9d0006;
 
 * {
     font-family: "Source Code Pro", monospace;

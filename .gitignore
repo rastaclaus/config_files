@@ -8,3 +8,15 @@ __pycache__/
 *.pem
 vpn/local.env
 opencode/service.json
+
+# fish runtime state (живёт в ~/.config/fish, не в репозитории):
+# universal-переменные и файлы, которые пишут fish/fisher.
+# Если merge-каталог не развернут, эти пути в репо не должны появляться.
+fish/fish_variables
+fish/conf.d/fish_frozen_*.fish
+fish/conf.d/fzf.fish
+fish/functions/_fzf_*.fish
+fish/functions/fzf_configure_bindings.fish
+fish/functions/fisher.fish
+fish/completions/fisher.fish
+fish/completions/fzf_configure_bindings.fish

@@ -1,0 +1,10 @@
+#!/bin/sh
+# darkman hook: вызывается с "dark" или "light".
+set -eu
+case "${1:-}" in
+    dark)  icon=weather-clear-night ;;
+    light) icon=weather-clear ;;
+    *) echo "usage: $0 dark|light" >&2; exit 2 ;;
+esac
+notify-send --app-name=darkman --urgency=low --icon="$icon" "switching to $1 mode" || true
+exec "$(dirname "$(readlink -f "$0")")/../wayland/theme-sync" "$1"

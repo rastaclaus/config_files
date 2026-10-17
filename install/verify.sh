@@ -70,7 +70,7 @@ else
 fi
 
 # merge-каталоги: реальные каталоги, файлы — ссылки внутрь репозитория
-for d in fish helix; do
+for d in fish helix opencode; do
     if [[ -L "$HOME/.config/$d" ]]; then
         bad "~/.config/$d is a symlink; expected a merge directory"
     elif [[ -d "$HOME/.config/$d" ]]; then
@@ -80,12 +80,28 @@ for d in fish helix; do
     fi
 done
 
-for f in fish/config.fish fish/conf.d/theme.fish fish/fish_plugins helix/config.toml; do
+for f in fish/config.fish fish/conf.d/theme.fish fish/fish_plugins helix/config.toml \
+         opencode/opencode.jsonc opencode/cli.json opencode/AGENTS.md; do
     t="$HOME/.config/$f"
     if [[ -L "$t" && "$(readlink -f "$t")" == "$REPO/$f" ]]; then
         ok "~/.config/$f -> repo"
     else
         bad "~/.config/$f is not a symlink into the repo"
+    fi
+done
+
+# Рантайм OpenCode (plugin-зависимости, пароль локального сервера) должен
+# оставаться локальным файлом: если он окажется симлинком в репозиторий,
+# приложение снова начнёт писать в трекаемое дерево.
+if [[ -e "$HOME/.config/opencode/service.json" && -L "$HOME/.config/opencode/service.json" ]]; then
+    bad "opencode/service.json is a symlink into the repo; expected a local file"
+else
+    ok "opencode/service.json is not linked into the repo"
+fi
+for f in package.json bun.lock package-lock.json; do
+    t="$HOME/.config/opencode/$f"
+    if [[ -L "$t" && "$(readlink -f "$t")" == "$REPO"/* ]]; then
+        bad "~/.config/opencode/$f points into the repo; runtime files must stay local"
     fi
 done
 
@@ -158,12 +174,15 @@ else
 fi
 
 # ---------------------------------------- 7. переключение не трогает репозиторий
-before="$(git -C "$REPO" status --porcelain)"
-[[ -z "$before" ]] || warn "repo has uncommitted changes; checking they stay unchanged"
+# ignore-файлы тоже смотрим: иначе рантайм, который приложение пишет в репо
+# (opencode когда-то так и делал), для проверки просто невидим.
+before="$(git -C "$REPO" status --porcelain --ignored)"
+[[ -z "$(git -C "$REPO" status --porcelain)" ]] ||
+    warn "repo has uncommitted changes; checking they stay unchanged"
 
 for m in dark light; do
     THEME_SYNC_NO_RELOAD=1 "$REPO/wayland/theme-sync" "$m"
-    after="$(git -C "$REPO" status --porcelain)"
+    after="$(git -C "$REPO" status --porcelain --ignored)"
     if [[ "$before" == "$after" ]]; then
         ok "theme-sync $m leaves git status unchanged"
     else

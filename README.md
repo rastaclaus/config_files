@@ -67,12 +67,13 @@ Host override path mapping (used by the installer):
 
 If a host override exists, `~/.config/<x>` becomes a real directory whose
 entries are symlinks into the repo (common first, host wins on conflicts).
-Two entries carry the `merge` tag and are always laid out that way
-(`~/.config/fish`, `~/.config/helix`): applications must be able to write next
-to the tracked files (fisher installs plugins, fish rewrites `fish_variables`,
-helix may add runtime files). Everything else is a single symlink. Files listed
-in `install/volatile.conf` are copied into a merge directory instead of being
-linked, so writes never reach the repo.
+Three entries carry the `merge` tag and are always laid out that way
+(`~/.config/fish`, `~/.config/helix`, `~/.config/opencode`): applications must be
+able to write next to the tracked files (fisher installs plugins, fish rewrites
+`fish_variables`, helix may add runtime files, OpenCode runs `bun install` for
+plugin dependencies in its config directory). Everything else is a single
+symlink. Files listed in `install/volatile.conf` are copied into a merge
+directory instead of being linked, so writes never reach the repo.
 
 ## Hosts
 
@@ -165,8 +166,11 @@ focus-parent, scratchpad, a resize mode) stay in `sway/config`.
 
 ## Runtime state и переключение темы
 
-The repository is a **read-only configuration source**: applications never
-write into it. Everything that changes at runtime lives in one fixed directory:
+The repository is a **read-only configuration source**: no application writes
+into it. Merge directories (`fish`, `helix`, `opencode`) give applications a
+real directory to write next to the tracked files, so runtime state stays
+outside the tree. Everything that changes at runtime lives in one fixed
+directory:
 
 ```
 ~/.local/state/dotfiles/
@@ -239,8 +243,12 @@ immediately), rofi on its next launch.
 
 ## OpenCode / MCP
 
-`opencode/` is linked to `~/.config/opencode`. The MCP servers are declared under
-`mcp.servers` in `opencode/opencode.jsonc`:
+`opencode/` is a merge directory (like `fish/` and `helix/`): `opencode.jsonc`,
+`cli.json`, `AGENTS.md`, `plugins/` and `sync-models.sh` are symlinks into the
+repo, while what OpenCode writes next to its config — `package.json`,
+`bun.lock`, `node_modules/`, `service.json` — stays a real local file and never
+enters the working tree. The MCP servers are declared under `mcp.servers` in
+`opencode/opencode.jsonc`:
 
 | server     | transport | purpose                                                                   |
 |------------|-----------|---------------------------------------------------------------------------|

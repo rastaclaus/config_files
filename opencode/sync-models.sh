@@ -26,10 +26,12 @@ declare -A API_KEYS=(
 )
 
 # V2-конфиг OpenCode: opencode.jsonc (JSONC — разрешены // и /* */ комментарии).
+# Каталог ~/.config/opencode — merge-каталог (см. install/symlinks.conf): файлы
+# конфига — симлинки в репозиторий, рантайм (package.json, bun.lock,
+# node_modules, service.json) живёт там же обычными файлами и в git не попадает.
 # jq не умеет парсить JSONC, поэтому чтение/запись конфига делает python3 (функция write_provider_models).
 CONFIG_FILE="$HOME/.config/opencode/opencode.jsonc"
-# Бэкап — вне репозитория: ~/.config/opencode — симлинк в repo, а рядом лежащий
-# *.backup попал бы в рабочее дерево со старыми путями.
+# Бэкап — вне репозитория: состояние OpenCode не должно попадать в рабочее дерево.
 BACKUP_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/opencode"
 BACKUP_FILE="$BACKUP_DIR/opencode.jsonc.$(date +%Y%m%d-%H%M%S)"
 PROVIDERS_TO_UPDATE=()
@@ -237,7 +239,7 @@ update_provider() {
 
     log_info "Запись моделей в $CONFIG_FILE"
     if ! python3 - "$CONFIG_FILE" "$provider" "$models_file" <<'PY'
-import sys, json
+import sys, json, os, tempfile
 
 def load_jsonc(text):
     # 1) Убираем // и /* */ комментарии, не трогая содержимое строок.
@@ -307,6 +309,10 @@ def load_jsonc(text):
     return json.loads(''.join(o2))
 
 path, provider, models_file = sys.argv[1], sys.argv[2], sys.argv[3]
+# ~/.config/opencode/opencode.jsonc — симлинк в репозиторий (merge-каталог).
+# Пишем по реальному пути и через temp+rename: иначе os.replace заменил бы сам
+# симлинк обычным файлом, и конфиг разъехался бы с репозиторием.
+path = os.path.realpath(path)
 with open(models_file) as f:
     models = json.load(f)
 
@@ -321,9 +327,22 @@ cur = cfg['providers'].get(provider) or {}
 cur['models'] = models
 cfg['providers'][provider] = cur
 
-with open(path, 'w') as f:
-    json.dump(cfg, f, ensure_ascii=False, indent=2)
-    f.write('\n')
+# Атомарная запись: обрыв посреди json.dump не должен оставить битый конфиг.
+dir_ = os.path.dirname(path) or '.'
+fd, tmp = tempfile.mkstemp(dir=dir_, prefix='.opencode.jsonc.', suffix='.tmp')
+try:
+    with os.fdopen(fd, 'w') as f:
+        json.dump(cfg, f, ensure_ascii=False, indent=2)
+        f.write('\n')
+    # mkstemp создаёт 0600; у конфига в репозитории права 0644.
+    os.chmod(tmp, 0o644)
+    os.replace(tmp, path)
+except BaseException:
+    try:
+        os.unlink(tmp)
+    except OSError:
+        pass
+    raise
 print('ok')
 PY
     then

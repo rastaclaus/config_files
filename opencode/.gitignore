@@ -1,0 +1,17 @@
+# Runtime artifacts of OpenCode itself (plugin dependencies, server state).
+#
+# The config directory is a merge directory: opencode.jsonc, cli.json,
+# AGENTS.md, plugins/ and sync-models.sh are symlinks into the repository,
+# while the files below are real files that OpenCode creates and rewrites
+# locally. They must never be committed.
+#
+# This file is tracked on purpose (it used to ignore itself, which made every
+# rule below machine-local and invisible to git status).
+node_modules/
+package.json
+package-lock.json
+bun.lock
+bun.lockb
+service.json
+opencode.jsonc.backup
+.opencode.jsonc.*.tmp

@@ -60,22 +60,37 @@ fi
 # Alacritty: live_config_reload следит только за основным конфигом, изменения
 # импортированных файлов он НЕ замечает (проверено на 0.1x через IPC:
 # get-config не меняется после правки state). Поэтому уже запущенным окнам
-# палитру и прозрачность отправляем через IPC. Новые окна читают state сами.
-# Импорт в state-файле нужен именно для них.
-if command -v alacritty >/dev/null 2>&1 && alacritty msg get-config >/dev/null 2>&1; then
+# палитру и прозрачность отправляем через IPC.
+# Важно: darkman вызывается как systemd user service без переменной ALACRITTY_SOCKET,
+# поэтому перебираем все сокеты запущенных процессов в $XDG_RUNTIME_DIR и /tmp.
+# Новые окна читают state сами через импорт.
+if command -v alacritty >/dev/null 2>&1; then
     palette=$(sed -n 's/^import = \["\(.*\)"\]$/\1/p' "$REPO/theme/$mode/alacritty.toml" | head -n 1)
     palette=${palette/#\~/$HOME}
     opacity=$(sed -n 's/^opacity *= *//p' "$REPO/theme/$mode/alacritty.toml" | head -n 1)
     if [[ -r $palette ]]; then
-        # [colors.primary] + background = '#...'  ->  colors.primary.background="#..."
-        # shellcheck disable=SC2046 # нужен word splitting: это список key=value
-        alacritty msg config -w -1 $(awk -F"'" '
+        config_args=$(awk -F"'" '
             /^\[colors\./ { section = $0; gsub(/^\[|\]$/, "", section); next }
             section != "" && /^[a-z_]+[ \t]*=/ {
                 key = $1; gsub(/[ \t=]/, "", key);
                 printf "%s.%s=\"%s\" ", section, key, $2;
             }
-        ' "$palette") "window.opacity=${opacity:-1.0}" 2>/dev/null || true
+        ' "$palette")
+        config_args="$config_args window.opacity=${opacity:-1.0}"
+
+        shopt -s nullglob
+        sockets=( "${XDG_RUNTIME_DIR:-/run/user/$UID}"/Alacritty*.sock /tmp/Alacritty*.sock )
+        shopt -u nullglob
+
+        # shellcheck disable=SC2086 # нужен word splitting для аргументов config
+        if [[ ${#sockets[@]} -gt 0 ]]; then
+            for sock in "${sockets[@]}"; do
+                [[ -S "$sock" ]] || continue
+                env -u ALACRITTY_SOCKET alacritty msg -s "$sock" config -w -1 $config_args 2>/dev/null || true
+            done
+        elif alacritty msg get-config >/dev/null 2>&1; then
+            alacritty msg config -w -1 $config_args 2>/dev/null || true
+        fi
     fi
 fi
 

@@ -59,11 +59,30 @@ log "host=$HOST profile=$PROFILE repo=$REPO"
 # -------------------------------------------------------------------- packages
 install_yay() {
   command -v yay >/dev/null 2>&1 && return 0
-  command -v git >/dev/null 2>&1 || die "git is required to bootstrap yay"
+
+  # В --dry-run ничего не клонируем и не собираем: run() только печатает
+  # команды, поэтому следующий `cd` уходил в несуществующий каталог, а set -e
+  # завершал весь прогон — ровно на той чистой машине, где dry-run и нужен.
+  if [[ $DRY_RUN -eq 1 ]]; then
+    log "bootstrap: installing yay (dry-run)"
+    info "[dry-run] git clone https://aur.archlinux.org/yay.git <tmp>/yay"
+    info "[dry-run] (cd <tmp>/yay && makepkg -si --noconfirm)"
+    return 0
+  fi
+
+  command -v git     >/dev/null 2>&1 || die "git is required to bootstrap yay"
+  command -v makepkg >/dev/null 2>&1 || die "makepkg is required to bootstrap yay (install base-devel)"
+
   log "bootstrap: installing yay"
   local tmp; tmp="$(mktemp -d)"
-  run git clone https://aur.archlinux.org/yay.git "$tmp/yay"
-  ( cd "$tmp/yay" && run makepkg -si --noconfirm )
+  if ! run git clone https://aur.archlinux.org/yay.git "$tmp/yay"; then
+    rm -rf "$tmp"
+    die "failed to clone the yay repository"
+  fi
+  if ! ( cd "$tmp/yay" && run makepkg -si --noconfirm ); then
+    rm -rf "$tmp"
+    die "failed to build yay"
+  fi
   rm -rf "$tmp"
 }
 

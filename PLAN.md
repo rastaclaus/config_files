@@ -712,6 +712,34 @@ case "$mode" in dark|light) ;; *) mode=light ;; esac
 
 ---
 
+### Результаты проверки (2026-10-17, niri, машина adesk)
+
+Выполнено на живой сессии; `git status` после каждого шага оставался пустым.
+
+| проверка | результат |
+|---|---|
+| `install/verify.sh` | `verify: OK` (state, ссылки, prune, legacy-хуки, шаблоны, ironbar-обёртка) |
+| alacritty (без рестарта) | light `#fbf1c7/1.0` → dark `#282828/0.8` → light (IPC `msg config`) |
+| helix, запуск | тема `dotfiles`: light `#fbf1c7`, dark `#282828` (проверено по escape-кодам pty) |
+| helix, SIGUSR1 | открытое окно перекрасилось light → dark без рестарта |
+| nvim, `nvim-ctrl` | `&background`: dark → light в запущенном окне |
+| ironbar | запущен с `-t state/ironbar/style.css`; «Reloading CSS» при смене; пиксели бара light `#fbf1c7`, dark `#282828` |
+| fish | ветки темы dark/light применяются на промпте; `set -U probe` и `fisher update` не меняют репозиторий |
+| rofi | `gruvbox-dark-bg0-soft` / `gruvbox-light-bg0-soft` (`-dump-theme`) |
+| GTK | `adw-gtk3-dark` + `prefer-dark` / `adw-gtk3` + `prefer-light` |
+
+Замечания:
+
+- Запущенный ironbar был стартован без `-t` (сессия до правок конфигов) — при
+  проверке перезапущен вручную с обёрткой; после перелогина его поднимут
+  `sway/config` / `niri/config.kdl` уже с `-t`.
+- Полный вход в niri/sway (пункт 8) остаётся ручным шагом: текущая сессия
+  стартовала до изменений, поэтому автозапуск `theme-sync` и бара проверен
+  по конфигам, а не перелогином.
+- Helix-тему удобно проверять через pty: `script -q -c 'stty rows 30 cols 100; helix file'`.
+
+---
+
 ## Список изменяемых/создаваемых файлов
 
 Новые:

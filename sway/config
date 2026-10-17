@@ -180,7 +180,11 @@ focus_follows_mouse no
 # workspaces/focused modules auto-detect the compositor). The waybar config is
 # kept in ~/.config/waybar/ for a one-line rollback.
 # exec --no-startup-id waybar -c ~/.config/waybar/config-sway -s ~/.config/waybar/style.css
-exec --no-startup-id ironbar
+# CSS-обёртка собирается wayland/theme-sync: структура из репозитория,
+# палитра — в ~/.local/state/dotfiles/ironbar/colors.css.
+# Сначала применяем тему, чтобы state-файлы существовали до запуска бара.
+exec --no-startup-id ~/.config/wayland/theme-sync "$(darkman get 2>/dev/null || echo light)"
+exec --no-startup-id ironbar -t $HOME/.local/state/dotfiles/ironbar/style.css
 
 exec --no-startup-id nm-applet --indicator
 exec --no-startup-id swaync

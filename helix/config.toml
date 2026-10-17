@@ -1,4 +1,5 @@
-theme = "gruvbox_light"
+# Тема лежит в ~/.config/helix/runtime/themes/dotfiles.toml (симлинк в state).
+theme = "dotfiles"
 
 [editor]
 line-number = "relative"

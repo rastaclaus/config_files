@@ -65,7 +65,11 @@ spawn-at-startup "~/.config/wayland/wallpapers.sh"
 // Status bar: ironbar (shared config with sway). The waybar config is kept in
 // ~/.config/waybar/ for a one-line rollback.
 // spawn-sh-at-startup "waybar -c ~/.config/waybar/config-niri -s ~/.config/waybar/style.css"
-spawn-at-startup "ironbar"
+// CSS-обёртка собирается wayland/theme-sync: структура из репозитория,
+// палитра — в ~/.local/state/dotfiles/ironbar/colors.css.
+// Сначала применяем тему, чтобы state-файлы существовали до запуска бара.
+spawn-sh-at-startup "~/.config/wayland/theme-sync \"$(darkman get 2>/dev/null || echo light)\""
+spawn-sh-at-startup "ironbar -t \"$HOME/.local/state/dotfiles/ironbar/style.css\""
 
 // Idle: lock after 5 min, screen off after 10, suspend after 30.
 spawn-sh-at-startup "swayidle -w timeout 300 'swaylock -f -c 000000' timeout 600 'niri msg action power-off-monitors' timeout 1800 'systemctl suspend' before-sleep 'swaylock -f -c 000000'"

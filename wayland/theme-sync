@@ -49,11 +49,33 @@ copy "$REPO/theme/$mode/ironbar.css" "$STATE/ironbar/colors.css"
 # GTK / xdg-desktop-portal
 if command -v gsettings >/dev/null 2>&1; then
     if [[ $mode == dark ]]; then
-        gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark
-        gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+        gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true
     else
-        gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3
-        gsettings set org.gnome.desktop.interface color-scheme prefer-light
+        gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface color-scheme prefer-light 2>/dev/null || true
+    fi
+fi
+
+# Alacritty: live_config_reload следит только за основным конфигом, изменения
+# импортированных файлов он НЕ замечает (проверено на 0.1x через IPC:
+# get-config не меняется после правки state). Поэтому уже запущенным окнам
+# палитру и прозрачность отправляем через IPC. Новые окна читают state сами.
+# Импорт в state-файле нужен именно для них.
+if command -v alacritty >/dev/null 2>&1 && alacritty msg get-config >/dev/null 2>&1; then
+    palette=$(sed -n 's/^import = \["\(.*\)"\]$/\1/p' "$REPO/theme/$mode/alacritty.toml" | head -n 1)
+    palette=${palette/#\~/$HOME}
+    opacity=$(sed -n 's/^opacity *= *//p' "$REPO/theme/$mode/alacritty.toml" | head -n 1)
+    if [[ -r $palette ]]; then
+        # [colors.primary] + background = '#...'  ->  colors.primary.background="#..."
+        # shellcheck disable=SC2046 # нужен word splitting: это список key=value
+        alacritty msg config -w -1 $(awk -F"'" '
+            /^\[colors\./ { section = $0; gsub(/^\[|\]$/, "", section); next }
+            section != "" && /^[a-z_]+[ \t]*=/ {
+                key = $1; gsub(/[ \t=]/, "", key);
+                printf "%s.%s=\"%s\" ", section, key, $2;
+            }
+        ' "$palette") "window.opacity=${opacity:-1.0}" 2>/dev/null || true
     fi
 fi
 
@@ -66,6 +88,6 @@ if [[ -x "$HOME/.cargo/bin/nvim-ctrl" ]]; then
     "$HOME/.cargo/bin/nvim-ctrl" "set background=$mode" 2>/dev/null || true
 fi
 
-# Alacritty / rofi / fish / ironbar подхватывают изменения сами:
-# alacritty — live_config_reload импортов, rofi — при следующем запуске,
-# fish — на следующем промпте, ironbar — watcher обёртки.
+# rofi / fish / ironbar подхватывают изменения сами:
+# rofi — при следующем запуске, fish — на следующем промпте,
+# ironbar — watcher обёртки.

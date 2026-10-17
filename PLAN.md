@@ -23,6 +23,12 @@
   молча пропускаются, импортирующий файл загружается **последним** (его ключи
   перебивают импорт), nested-imports работают (`man 5 alacritty`,
   `alacritty migrate --dry-run`).
+- Alacritty 0.1x: `live_config_reload` следит **только за основным конфигом**.
+  Правка импортированного файла не перерисовывает уже запущенные окна
+  (проверено через `alacritty msg get-config`: цвета не менялись). Поэтому
+  `theme-sync` дополнительно отправляет палитру запущенным инстансам через
+  `alacritty msg config -w -1 ...`; новые окна читают state-импорт сами.
+  Перезапуск приложения для смены темы не нужен.
 - Rofi 2.0: `?import "~/..."` работает, отсутствующий файл — только warning;
   `@theme` внутри импортированного файла перекрывает более ранний `@theme`
   (`rofi -dump-theme`).
@@ -185,11 +191,33 @@ copy "$REPO/theme/$mode/ironbar.css" "$STATE/ironbar/colors.css"
 # GTK / xdg-desktop-portal
 if command -v gsettings >/dev/null 2>&1; then
     if [[ $mode == dark ]]; then
-        gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark
-        gsettings set org.gnome.desktop.interface color-scheme prefer-dark
+        gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3-dark 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface color-scheme prefer-dark 2>/dev/null || true
     else
-        gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3
-        gsettings set org.gnome.desktop.interface color-scheme prefer-light
+        gsettings set org.gnome.desktop.interface gtk-theme adw-gtk3 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface color-scheme prefer-light 2>/dev/null || true
+    fi
+fi
+
+# Alacritty: live_config_reload следит только за основным конфигом, изменения
+# импортированных файлов он НЕ замечает (проверено на 0.1x через IPC:
+# get-config не меняется после правки state). Поэтому уже запущенным окнам
+# палитру и прозрачность отправляем через IPC. Новые окна читают state сами.
+# Импорт в state-файле нужен именно для них.
+if command -v alacritty >/dev/null 2>&1 && alacritty msg get-config >/dev/null 2>&1; then
+    palette=$(sed -n 's/^import = \["\(.*\)"\]$/\1/p' "$REPO/theme/$mode/alacritty.toml" | head -n 1)
+    palette=${palette/#\~/$HOME}
+    opacity=$(sed -n 's/^opacity *= *//p' "$REPO/theme/$mode/alacritty.toml" | head -n 1)
+    if [[ -r $palette ]]; then
+        # [colors.primary] + background = '#...'  ->  colors.primary.background="#..."
+        # shellcheck disable=SC2046 # нужен word splitting: это список key=value
+        alacritty msg config -w -1 $(awk -F"'" '
+            /^\[colors\./ { section = $0; gsub(/^\[|\]$/, "", section); next }
+            section != "" && /^[a-z_]+[ \t]*=/ {
+                key = $1; gsub(/[ \t=]/, "", key);
+                printf "%s.%s=\"%s\" ", section, key, $2;
+            }
+        ' "$palette") "window.opacity=${opacity:-1.0}" 2>/dev/null || true
     fi
 fi
 
@@ -202,9 +230,9 @@ if [[ -x "$HOME/.cargo/bin/nvim-ctrl" ]]; then
     "$HOME/.cargo/bin/nvim-ctrl" "set background=$mode" 2>/dev/null || true
 fi
 
-# Alacritty / rofi / fish / ironbar подхватывают изменения сами:
-# alacritty — live_config_reload импортов, rofi — при следующем запуске,
-# fish — на следующем промпте, ironbar — watcher обёртки.
+# rofi / fish / ironbar подхватывают изменения сами:
+# rofi — при следующем запуске, fish — на следующем промпте,
+# ironbar — watcher обёртки.
 ```
 
 ### `darkman/theme` (новый, `chmod +x`)
@@ -552,9 +580,10 @@ fish/completions/fzf_configure_bindings.fish
      ironbar/{colors.css,style.css}
    ```
 3. **Как работает переключение.** darkman → `~/.local/share/darkman/theme` →
-   `wayland/theme-sync`; что делает скрипт (файлы, gsettings, SIGUSR1 helix,
-   nvim-ctrl); что приложения подхватывают сами (alacritty live-reload,
-   rofi при запуске, fish на промпте, ironbar watcher).
+   `wayland/theme-sync`; что делает скрипт (файлы, gsettings, палитра
+   запущенным alacritty через `alacritty msg config`, SIGUSR1 helix,
+   nvim-ctrl); что приложения подхватывают сами (rofi при запуске, fish на
+   промпте, ironbar watcher). Новые окна alacritty читают state-импорт.
 4. **Merge-каталоги.** `~/.config/fish`, `~/.config/helix` — реальные каталоги
    с симлинками на файлы репо; `install/volatile.conf` — список рантайм-файлов,
    которые копируются, а не симлинкуются; как добавить новый volatile-файл.

@@ -1,15 +1,11 @@
 /* Ironbar style for sway and niri.
  *
- * Colors are declared with @define-color so the light/dark theme scripts
- * (dark-mode.d/ironbar-theme.sh, light-mode.d/ironbar-theme.sh) can switch
- * them with a simple sed. Ironbar hot-reloads the stylesheet on change.
+ * Здесь только структура. Палитра (@define-color) приходит из
+ * ~/.local/state/dotfiles/ironbar/colors.css через обёртку, которую
+ * генерирует wayland/theme-sync. Запуск:
+ *   ironbar -t ~/.local/state/dotfiles/ironbar/style.css
+ * Ironbar следит за обёрткой и перезагружает CSS вместе с импортами.
  */
-
-@define-color bar_bg #fbf1c7;
-@define-color bar_fg #3c3836;
-@define-color bar_accent #b57614;
-@define-color bar_inactive #928374;
-@define-color bar_critical #9d0006;
 
 * {
     font-family: "Source Code Pro", monospace;

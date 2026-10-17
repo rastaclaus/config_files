@@ -6,4 +6,6 @@ configuration {
   combi-modi: "window,drun";
   // run-command: "alacritty -e fish -c '{cmd}'";
 }
-@theme "gruvbox-light-soft"
+// Fallback, если state ещё не создан; импорт ниже имеет приоритет.
+@theme "gruvbox-dark-soft"
+?import "~/.local/state/dotfiles/rofi.rasi"

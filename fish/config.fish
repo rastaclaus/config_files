@@ -1,14 +1,9 @@
-# darkman answers only while its daemon runs. Without the socket the call fails
-# and its empty output used to spam every non-interactive 'fish -c' (fisher,
-# plugins, install.sh) with "test: Missing argument".
-if status is-interactive; and command -q darkman
-    switch (darkman get 2>/dev/null)
-        case light
-            fish_config theme choose "Snow Day"
-        case dark
-            fish_config theme choose "dark"
-    end
-end
+# EDITOR раньше жил в universal-переменных fish; теперь — здесь.
+set -gx EDITOR /usr/bin/helix
+
+# Key bindings: содержимое бывшего conf.d/fish_frozen_key_bindings.fish.
+set -g fish_key_bindings fish_vi_key_bindings
+set -e -U fish_key_bindings 2>/dev/null
 
 set -gx PYENV_ROOT $HOME/.pyenv
 fish_add_path -g $HOME/.local/bin $HOME/.cargo/bin

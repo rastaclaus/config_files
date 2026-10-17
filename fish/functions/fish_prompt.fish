@@ -1,5 +1,6 @@
 function fish_prompt
         set -l last_status $status
+        functions -q __dotfiles_apply_theme; and __dotfiles_apply_theme
     
         set -l normal (set_color normal)
         set -l usercolor (set_color $fish_color_user)

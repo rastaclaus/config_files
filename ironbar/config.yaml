@@ -4,9 +4,9 @@
 # modules auto-detect the compositor (sway via SWAYSOCK, niri via NIRI_SOCKET).
 # The previous waybar config is kept in ~/.config/waybar/ for a quick rollback.
 #
-# Colors live in style.css (@define-color) and are switched by darkman through
-# dark-mode.d/ironbar-theme.sh and light-mode.d/ironbar-theme.sh. Ironbar
-# hot-reloads the stylesheet, so no restart is needed on theme change.
+# Colors live in ~/.local/state/dotfiles/ironbar/ like the rest of the theme
+# state: wayland/theme-sync generates the wrapper CSS (palette + this stylesheet)
+# and ironbar hot-reloads it, so no restart is needed on theme change.
 
 $schema: https://f.jstanger.dev/github/ironbar/schema.json
 

@@ -196,9 +196,10 @@ its static palette. To bring it back, do the same thing: generate a wrapper in
 the state dir, run `waybar -s <state>/waybar/style.css`, and `@import` the
 palette.
 
-**Checks.** `./install/verify.sh` validates that the repo is clean, that the
-merge directories are laid out correctly, that no symlink points outside, and
-that the state files match the current mode (read-only, changes nothing).
+**Checks.** `./install/verify.sh` validates that the state files match the
+current mode, that the merge directories and symlinks are laid out correctly,
+that there are no dangling links or legacy hooks, and that switching the theme
+leaves `git status` unchanged (it is read-only and restores the current mode).
 
 **Limitations.** `XDG_STATE_HOME` must stay at its default. fish applies the new
 theme on the next prompt, helix on `SIGUSR1` (new helix windows pick it up

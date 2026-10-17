@@ -7,7 +7,7 @@ Personal dotfiles. One branch, host-specific bits under `hosts/`.
 ```
 fish/ helix/ nvim/ opencode/ direnv/ alacritty/ rofi/ darkman/
 networkmanager-dmenu/ xdg-desktop-portal/ applications/
-sway/ niri/ waybar/ wayland/                          # Wayland sessions (gui)
+sway/ niri/ ironbar/ waybar/ wayland/                 # Wayland sessions (gui)
 dark-mode.d/ light-mode.d/ .tmux.conf .ruff.toml      # common (base)
 vpn/                                                  # VPN profile skeleton (see below)
 hosts/
@@ -82,17 +82,27 @@ Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
 - `toggletouch.sh` — touchpad toggle (`niri msg action toggle-touchpad` or
   `swaymsg input ... events`).
 
-The status bar is **waybar** on both compositors: `waybar/config-common.jsonc`
-holds shared options and modules, `config-sway` / `config-niri` add the
-compositor-specific workspace module, and `style.css` is themed by darkman
-(`dark-mode.d/` / `light-mode.d/`). The `battery` module (capacity, charging
-icon, time left) hides itself on hosts without a battery, so it lives in the
-shared config. Portals: sway keeps `xdg-desktop-portal-wlr`,
-niri uses `niri-portals.conf` (GNOME screencast backend).
+The status bar is **ironbar** on both compositors. A single `ironbar/config.yaml`
+works for sway and niri alike — the `workspaces` and `focused` modules detect the
+compositor at runtime, so there is no per-compositor split. `ironbar/style.css`
+is themed by darkman (`dark-mode.d/ironbar-theme.sh` /
+`light-mode.d/ironbar-theme.sh`) and hot-reloaded on change. The `battery`
+module is hidden via `show_if` on hosts without a battery, and it depends on
+**upower** (unlike waybar, which read sysfs directly). Weather comes from the
+shared `waybar/weather.py` script, called with `--plain` (the default output is
+still waybar's JSON).
+
+The previous **waybar** setup is kept intact in `waybar/` and the launch lines in
+`sway/config` / `niri/config.kdl` are left commented out, so switching back is a
+one-line change. `install/packages/gui.txt` and `install/symlinks.conf` still
+carry both bars.
+
+Portals: sway keeps `xdg-desktop-portal-wlr`, niri uses `niri-portals.conf`
+(GNOME screencast backend).
 
 Dark/light switching is driven by **darkman**: `dark-mode.d/` and `light-mode.d/`
 are run on every mode change (GTK theme `adw-gtk3-dark` / `adw-gtk3`, plus
-terminal / editor / rofi / waybar colors). Qt apps follow the GTK theme through
+terminal / editor / rofi / ironbar colors). Qt apps follow the GTK theme through
 Qt's GTK platform theme, which is read from the environment — a one-time manual
 step, since the repo does not manage `/etc/environment`:
 

@@ -5,6 +5,9 @@ Ported from sway/swaybar-status.py: pulls the current temperature and symbol
 from the met.no locationforecast API and prints a single-line JSON object that
 waybar understands (return-type "json").
 
+Pass --plain to print just the text (no JSON), which is what ironbar's script
+module expects: `weather.py --plain` -> "☀️ 12°C".
+
 Location can be overridden with WEATHER_LAT / WEATHER_LON, and the met.no
 User-Agent with WEATHER_USER_AGENT.
 """
@@ -13,11 +16,14 @@ User-Agent with WEATHER_USER_AGENT.
 
 import json
 import os
+import sys
 
 import requests  # type: ignore[import-untyped]
 
 LAT = float(os.environ.get("WEATHER_LAT", "55.817521"))
 LON = float(os.environ.get("WEATHER_LON", "37.695987"))
+
+PLAIN = "--plain" in sys.argv[1:]
 
 API_URL = "https://api.met.no/weatherapi/locationforecast/2.0/compact"
 USER_AGENT = os.environ.get(
@@ -64,7 +70,10 @@ def symbol_emoji(code: str) -> str:
 
 
 def emit(text: str, tooltip: str) -> None:
-    print(json.dumps({"text": text, "tooltip": tooltip}), flush=True)
+    if PLAIN:
+        print(text, flush=True)
+    else:
+        print(json.dumps({"text": text, "tooltip": tooltip}), flush=True)
 
 
 def main() -> None:

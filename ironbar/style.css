@@ -1,0 +1,75 @@
+/* Ironbar style for sway and niri.
+ *
+ * Colors are declared with @define-color so the light/dark theme scripts
+ * (dark-mode.d/ironbar-theme.sh, light-mode.d/ironbar-theme.sh) can switch
+ * them with a simple sed. Ironbar hot-reloads the stylesheet on change.
+ */
+
+@define-color bar_bg #282828;
+@define-color bar_fg #ebdbb2;
+@define-color bar_accent #fabd2f;
+@define-color bar_inactive #928374;
+@define-color bar_critical #fb4934;
+
+* {
+    font-family: "Source Code Pro", monospace;
+    font-size: 14px;
+    border: none;
+    box-shadow: none;
+    background-image: none;
+}
+
+.background {
+    background-color: @bar_bg;
+    color: @bar_fg;
+}
+
+#bar {
+    padding: 0 6px;
+}
+
+/* Every module sits in a .widget-container; keep a small even padding. */
+.widget-container {
+    padding: 0 4px;
+}
+
+/* Space out the right-hand (end) modules. */
+#end > * + * {
+    margin-left: 0.75em;
+}
+
+.workspaces .item {
+    color: @bar_inactive;
+}
+
+.workspaces .item.focused {
+    color: @bar_accent;
+}
+
+.workspaces .item.urgent {
+    color: @bar_critical;
+}
+
+.clock,
+.sysinfo,
+.script,
+.battery,
+.focused,
+.tray {
+    color: @bar_fg;
+}
+
+/* Battery: charged/charging accent, low/critical in the alert color. */
+.battery.charging,
+.battery.plugged,
+.battery.warning {
+    color: @bar_accent;
+}
+
+.battery.critical {
+    color: @bar_critical;
+}
+
+.popup-clock .calendar-clock {
+    font-size: 2em;
+}

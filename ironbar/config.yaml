@@ -1,0 +1,62 @@
+# Ironbar config — shared by sway and niri.
+#
+# A single config works on both compositors: the `workspaces` and `focused`
+# modules auto-detect the compositor (sway via SWAYSOCK, niri via NIRI_SOCKET).
+# The previous waybar config is kept in ~/.config/waybar/ for a quick rollback.
+#
+# Colors live in style.css (@define-color) and are switched by darkman through
+# dark-mode.d/ironbar-theme.sh and light-mode.d/ironbar-theme.sh. Ironbar
+# hot-reloads the stylesheet, so no restart is needed on theme change.
+
+$schema: https://f.jstanger.dev/github/ironbar/schema.json
+
+position: bottom
+layer: top
+height: 26
+
+# Workspaces on the left: sway and niri both.
+start:
+  - type: workspaces
+    format: "{index}"
+
+# Focused window title in the center (niri previously used waybar's niri/window;
+# ironbar uses wlr-foreign-toplevel-management, supported by both compositors).
+center:
+  - type: focused
+    show_icon: false
+    show_title: true
+    truncate:
+      mode: end
+      length: 60
+
+end:
+  - type: clock
+    format: "Time: %A %Y-%m-%d %H:%M:%S"
+    format_popup: "%H:%M:%S"
+
+  - type: sys_info
+    format:
+      - "CPU: {cpu_percent}%"
+      - "Mem: {memory_percent}%"
+    interval:
+      cpu: 2
+      memory: 2
+
+  # Weather: the shared script prints JSON by default (waybar) or plain text
+  # with --plain (ironbar). Poll every 10 minutes.
+  - type: script
+    cmd: "$HOME/.config/waybar/weather.py --plain"
+    mode: poll
+    interval: 600000
+
+  # Laptops only: hide the module on hosts without a battery. Ironbar's battery
+  # module needs upower (unlike waybar, which read sysfs directly).
+  - type: battery
+    format: "{percentage}%"
+    interval: 30
+    show_if: |
+      ls /sys/class/power_supply/ | grep --quiet '^BAT'
+
+  # StatusNotifier host (nm-applet, swaync, blueman-applet, ...).
+  - type: tray
+    icon_size: 18

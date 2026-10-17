@@ -176,14 +176,16 @@ bindsym $mod+r mode "resize"
 bindsym $mod+t exec ~/.config/wayland/wallpapers.sh
 focus_follows_mouse no
 
-# Status Bar: provided by waybar (shared config with the niri setup).
-# Waybar is always visible (no hide-on-modifier); see ~/.config/waybar/.
+# Status Bar: provided by ironbar (shared config with the niri setup; the
+# workspaces/focused modules auto-detect the compositor). The waybar config is
+# kept in ~/.config/waybar/ for a one-line rollback.
+# exec --no-startup-id waybar -c ~/.config/waybar/config-sway -s ~/.config/waybar/style.css
+exec --no-startup-id ironbar
 
 exec --no-startup-id nm-applet --indicator
 exec --no-startup-id swaync
 exec --no-startup-id gammastep -l 55.817521:37.695987
 exec --no-startup-id $HOME/.config/wayland/wallpapers.sh
-exec --no-startup-id waybar -c ~/.config/waybar/config-sway -s ~/.config/waybar/style.css
 
 include /etc/sway/config.d/*
 include ~/.config/sway/config.d/*.conf

@@ -3,7 +3,8 @@
 # --- compositor + helpers ---
 sway                         # Wayland-композитор (i3-подобный; конфиг sway/)
 niri                         # Wayland-композитор со скроллящимися колонками (конфиг niri/)
-waybar                       # панель статуса для Wayland
+ironbar                      # панель статуса для Wayland (GTK4, конфиг ironbar/)
+waybar                       # панель статуса для Wayland (fallback для ironbar)
 xwayland-satellite           # Xwayland-сервер для niri
 swaybg                       # установка обоев рабочего стола
 swayidle                     # реакция на простой (блокировка/гашение экрана)

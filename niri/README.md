@@ -238,7 +238,8 @@ niri msg --json workspaces | jq .   # машиночитаемый вывод
   выбирается один случайный файл из `~/Wallpapers` и ставится на все мониторы.
   Скрипт молчит при успехе; вывод `swaybg` пишется в
   `$XDG_RUNTIME_DIR/wallpapers.log` и показывается, только если `swaybg` упал;
-- `waybar -c ~/.config/waybar/config-niri -s ~/.config/waybar/style.css` — статусбар;
+- `ironbar` — статусбар (общий `~/.config/ironbar/config.yaml` с sway; старый
+  waybar-запуск закомментирован рядом для отката);
 - `swayidle -w` — блокировка через 5 мин, гашение экрана через 10, suspend
   через 30 мин (`before-sleep` тоже лочит).
 

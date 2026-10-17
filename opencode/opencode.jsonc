@@ -3282,5 +3282,10 @@
         "effect": "allow"
       }
     ]
+  },
+  "agents": {
+    "compaction": {
+      "model": "routerai/~google/gemini-flash-latest"
+    }
   }
 }

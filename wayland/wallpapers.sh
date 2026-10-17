@@ -31,6 +31,7 @@
 # Force a mode with WALLPAPER_MODE=dark|light.
 # Force one picture with WALLPAPER_IMAGE=<path>.
 # Disable the slice cache with WALLPAPER_NO_SLICES=1.
+# Disable the "wallpaper changed" notification with WALLPAPER_NO_NOTIFY=1.
 set -euo pipefail
 
 WALLPAPER_DIR="${WALLPAPER_DIR:-$HOME/Wallpapers}"
@@ -304,6 +305,28 @@ fi
 # it is shown only if the backend fails to come up.
 log="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/wallpapers.log"
 
+# Name of the picture that was just set, as a desktop notification. The title is
+# the file the user has to look at to recognise the wallpaper (slices are
+# derived and never shown as the name), the body carries the mode. Silent when
+# there is no notification daemon or no session bus (TTY, scripts, boot before
+# swaync). WALLPAPER_NO_NOTIFY=1 turns it off.
+notify_wallpaper() {
+    [[ ${WALLPAPER_NO_NOTIFY:-0} == 1 ]] && return 0
+    command -v notify-send >/dev/null 2>&1 || return 0
+    if [[ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]] \
+        && [[ ! -S "${XDG_RUNTIME_DIR:-/nonexistent}/bus" ]]; then
+        return 0
+    fi
+    local name="${image##*/}"
+    if [[ -n $mode ]]; then
+        notify-send --app-name=wallpapers --icon=image-x-generic \
+            --expire-time=4000 -- "$name" "тема: $mode" 2>/dev/null || true
+    else
+        notify-send --app-name=wallpapers --icon=image-x-generic \
+            --expire-time=4000 -- "$name" 2>/dev/null || true
+    fi
+}
+
 # Make sure awww's daemon is running: the client never starts it on its own.
 # A live daemon answers `awww query`; if it does not, spawn one and wait for it.
 if [[ $backend == awww ]] && ! awww query >/dev/null 2>&1; then
@@ -347,6 +370,7 @@ if [[ $backend == awww ]]; then
             exit 1
         fi
     fi
+    notify_wallpaper
     exit 0
 fi
 
@@ -374,3 +398,5 @@ if ! kill -0 "$sbg" 2>/dev/null; then
     cat "$log" >&2
     exit 1
 fi
+
+notify_wallpaper

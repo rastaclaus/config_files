@@ -108,7 +108,8 @@ Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
   active output; picks only `*_dark.*` or `*_light.*` files to match the
   current theme (see `Runtime state`), and caches the halves of a panoramic
   picture in `~/Wallpapers/.slices/<layout>/` so they are reused instead of
-  being re-sliced.
+  being re-sliced. Each change also pops a notification with the source file
+  name (`WALLPAPER_NO_NOTIFY=1` silences it).
 - `toggletouch.sh` — touchpad toggle (`niri msg action toggle-touchpad` or
   `swaymsg input ... events`).
 

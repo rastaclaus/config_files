@@ -252,6 +252,24 @@ package-name → repository mapping comes from `web-docs` (`lib_docs` returns a
 The split is codified in `opencode/AGENTS.md`: `web-docs` for API facts,
 `deepwiki` for architecture and deeper analysis, and only then the sources.
 
+### Models per agent
+
+`default_agent` is `plan` and the root `model` is
+`routerai/~deepseek/deepseek-v4-pro-latest`, so a new session starts on the
+plan model. `agents.plan` repeats that model, `agents.build` sets
+`routerai/~deepseek/deepseek-v4-flash-latest#low`, and `agents.compaction` keeps
+a cheap flash model.
+
+V2 resolves a session's model once (the stored session model, else the catalog
+default) and does not reconsult `agents.<id>.model` when the agent changes, so
+plan → build alone leaves the old model in place. `opencode/plugins/agent-model-sync.ts`
+closes that gap: on prompt admission, i.e. before model resolution, it switches
+the session to the active agent's model when the agent changed or the session
+has no model yet. A model picked by hand for the session survives until the next
+agent switch. Plugin sources are cached by path, so after editing the file run
+`opencode service restart` (a plain `opencode reload` can keep serving the old
+build; renaming the file always forces a fresh one).
+
 ## Install
 
 ```sh

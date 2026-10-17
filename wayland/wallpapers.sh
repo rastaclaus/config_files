@@ -2,8 +2,13 @@
 #
 # Set a random wallpaper on every active output.
 #
-# Works under both sway (via swaymsg) and niri (via niri msg). Wallpapers are
-# drawn with swaybg, which runs on both compositors.
+# The wallpaper is drawn with awww (awww-daemon) when it is available; swaybg
+# is kept as a fallback for systems without awww.
+#
+# The running compositor is still detected (niri via `niri msg`, sway via
+# `swaymsg`): awww only reports output names and dimensions, not their
+# positions, and we need the positions to slice a wide picture seamlessly
+# across monitors. awww then does the actual drawing.
 #
 # On a multi-monitor setup with a matching aspect ratio, a single image is
 # sliced across the outputs so the picture spans them seamlessly (no
@@ -27,6 +32,13 @@ mapfile -t images < <(find "$WALLPAPER_DIR" -maxdepth 1 -type f \
 if (( ${#images[@]} == 0 )); then
     echo "wallpapers: no images found in $WALLPAPER_DIR" >&2
     exit 1
+fi
+
+# Pick the drawing backend up front. awww needs both binaries present.
+if command -v awww >/dev/null 2>&1 && command -v awww-daemon >/dev/null 2>&1; then
+    backend=awww
+else
+    backend=swaybg
 fi
 
 # Detect the running compositor and collect the geometry of its active outputs.
@@ -104,18 +116,88 @@ if (( ${#names[@]} >= 2 )) && command -v magick >/dev/null 2>&1; then
     fi
 fi
 
+# Backend chatter is captured so it does not flash across the console at login;
+# it is shown only if the backend fails to come up.
+log="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/wallpapers.log"
+tmp="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/wallpapers.d"
+
+# Make sure awww's daemon is running: the client never starts it on its own.
+# A live daemon answers `awww query`; if it does not, spawn one and wait for it.
+if [[ $backend == awww ]] && ! awww query >/dev/null 2>&1; then
+    awww-daemon >"$log" 2>&1 &
+    daemon=$!
+    for (( i = 0; i < 50; i++ )); do
+        awww query >/dev/null 2>&1 && break
+        kill -0 "$daemon" 2>/dev/null || break
+        sleep 0.1
+    done
+    if ! awww query >/dev/null 2>&1; then
+        echo "wallpapers: awww-daemon failed to start; falling back to swaybg" >&2
+        cat "$log" >&2 || true
+        backend=swaybg
+    fi
+fi
+
+# Drop any swaybg left over from a previous run (or from the fallback path) so
+# it cannot fight awww for the background layer.
 pkill -x swaybg 2>/dev/null || true
 
-# swaybg's chatter is captured so it does not flash across the console at
-# login; it is shown only if swaybg fails to come up.
-log="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/wallpapers.log"
+if [[ $backend == awww ]]; then
+    if (( span )); then
+        # Slice the picture by the outputs' layout and resize each slice to the
+        # exact physical size of its output, then hand every slice to its own
+        # output. Each slice is already at the target resolution, so
+        # --resize stretch introduces no distortion.
+        rm -rf "$tmp"
+        mkdir -p "$tmp"
 
+        for i in "${!names[@]}"; do
+            read -r cx cw cy ch < <(awk -v x="${xs[i]}" -v y="${ys[i]}" \
+                -v ox="$X0" -v oy="$Y0" -v W="$W" -v H="$H" \
+                -v IW="$IW" -v IH="$IH" -v w="${ws[i]}" -v h="${hs[i]}" 'BEGIN {
+                    cx = int((x - ox) * IW / W + 0.5);
+                    cy = int((y - oy) * IH / H + 0.5);
+                    cw = int(w * IW / W + 0.5);
+                    ch = int(h * IH / H + 0.5);
+                    if (cx < 0) cx = 0;
+                    if (cy < 0) cy = 0;
+                    if (cw < 1) cw = 1;
+                    if (ch < 1) ch = 1;
+                    if (cx + cw > IW) cw = IW - cx;
+                    if (cy + ch > IH) ch = IH - cy;
+                    printf "%d %d %d %d\n", cx, cw, cy, ch;
+                }')
+            out="$tmp/${names[i]}.png"
+            magick "$image" -crop "${cw}x${ch}+${cx}+${cy}" +repage \
+                -resize "${pws[i]}x${phs[i]}!" "$out"
+            if ! awww img -o "${names[i]}" --resize stretch \
+                --transition-type none "$out" >"$log" 2>&1; then
+                echo "wallpapers: awww img failed for output ${names[i]}" >&2
+                cat "$log" >&2
+                exit 1
+            fi
+        done
+    else
+        # One image for every output (including ones plugged in later).
+        rm -rf "$tmp"
+        if ! awww img "$image" --resize crop --fill-color "$WALLPAPER_BG" \
+            --transition-type none >"$log" 2>&1; then
+            echo "wallpapers: awww img failed" >&2
+            cat "$log" >&2
+            exit 1
+        fi
+    fi
+    exit 0
+fi
+
+# ---------------------------------------------------------------------------
+# Fallback: swaybg, used when awww is not installed or its daemon failed.
+# ---------------------------------------------------------------------------
 if (( span )); then
     # Slice the picture by the outputs' layout, resize each slice to the exact
     # physical size of its output, then hand every slice to its own output with
     # a single swaybg process. Each slice is already at the target resolution,
     # so --mode stretch introduces no distortion.
-    tmp="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/wallpapers.d"
     rm -rf "$tmp"
     mkdir -p "$tmp"
 
@@ -148,7 +230,7 @@ else
     # ones plugged in later). Unlike one process per output, it does not log
     # "Could not find config for output ..." for the outputs it was not told
     # about.
-    rm -rf "${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/wallpapers.d"
+    rm -rf "$tmp"
     swaybg -i "$image" --mode fill >"$log" 2>&1 &
 fi
 sbg=$!

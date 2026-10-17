@@ -78,7 +78,8 @@ Layering mirrors the rest of the repo:
 Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
 `wayland/`:
 
-- `wallpapers.sh` — random `swaybg` wallpaper on every active output.
+- `wallpapers.sh` — random wallpaper via `awww` (falls back to `swaybg`) on
+  every active output.
 - `toggletouch.sh` — touchpad toggle (`niri msg action toggle-touchpad` or
   `swaymsg input ... events`).
 

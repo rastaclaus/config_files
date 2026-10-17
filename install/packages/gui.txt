@@ -6,7 +6,8 @@ niri                         # Wayland-композитор со скролля�
 ironbar                      # панель статуса для Wayland (GTK4, конфиг ironbar/)
 waybar                       # панель статуса для Wayland (fallback для ironbar)
 xwayland-satellite           # Xwayland-сервер для niri
-swaybg                       # установка обоев рабочего стола
+awww                         # менеджер обоев Wayland (layer-shell): основной
+swaybg                       # установка обоев рабочего стола (fallback для awww)
 swayidle                     # реакция на простой (блокировка/гашение экрана)
 swaylock                     # экран блокировки
 swaync                       # центр уведомлений

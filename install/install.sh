@@ -9,13 +9,20 @@
 #   --profile <p>     gui|headless (default: from install/hosts.conf)
 #   --no-packages     skip package installation
 #   --no-links        skip symlink setup
+#   --no-fisher       skip fish plugin installation (fisher)
 #   --dry-run         print what would happen, change nothing
 #   -h, --help
+#
+# Runtime state (themes, fish universal vars, fisher plugins) is written to
+# ~/.local/state/dotfiles and ~/.config/fish*, never into this repo.
 #
 set -euo pipefail
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INSTALL_DIR="$REPO/install"
+
+# Runtime state lives outside the repo so that the repo stays read-only.
+STATE_DIR="$HOME/.local/state/dotfiles"
 
 # User-level install prefix for tooling that has no pacman/AUR package.
 # npm's global prefix defaults to /usr (node is packaged system-wide), which is
@@ -28,6 +35,7 @@ HOST=""
 PROFILE=""
 DO_PACKAGES=1
 DO_LINKS=1
+DO_FISHER=1
 DRY_RUN=0
 
 log()  { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
@@ -40,7 +48,7 @@ run() {
 }
 
 usage() {
-  sed -n '3,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '3,14p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 while [[ $# -gt 0 ]]; do
@@ -49,6 +57,7 @@ while [[ $# -gt 0 ]]; do
     --profile) PROFILE="${2:-}"; shift 2 ;;
     --no-packages) DO_PACKAGES=0; shift ;;
     --no-links)    DO_LINKS=0;    shift ;;
+    --no-fisher)   DO_FISHER=0;   shift ;;
     --dry-run)     DRY_RUN=1;     shift ;;
     -h|--help)     usage; exit 0 ;;
     *) die "unknown option: $1 (try --help)" ;;
@@ -193,18 +202,6 @@ if [[ $DO_PACKAGES -eq 1 ]]; then
   else
     warn "uv not found; skipping uv tools"
   fi
-
-  if command -v fish >/dev/null 2>&1 || [[ $DRY_RUN -eq 1 ]]; then
-    if ! fish -c 'type -q fisher' 2>/dev/null; then
-      log "installing fisher"
-      run fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher' || warn "failed to install fisher"
-    fi
-    while read -r plugin; do
-      [[ -z "$plugin" ]] && continue
-      log "fisher install $plugin"
-      run fish -c "fisher install $plugin" || warn "fisher install $plugin failed"
-    done < <(read_list "$REPO/fish/fish_plugins")
-  fi
 else
   log "skipping packages (--no-packages)"
 fi
@@ -245,24 +242,59 @@ host_source_for() { # map a target path to its host override dir/file
   esac
 }
 
-merge_dir() { # merge_dir <common-dir> <host-dir> <target-dir>
-  local common="$1" host="$2" target="$3"
+is_volatile() { # is_volatile <path relative to $REPO>; читает install/volatile.conf
+  local rel="$1" pat
+  while IFS= read -r pat; do
+    # shellcheck disable=SC2254 # глобы в volatile.conf — намеренно
+    case "$rel" in $pat) return 0 ;; esac
+  done < <(read_list "$INSTALL_DIR/volatile.conf")
+  return 1
+}
+
+copy_volatile() { # copy_volatile <repo-file> <target>; локальную копию не трогаем
+  local src="$1" target="$2" link
+  if [[ -f "$target" && ! -L "$target" ]]; then
+    return 0
+  fi
+  if [[ -L "$target" ]]; then
+    link="$(readlink "$target")"
+    case "$link" in
+      "$REPO"/*) run rm -f "$target" ;;   # старый симлинк в репозиторий
+      *)         backup_path "$target" ;;
+    esac
+  elif [[ -e "$target" ]]; then
+    backup_path "$target"
+  fi
+  run mkdir -p "$(dirname "$target")"
+  run cp -a "$src" "$target"
+  info "copied $target (volatile)"
+}
+
+merge_dir() { # merge_dir <common-dir> <host-dir> <target-dir> [repo-relative-prefix]
+  local common="$1" host="$2" target="$3" rel="${4:-}"
   # target must be a real directory
   if [[ -L "$target" ]]; then backup_path "$target"; run rm -f "$target"; fi
   if [[ -e "$target" && ! -d "$target" ]]; then backup_path "$target"; run rm -f "$target"; fi
   run mkdir -p "$target"
 
-  local names name c h
+  local names name c h child_rel
   names="$( { ls -A "$common" 2>/dev/null || true; ls -A "$host" 2>/dev/null || true; } | sort -u )"
   while IFS= read -r name; do
     [[ -z "$name" ]] && continue
     c="$common/$name"; h="$host/$name"
+    child_rel="${rel:+$rel/}$name"
     if [[ -e "$h" || -L "$h" ]]; then
       if [[ -d "$h" ]]; then
-        merge_dir "$([[ -d "$c" ]] && printf '%s' "$c" || printf '/nonexistent')" "$h" "$target/$name"
+        merge_dir "$([[ -d "$c" ]] && printf '%s' "$c" || printf '/nonexistent')" "$h" "$target/$name" "$child_rel"
       else
         ensure_link "$h" "$target/$name"
       fi
+    elif [[ -d "$c" ]]; then
+      # каталог без host-override тоже раскрываем в реальный каталог:
+      # приложения (fish/fisher, helix) пишут рядом, а файлы остаются ссылками.
+      merge_dir "$c" "/nonexistent" "$target/$name" "$child_rel"
+    elif is_volatile "$child_rel"; then
+      copy_volatile "$c" "$target/$name"
     else
       ensure_link "$c" "$target/$name"
     fi
@@ -278,19 +310,36 @@ merge_dir() { # merge_dir <common-dir> <host-dir> <target-dir>
   done
 }
 
+cleanup_legacy_hooks() { # старые хуки darkman: только симлинки внутрь $REPO
+  local d link
+  for d in "$HOME/.local/share/dark-mode.d" "$HOME/.local/share/light-mode.d"; do
+    if [[ -L "$d" ]]; then
+      link="$(readlink -f "$d" 2>/dev/null || true)"
+      case "$link" in
+        "$REPO"/*) run rm -f "$d"; info "removed legacy hook $d" ;;
+        *) warn "legacy hook $d points outside the repo ($link); left in place" ;;
+      esac
+    elif [[ -e "$d" ]]; then
+      warn "legacy hook dir $d is not a symlink; left in place, check manually"
+    fi
+  done
+}
+
 if [[ $DO_LINKS -eq 1 ]]; then
   log "setting up symlinks"
-  while read -r src target tag _; do
+  while read -r src target tags _; do
     [[ -z "$src" || "$src" == \#* ]] && continue
-    if [[ "$tag" == "gui" && "$PROFILE" != "gui" ]]; then
+    taglist=" $tags "
+    if [[ "$taglist" == *" gui "* && "$PROFILE" != "gui" ]]; then
       continue
     fi
     src_abs="$REPO/$src"
     target_abs="${target/#\~/$HOME}"
     host_src="$(host_source_for "$target_abs")"
-    if [[ -d "$host_src" ]]; then
-      info "merging host override for $target_abs"
-      merge_dir "$src_abs" "$host_src" "$target_abs"
+    if [[ -d "$host_src" || "$taglist" == *" merge "* ]]; then
+      [[ -d "$src_abs" ]] || { warn "missing source dir: $src"; continue; }
+      info "merging $target_abs"
+      merge_dir "$src_abs" "$host_src" "$target_abs" "$src"
     elif [[ -f "$host_src" || -L "$host_src" ]]; then
       ensure_link "$host_src" "$target_abs"
     else
@@ -298,8 +347,66 @@ if [[ $DO_LINKS -eq 1 ]]; then
       ensure_link "$src_abs" "$target_abs"
     fi
   done < "$INSTALL_DIR/symlinks.conf"
+
+  # Тема и helix-тема живут в state; see wayland/theme-sync.
+  log "preparing runtime state in $STATE_DIR"
+  run mkdir -p "$STATE_DIR/alacritty" "$STATE_DIR/helix/runtime/themes" "$STATE_DIR/ironbar"
+  ensure_link "$STATE_DIR/helix/runtime" "$HOME/.config/helix/runtime"
+
+  cleanup_legacy_hooks
 else
   log "skipping symlinks (--no-links)"
+fi
+
+# ------------------------------------------------------------- fish plugins
+# Fisher пишет в ~/.config/fish, поэтому запускается после раскладки merge-
+# каталога: плагины ставятся в реальный каталог, а не в репозиторий.
+install_fisher() {
+  if ! command -v fish >/dev/null 2>&1 && [[ $DRY_RUN -eq 0 ]]; then
+    warn "fish not found; skipping fisher"
+    return 0
+  fi
+  if ! fish -c 'type -q fisher' 2>/dev/null; then
+    log "installing fisher"
+    run fish -c 'curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source && fisher install jorgebucaran/fisher' || warn "failed to install fisher"
+  fi
+  while read -r plugin; do
+    [[ -z "$plugin" ]] && continue
+    log "fisher install $plugin"
+    run fish -c "fisher install $plugin" || warn "fisher install $plugin failed"
+  done < <(read_list "$REPO/fish/fish_plugins")
+}
+
+# -------------------------------------------------------------------- theme
+# Тема применяется после ссылок: theme-sync пишет state-файлы и (в gui)
+# перезагружает приложения. Режим берём у darkman, иначе из state.
+if [[ $DO_LINKS -eq 1 ]]; then
+  mode="$(darkman get 2>/dev/null || true)"
+  case "$mode" in
+    dark|light) ;;
+    *) mode="$(cat "$STATE_DIR/background-mode" 2>/dev/null || true)" ;;
+  esac
+  case "$mode" in
+    dark|light) ;;
+    *) mode=light ;;
+  esac
+  if [[ "$PROFILE" == "gui" ]]; then
+    log "applying theme: $mode"
+    run "$REPO/wayland/theme-sync" "$mode"
+  else
+    log "writing theme files: $mode (headless profile, no reload)"
+    run env THEME_SYNC_NO_RELOAD=1 "$REPO/wayland/theme-sync" "$mode"
+  fi
+fi
+
+if [[ $DO_LINKS -eq 1 && $DO_FISHER -eq 1 ]]; then
+  if [[ "$PROFILE" == "headless" ]]; then
+    log "skipping fish plugins (headless profile)"
+  else
+    install_fisher
+  fi
+elif [[ $DO_FISHER -eq 0 ]]; then
+  log "skipping fish plugins (--no-fisher)"
 fi
 
 if [[ -d "$BACKUP" ]]; then

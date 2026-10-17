@@ -474,10 +474,14 @@ darkman/theme                     ~/.local/share/darkman/theme                gu
    (`gui`, `merge`).
 2. `merge_dir`:
    - принимать решение о merge, если есть host-override **или** тег `merge`;
+   - рекурсивно раскрывать **все** подкаталоги в реальные каталоги с симлинками
+     на файлы (иначе `functions/`, `conf.d/` остались бы симлинками на
+     репозиторий, и fisher писал бы прямо в него);
    - перед `ensure_link` проверять, входит ли путь (относительно `$REPO`) в
      `install/volatile.conf`: если да — копировать (`cp -a`) при отсутствии
      файла в target и **не** создавать симлинк;
-   - существующий локальный файл никогда не перезаписывать.
+   - существующий локальный файл никогда не перезаписывать (старый симлинк
+     внутрь репозитория заменяется копией — это и есть миграция).
 3. State-каталог (после раскладки ссылок):
    ```bash
    STATE_DIR="$HOME/.local/state/dotfiles"
@@ -499,6 +503,8 @@ darkman/theme                     ~/.local/share/darkman/theme                gu
    case "$mode" in dark|light) ;; *) mode=light ;; esac
    run "$REPO/wayland/theme-sync" "$mode"
    ```
+   Для `headless` — тот же вызов с `THEME_SYNC_NO_RELOAD=1`: state-файлы
+   (включая helix-тему `dotfiles`) создаются, но gsettings/IPC не трогаются.
 
 Миграция на этой машине получается автоматической: при первом запуске
 `merge_dir` скопирует `fish_variables` и fisher-файлы из репозитория в

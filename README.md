@@ -195,6 +195,9 @@ rewrites the files above and then:
   not imported files); new windows read the state import themselves;
 - sends `SIGUSR1` to helix (it reloads config and theme);
 - tells running Neovim to `set background=...` via `nvim-ctrl`;
+- forces the theme of a running tmux server (`tmux set -s theme dark|light`),
+  because alacritty answers `OSC 11` but does not implement `DECSET 2031`, so an
+  attached client never learns about a runtime palette change on its own;
 - re-runs `wayland/wallpapers.sh` in the background, so the wallpaper switches
   to a picture of the matching mode (`THEME_SYNC_NO_WALLPAPER=1` opts out).
 
@@ -227,6 +230,18 @@ so the old universal `background_mode` variable is gone. `wm` writes
 `~/.local/state/dotfiles/compositor` — the same file the installer seeds — and
 no longer touches universal variables.
 
+**Tmux.** `.tmux.conf` keeps both palettes inline as `dark-theme-*` /
+`light-theme-*` (values taken from the gruvbox alacritty themes), and the styles
+use the `theme*` names, so tmux recolours itself when the client theme changes.
+This needs tmux >= 3.8 (`theme`, `theme*` and `client-light-theme` /
+`client-dark-theme` hooks); older versions fall through `%if` to the previous
+static Solarized palette. There is no state file and no `source-file`: `theme` is
+a server option, and `theme-sync` only runs `tmux set -s theme <mode>` when a
+server is already running. tmux does not detect the change by itself — alacritty
+answers `OSC 11` but does not implement `DECSET 2031`, so the server has to be
+told explicitly. Note that `theme` is server-wide, so every client attached to
+the same server shares one mode.
+
 **Waybar.** It does not take part in switching and stays in rollback mode with
 its static palette. To bring it back, do the same thing: generate a wrapper in
 the state dir, run `waybar -s <state>/waybar/style.css`, and `@import` the
@@ -239,7 +254,8 @@ leaves `git status` unchanged (it is read-only and restores the current mode).
 
 **Limitations.** `XDG_STATE_HOME` must stay at its default. fish applies the new
 theme on the next prompt, helix on `SIGUSR1` (new helix windows pick it up
-immediately), rofi on its next launch.
+immediately), rofi on its next launch, tmux on `theme-sync` (a running server is
+updated in place, a server started later picks the mode up on attach).
 
 ## OpenCode / MCP
 

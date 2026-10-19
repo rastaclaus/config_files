@@ -102,6 +102,14 @@ fi
 pkill -USR1 -x helix 2>/dev/null || true
 pkill -USR1 -x hx 2>/dev/null || true
 
+# tmux (>= 3.8): alacritty отвечает на OSC 11, но не поддерживает DECSET 2031,
+# поэтому после IPC-смены палитры уже подключённый клиент tmux не узнает о новой
+# теме сам. Форсируем режим явно; на старых tmux такой опции нет — глушим ошибку.
+# list-sessions не даёт поднять сервер, если tmux сейчас не запущен.
+if command -v tmux >/dev/null 2>&1 && tmux list-sessions >/dev/null 2>&1; then
+    tmux set -s theme "$mode" 2>/dev/null || true
+fi
+
 # Уже открытые Neovim.
 if [[ -x "$HOME/.cargo/bin/nvim-ctrl" ]]; then
     "$HOME/.cargo/bin/nvim-ctrl" "set background=$mode" 2>/dev/null || true

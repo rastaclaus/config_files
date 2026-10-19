@@ -112,7 +112,8 @@ Layering mirrors the rest of the repo:
 - `hosts/<host>/config/{sway,niri}/config.d/` — per-host outputs/inputs.
 
 Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
-`wayland/`:
+`wayland/` (`theme-switch` lives in `applications/`, since it also works on
+headless hosts):
 
 - `wallpapers.sh` — wallpaper via `awww` (falls back to `swaybg`) on every
   active output; picks only `*_dark.*` or `*_light.*` files to match the
@@ -122,6 +123,8 @@ Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
   name (`WALLPAPER_NO_NOTIFY=1` silences it).
 - `toggletouch.sh` — touchpad toggle (`niri msg action toggle-touchpad` or
   `swaymsg input ... events`).
+- `./applications/theme-switch [dark|light]` — manual theme switch; a wrapper
+  over `theme-sync` (also works on headless, see **Runtime state**).
 
 The status bar is **ironbar** on both compositors. A single `ironbar/config.yaml`
 works for sway and niri alike — the `workspaces` and `focused` modules detect the
@@ -201,6 +204,15 @@ rewrites the files above and then:
 - re-runs `wayland/wallpapers.sh` in the background, so the wallpaper switches
   to a picture of the matching mode (`THEME_SYNC_NO_WALLPAPER=1` opts out).
 
+**Manual switch.** `theme-switch [dark|light]` (`applications/theme-switch`,
+linked into `~/.local/bin`) is a thin wrapper over `theme-sync`; without an
+argument it inverts the mode recorded in `background-mode`. It works on the
+`headless` profile too: `theme-sync` writes the state files and skips the GUI
+reloads on its own. It does **not** repaint a terminal emulator running on the
+SSH client — the client's foreground/background palette is outside the server's
+control; only the text colours that applications emit (fish syntax, helix, tmux)
+follow the theme.
+
 rofi picks the theme up on its next launch, fish applies it on the next prompt,
 and ironbar hot-reloads because the generated wrapper changed. No application
 has to be restarted.
@@ -225,8 +237,10 @@ the repo stylesheet, re-run `theme-sync` (or touch the wrapper) to reload.
 
 **Fish.** `fish_variables` and the fisher plugins are local to `~/.config/fish`
 and not in git; the declarative plugin list stays in `fish/fish_plugins`.
-`fish/conf.d/theme.fish` applies the theme from `background-mode` on the prompt,
-so the old universal `background_mode` variable is gone. `wm` writes
+`fish/conf.d/theme.fish` applies the theme from `background-mode` on the prompt
+(`fish/themes/dark.theme` / `light.theme`, gruvbox palettes with explicit hex
+colours), so the old universal `background_mode` variable is gone and prompt
+colours change without relying on the terminal's ANSI palette. `wm` writes
 `~/.local/state/dotfiles/compositor` — the same file the installer seeds — and
 no longer touches universal variables.
 
@@ -251,6 +265,8 @@ palette.
 current mode, that the merge directories and symlinks are laid out correctly,
 that there are no dangling links or legacy hooks, and that switching the theme
 leaves `git status` unchanged (it is read-only and restores the current mode).
+It also checks that `~/.local/bin/theme-switch` points into the repo and that
+the legacy `background_mode` universal variable is not set.
 
 **Limitations.** `XDG_STATE_HOME` must stay at its default. fish applies the new
 theme on the next prompt, helix on `SIGUSR1` (new helix windows pick it up

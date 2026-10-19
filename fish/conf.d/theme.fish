@@ -1,6 +1,10 @@
 # Тема fish следует за ~/.local/state/dotfiles/background-mode.
 # Раньше это делал darkman через universal background_mode; universal-переменные
 # больше не используем, чтобы fish не писал в репозиторий.
+#
+# Имена тем — по файлам fish/themes/{dark,light}.theme. Цвета промпта там
+# заданы hex-значениями: именованные (green/brgreen/red) рисуются палитрой
+# терминала и на headless-хосте не меняются вместе с темой.
 function __dotfiles_apply_theme --description 'Apply dark/light fish theme'
     set -l mode_file $HOME/.local/state/dotfiles/background-mode
     test -r $mode_file; or return 0
@@ -11,7 +15,7 @@ function __dotfiles_apply_theme --description 'Apply dark/light fish theme'
             fish_config theme choose dark
             set -g __dotfiles_theme_mode dark
         case light
-            fish_config theme choose "Snow Day"
+            fish_config theme choose light
             set -g __dotfiles_theme_mode light
     end
 end

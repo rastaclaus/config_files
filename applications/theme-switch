@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#
+# Переключить тему dark|light. Без аргумента — инвертировать текущую.
+#
+#   theme-switch [dark|light]
+#
+# Тонкая обёртка над wayland/theme-sync: он единственный пишет state-файлы
+# (background-mode и палитры), из которых тему читают fish, helix, rofi, tmux
+# и (в gui) alacritty/ironbar. Никаких universal-переменных fish и правок
+# конфигов «на месте» — иначе состояние расходится с репозиторием.
+#
+# Работает и на headless-хостах: theme-sync сам пропускает GUI-часть, если нет
+# композитора/приложений, а цвет фона клиентского терминала на headless с
+# сервера не переключается в принципе (это делает клиент).
+set -euo pipefail
+
+SCRIPT="$(readlink -f "${BASH_SOURCE[0]}")"
+REPO="$(cd "$(dirname "$SCRIPT")/.." && pwd)"
+# Путь зафиксирован (XDG-дефолт), как и в theme-sync: его нельзя вычислять
+# из XDG_STATE_HOME, иначе fish и theme-sync разойдутся.
+STATE="$HOME/.local/state/dotfiles"
+
+mode="${1:-}"
+case "$mode" in
+    dark|light) ;;
+    "")
+        if [[ -r "$STATE/background-mode" ]]; then
+            current="$(tr -d '[:space:]' < "$STATE/background-mode")"
+        else
+            current=""
+        fi
+        case "$current" in
+            dark)  mode=light ;;
+            light) mode=dark ;;
+            *)     mode=dark ;; # первый запуск: тёмная тема как дефолт
+        esac
+        ;;
+    *)
+        echo "usage: $0 [dark|light]" >&2
+        exit 2
+        ;;
+esac
+
+exec "$REPO/wayland/theme-sync" "$mode"

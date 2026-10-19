@@ -63,7 +63,11 @@ else
     bad "~/.config/helix/runtime is not a symlink"
 fi
 
-if [[ -x "$HOME/.local/share/darkman/theme" ]]; then
+if [[ "$declared_profile" == "headless" ]]; then
+    # На headless darkman не ставится (gui-only) и переключать нечего:
+    # тему двигает applications/theme-switch.
+    ok "darkman hook not needed on headless"
+elif [[ -x "$HOME/.local/share/darkman/theme" ]]; then
     ok "darkman hook"
 else
     bad "darkman hook missing or not executable: ~/.local/share/darkman/theme"
@@ -89,6 +93,22 @@ for f in fish/config.fish fish/conf.d/theme.fish fish/fish_plugins helix/config.
         bad "~/.config/$f is not a symlink into the repo"
     fi
 done
+
+# theme-switch — обёртка над theme-sync; старая локальная копия не должна
+# остаться: она писала universal background_mode и правила helix-config.
+ts="$HOME/.local/bin/theme-switch"
+if [[ -L "$ts" && "$(readlink -f "$ts")" == "$REPO/applications/theme-switch" && -x "$ts" ]]; then
+    ok "~/.local/bin/theme-switch -> repo"
+else
+    bad "~/.local/bin/theme-switch is not a symlink to applications/theme-switch"
+fi
+
+# universal background_mode больше не читается fish (источник — state-файл).
+if command -v fish >/dev/null 2>&1 && fish -c 'set -q -U background_mode' 2>/dev/null; then
+    bad "legacy background_mode universal variable is still set"
+else
+    ok "no legacy background_mode universal variable"
+fi
 
 # Рантайм OpenCode (plugin-зависимости, пароль локального сервера) должен
 # оставаться локальным файлом: если он окажется симлинком в репозиторий,

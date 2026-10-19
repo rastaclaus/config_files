@@ -493,6 +493,26 @@ drop_legacy_compositor_var() {
 
 drop_legacy_compositor_var
 
+# ------------------------------------------------ legacy theme variable
+# Тема теперь живёт только в state-файле background-mode: его пишет
+# wayland/theme-sync (установщик, darkman и applications/theme-switch).
+# Универсальную переменную background_mode раньше переключал старый
+# ~/.local/bin/theme-switch; fish её больше не читает, поэтому она только
+# создаёт иллюзию переключения.
+drop_legacy_theme_var() {
+  command -v fish >/dev/null 2>&1 || return 0
+  # Без state-файла не трогаем: при --no-links он ещё не создан.
+  [[ -f "$STATE_DIR/background-mode" ]] || return 0
+  if fish -c 'set -q -U background_mode' 2>/dev/null; then
+    log "removing legacy background_mode universal variable"
+    run fish -c 'set -e -U background_mode' || warn "could not erase background_mode"
+  else
+    info "legacy background_mode not set"
+  fi
+}
+
+drop_legacy_theme_var
+
 # ------------------------------------------------------------- fish plugins
 # Fisher пишет в ~/.config/fish, поэтому запускается после раскладки merge-
 # каталога: плагины ставятся в реальный каталог, а не в репозиторий.

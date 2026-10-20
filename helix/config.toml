@@ -25,6 +25,14 @@ enable = true
 [editor.indent-guides]
 render = true
 
+# Дефолтная раскладка + version-control: ветка git (или короткий хеш в detached
+# HEAD) в правой части статуслайна; вне репозитория элемент пуст.
+[editor.statusline]
+left = ["mode", "spinner", "file-name", "read-only-indicator", "file-modification-indicator"]
+center = []
+right = ["version-control", "separator", "diagnostics", "selections", "register", "position", "file-encoding"]
+separator = "│"
+
 [keys.insert]
 "C-o" = "normal_mode"
 

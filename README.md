@@ -335,6 +335,7 @@ build; renaming the file always forces a fresh one).
 ./install/install.sh --no-packages   # only (re)link configs
 ./install/install.sh --no-links      # only install packages
 ./install/install.sh --no-shell      # keep the current login shell
+./install/install.sh --no-nvim       # skip plugin/parser provisioning
 ```
 
 The installer:
@@ -356,7 +357,12 @@ The installer:
 7. installs fisher + the plugins from `fish/fish_plugins` into `~/.config/fish`
    (after the links; skipped for `headless` and with `--no-fisher`),
 8. applies the current darkman mode via `wayland/theme-sync`
-   (`--no-packages` still performs steps 4–8).
+   (`--no-packages` still performs steps 4–8),
+9. provisions Neovim plugins and treesitter parsers by running
+   `nvim --headless` once (`NVIM_TS_INSTALL_SYNC=1`, so parsers are built
+   during the install instead of the first interactive start; skip with
+   `--no-nvim`). Plugins are not pacman packages: `vim.pack.add()` in
+   `nvim/lua/plugins.lua` manages them, pinned by `nvim/nvim-pack-lock.json`.
 
 The `headless` profile installs only the base set plus fish/opencode/editors
 and their dependencies — no GUI, no Sway. Dev/DevOps tooling can be opted in

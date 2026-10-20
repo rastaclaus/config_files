@@ -79,7 +79,6 @@ uv                          # быстрый менеджер Python-пакет�
 pyenv                       # управление версиями Python
 luarocks                    # менеджер пакетов Lua
 tree-sitter                 # библиотека инкрементального парсинга
-tree-sitter-python          # грамматика tree-sitter для Python
 
 # --- cli helpers ---
 opencode                    # AI-агент для терминала (конфиг в opencode/)

@@ -11,6 +11,7 @@
 #   --no-links        skip symlink setup
 #   --no-fisher       skip fish plugin installation (fisher)
 #   --no-shell        do not change the login shell to fish
+#   --no-nvim         skip Neovim plugin/parser provisioning
 #   --dry-run         print what would happen, change nothing
 #   -h, --help
 #
@@ -30,6 +31,7 @@ DO_PACKAGES=1
 DO_LINKS=1
 DO_FISHER=1
 DO_SHELL=1
+DO_NVIM=1
 DRY_RUN=0
 
 run() {
@@ -37,7 +39,7 @@ run() {
 }
 
 usage() {
-  sed -n '3,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
+  sed -n '3,17p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
 }
 
 while [[ $# -gt 0 ]]; do
@@ -48,6 +50,7 @@ while [[ $# -gt 0 ]]; do
     --no-links)    DO_LINKS=0;    shift ;;
     --no-fisher)   DO_FISHER=0;   shift ;;
     --no-shell)    DO_SHELL=0;    shift ;;
+    --no-nvim)     DO_NVIM=0;     shift ;;
     --dry-run)     DRY_RUN=1;     shift ;;
     -h|--help)     usage; exit 0 ;;
     *) die "unknown option: $1 (try --help)" ;;
@@ -562,6 +565,35 @@ if [[ $DO_LINKS -eq 1 && $DO_FISHER -eq 1 ]]; then
   fi
 elif [[ $DO_FISHER -eq 0 ]]; then
   log "skipping fish plugins (--no-fisher)"
+fi
+
+# ----------------------------------------------------------------- neovim
+# Плагины и treesitter-парсеры ставятся не пакетным менеджером, а самим
+# Neovim через vim.pack на старте. Без этого шага они появляются только при
+# первом интерактивном запуске (нужна сеть + подтверждение в UI), а до тех пор
+# нет ни LSP-конфигов, ни подсветки. Запускаем ровно один раз здесь.
+provision_nvim() {
+  if ! command -v nvim >/dev/null 2>&1; then
+    if [[ $DRY_RUN -eq 1 ]]; then
+      info "[dry-run] nvim not found; skipping plugin provisioning"
+      return 0
+    fi
+    warn "nvim not found; skipping plugin provisioning"
+    return 0
+  fi
+
+  # Ошибки плагинов не должны валить установку: конфиг остаётся рабочим и
+  # доберёт недостающее при следующем запуске. vim.pack.add() в plugins.lua
+  # синхронный, а NVIM_TS_INSTALL_SYNC=1 заставляет дождаться сборки парсеров.
+  log "provisioning neovim plugins and treesitter parsers"
+  run env NVIM_TS_INSTALL_SYNC=1 nvim --headless -c 'qa!' ||
+    warn "neovim provisioning failed (open nvim once to retry)"
+}
+
+if [[ $DO_NVIM -eq 1 && $DO_LINKS -eq 1 ]]; then
+  provision_nvim
+elif [[ $DO_NVIM -eq 0 ]]; then
+  log "skipping neovim provisioning (--no-nvim)"
 fi
 
 if [[ -d "$BACKUP" ]]; then

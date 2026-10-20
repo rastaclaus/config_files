@@ -1,7 +1,7 @@
 -- Parsers and queries (nvim-treesitter "main" branch, Neovim >= 0.12).
 -- Parsers are installed into stdpath('data')/site and stay there; install() is a
 -- no-op for languages that are already present.
-require("nvim-treesitter").install({
+local parsers = {
 	"bash",
 	"c",
 	"css",
@@ -25,7 +25,16 @@ require("nvim-treesitter").install({
 	"vim",
 	"vimdoc",
 	"yaml",
-})
+}
+
+local task = require("nvim-treesitter").install(parsers)
+
+-- install.sh runs Neovim with NVIM_TS_INSTALL_SYNC=1 so parsers are built
+-- during provisioning instead of in the background after the first start.
+-- A failed parser must not abort the rest of the config.
+if vim.env.NVIM_TS_INSTALL_SYNC == "1" then
+	pcall(task.wait, task, 600000)
+end
 
 -- Treesitter highlighting is not enabled globally by Neovim: turn it on for the
 -- filetypes we actually edit (runtime ftplugins already cover lua/markdown/...).

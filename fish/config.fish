@@ -1,5 +1,5 @@
 # EDITOR раньше жил в universal-переменных fish; теперь — здесь.
-set -gx EDITOR /usr/bin/helix
+set -gx EDITOR /usr/bin/nvim
 
 # Key bindings: содержимое бывшего conf.d/fish_frozen_key_bindings.fish.
 set -g fish_key_bindings fish_vi_key_bindings

@@ -10,7 +10,22 @@ vim.keymap.set("n", "<leader>bp", ":bprevious<CR>", { desc = "Previous buffer" }
 vim.keymap.set("n", "<C-h>", "<C-w>h", { desc = "Move to left window" })
 vim.keymap.set("n", "<C-j>", "<C-w>j", { desc = "Move to bottom window" })
 vim.keymap.set("n", "<C-k>", "<C-w>k", { desc = "Move to top window" })
-vim.keymap.set("n", "<C-l>", "<C-w>l", { desc = "Move to right window" })
+-- <C-L> в Neovim 0.13 — дефолтный маппинг, который кроме redraw делает
+-- :nohlsearch, :diffupdate и снимает multicursor (:h CTRL-L-default,
+-- :h mcursor-clear). Держим оба поведения: есть доп. курсоры — чистим,
+-- иначе идём в правое окно.
+local mc_ns = vim.api.nvim_create_namespace("nvim.multicursor")
+
+vim.keymap.set("n", "<C-l>", function()
+	if #vim.api.nvim_buf_get_extmarks(0, mc_ns, 0, -1, { limit = 1 }) > 0 then
+		vim.cmd("nohlsearch")
+		vim.cmd("diffupdate")
+		vim.api.nvim_buf_clear_namespace(0, mc_ns, 0, -1)
+		vim.cmd("normal! \12") -- перерисовать экран (raw <C-L>)
+		return
+	end
+	vim.cmd("wincmd l")
+end, { desc = "Clear multicursors / move to right window" })
 
 -- Splitting & Resizing
 vim.keymap.set("n", "<leader>sv", ":vsplit<CR>", { desc = "Split window vertically" })

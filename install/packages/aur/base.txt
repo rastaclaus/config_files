@@ -2,8 +2,7 @@
 
 # --- editor tooling ---
 fish-lsp          # LSP для fish shell
-tree-sitter-html  # грамматика tree-sitter для HTML
-tree-sitter-yaml  # грамматика tree-sitter для YAML
+neovim-nightly-bin # Neovim 0.13-dev (конфиг в nvim/; заменяет neovim из extra)
 
 # --- python ---
 pyenv-virtualenv  # интеграция pyenv с virtualenv

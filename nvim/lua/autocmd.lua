@@ -1,11 +1,12 @@
 -- Basic autocommands
 local augroup = vim.api.nvim_create_augroup("UserConfig", {})
 
--- Highlight yanked text
-vim.api.nvim_create_autocmd("TextYankPost", {
+-- Highlight yanked/put text (brief flash, no lingering)
+local hl_op = { higroup = "IncSearch", timeout = 120, priority = vim.hl.priorities.user }
+vim.api.nvim_create_autocmd({ "TextYankPost", "TextPutPost" }, {
 	group = augroup,
 	callback = function()
-		vim.highlight.on_yank()
+		vim.hl.hl_op(hl_op)
 	end,
 })
 
@@ -59,6 +60,15 @@ vim.api.nvim_create_autocmd("FileType", {
 -- 		end
 -- 	end,
 -- })
+
+-- Builtin cmdline autocompletion (Neovim >= 0.12): show suggestions while typing
+vim.api.nvim_create_autocmd("CmdlineChanged", {
+	group = augroup,
+	pattern = { ":", "/", "?" },
+	callback = function()
+		vim.fn.wildtrigger()
+	end,
+})
 
 -- Auto-resize splits when window is resized
 vim.api.nvim_create_autocmd("VimResized", {

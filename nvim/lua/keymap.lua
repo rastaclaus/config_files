@@ -101,11 +101,33 @@ vim.api.nvim_create_autocmd("LspAttach", {
 			"n",
 			"<leader>q",
 			vim.diagnostic.setloclist,
-			{ buffer = event.buf, desc = "Show diagnostic in loclist" }
+			{ buf = event.buf, desc = "Show diagnostic in loclist" }
 		)
 		vim.keymap.set("n", "<leader>d", function()
 			vim.diagnostic.open_float()
-		end, { buffer = event.buf, desc = "Show diagnostic under cursor" })
+		end, { buf = event.buf, desc = "Show diagnostic under cursor" })
 	end,
 })
-vim.keymap.set("i", "<C-Space>", "<C-X><C-O>", { desc = "Omni completion" })
+-- Builtin completion (Neovim >= 0.12): <C-Space> triggers LSP completion,
+-- falls back to 'omnifunc'/buffer completion when no server is attached.
+-- <C-y> accepts, <C-e> cancels, <C-n>/<C-p> (or <Tab>/<S-Tab>) navigate.
+vim.keymap.set("i", "<C-Space>", function()
+	if #vim.lsp.get_clients({ bufnr = 0 }) > 0 then
+		vim.lsp.completion.get()
+	else
+		vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes("<C-n>", true, false, true), "n", false)
+	end
+end, { desc = "Trigger completion" })
+vim.keymap.set("i", "<Tab>", function()
+	if vim.fn.pumvisible() == 1 then
+		return "<C-n>"
+	end
+	return "<Tab>"
+end, { expr = true, desc = "Next completion item" })
+vim.keymap.set("i", "<S-Tab>", function()
+	if vim.fn.pumvisible() == 1 then
+		return "<C-p>"
+	end
+	return "<S-Tab>"
+end, { expr = true, desc = "Previous completion item" })
+

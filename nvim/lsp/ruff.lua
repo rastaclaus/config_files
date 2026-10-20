@@ -16,11 +16,9 @@
 ---
 --- ```lua
 --- vim.lsp.config('ruff', {
----   init_options = {
----     settings = {
----       -- Server settings should go here
----     }
----   }
+---   settings = {
+---     -- Server settings should go here
+---   },
 --- })
 --- ```
 ---

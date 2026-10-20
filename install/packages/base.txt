@@ -39,7 +39,6 @@ direnv                      # автозагрузка переменных ок
 yazi                        # TUI-файловый менеджер
 
 # --- editors + LSP / formatters (node LSPs come from pacman, not npm) ---
-neovim                      # редактор (конфиг в nvim/)
 helix                       # редактор (конфиг в helix/)
 lua-language-server         # LSP для Lua
 lua-jsregexp                # regexp-движок для Lua LSP (Lua 5.4/5.3)

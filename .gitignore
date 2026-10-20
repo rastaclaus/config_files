@@ -20,3 +20,5 @@ fish/functions/fzf_configure_bindings.fish
 fish/functions/fisher.fish
 fish/completions/fisher.fish
 fish/completions/fzf_configure_bindings.fish
+
+nvim/nvim-pack-lock.json

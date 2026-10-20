@@ -5,9 +5,8 @@ return {
 	settings = {
 		["rust-analyzer"] = {
 			imports = {
-				checkOnSave = true,
 				granularity = {
-					group = "module"
+					group = "module",
 				},
 				prefix = "self",
 			},
@@ -15,18 +14,10 @@ return {
 				command = "clippy",
 			},
 			inlayHints = {
-				lifetimeElisionHints = { enable = true },
+				lifetimeElisionHints = { enable = "always" },
 			},
-		cargo = {
-			loadOutDirsFromCheck = true,
-			buildScripts = {
-				enable = true,
-			},
-			allFeatures = true,
-			features = "all",
-		},
-			procMacro = {
-				enable = true,
+			cargo = {
+				features = "all",
 			},
 		},
 	},

@@ -363,6 +363,7 @@ The installer:
    during the install instead of the first interactive start; skip with
    `--no-nvim`). Plugins are not pacman packages: `vim.pack.add()` in
    `nvim/lua/plugins.lua` manages them, pinned by `nvim/nvim-pack-lock.json`.
+   Git-ревью (хунки, stage, diff перед коммитом) — см. `nvim/README.md`.
 
 The `headless` profile installs only the base set plus fish/opencode/editors
 and their dependencies — no GUI, no Sway. Dev/DevOps tooling can be opted in

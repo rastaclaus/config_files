@@ -100,6 +100,22 @@ vim.api.nvim_create_autocmd("FileType", {
 	end,
 })
 
+-- Ревью перед коммитом: `git config commit.verbose true` кладёт в
+-- COMMIT_EDITMSG diff застейдженного; :DiffGitCached (встроенный ftplugin
+-- gitcommit) открывает тот же diff отдельным сплитом.
+vim.api.nvim_create_autocmd("FileType", {
+	group = augroup,
+	pattern = "gitcommit",
+	callback = function()
+		vim.opt_local.spell = true
+		vim.keymap.set("n", "<leader>gp", ":DiffGitCached<CR>", {
+			buffer = true,
+			desc = "Preview staged diff",
+		})
+	end,
+})
+
+
 -- Create directories when saving files
 vim.api.nvim_create_autocmd("BufWritePre", {
 	group = augroup,

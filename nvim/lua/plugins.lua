@@ -11,6 +11,9 @@ vim.pack.add({
 	-- Oil
 	{ src = "https://github.com/stevearc/oil.nvim" }, -- file manager
 
+	-- Git
+	{ src = "https://github.com/lewis6991/gitsigns.nvim" }, -- signs, hunks, stage
+
 	-- Helpers
 	{ src = "https://github.com/stevearc/conform.nvim" }, -- formatting
 	{ src = "https://github.com/folke/which-key.nvim" }, -- key suggestions
@@ -28,6 +31,7 @@ vim.pack.add({
 require("plugins.treesitter")
 require("plugins.oil")
 require("plugins.fzflua")
+require("plugins.gitsigns")
 require("plugins.which_key")
 require("plugins.conform")
 require("plugins.autopairs")

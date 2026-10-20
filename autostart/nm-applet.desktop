@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=NetworkManager Applet (disabled)
+Comment=Started by the compositor config through wayland/wait-sni.sh instead.
+# Hidden= is honoured by systemd-xdg-autostart-generator: no service is
+# generated, so this autostart entry cannot win the race against the bar and
+# grab the applet's D-Bus name before a StatusNotifier host exists.
+Hidden=true

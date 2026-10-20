@@ -58,7 +58,13 @@ layout {
 }
 
 // ---------------------------------------------------------------- startup
-spawn-at-startup "nm-applet" "--indicator"
+// nm-applet выбирает бэкенд иконки один раз при запуске и, не найдя
+// StatusNotifier-хоста, навсегда уходит в legacy GtkStatusIcon, который
+// на Wayland не виден. Скрипт ждёт, пока ironbar займёт
+// org.kde.StatusNotifierWatcher.
+// Запись в ~/.config/autostart погашена (Hidden=true), иначе systemd-овский
+// инстанс выиграл бы гонку и наш вышел бы дублем.
+spawn-sh-at-startup "~/.config/wayland/wait-sni.sh nm-applet --indicator"
 spawn-at-startup "swaync"
 spawn-at-startup "gammastep" "-l" "55.817521:37.695987"
 // Обои не запускаются отдельно: их выставляет theme-sync в конце (см. ниже),

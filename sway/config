@@ -186,7 +186,10 @@ focus_follows_mouse no
 exec --no-startup-id ~/.config/wayland/theme-sync "$(darkman get 2>/dev/null || echo light)"
 exec --no-startup-id ironbar -t $HOME/.local/state/dotfiles/ironbar/style.css
 
-exec --no-startup-id nm-applet --indicator
+# nm-applet — через wait-sni.sh, чтобы он не стартовал раньше
+# StatusNotifier-хоста ironbar (иначе иконка навсегда уходит в legacy
+# GtkStatusIcon, невидимый на Wayland). Запись в ~/.config/autostart погашена.
+exec --no-startup-id ~/.config/wayland/wait-sni.sh nm-applet --indicator
 exec --no-startup-id swaync
 exec --no-startup-id gammastep -l 55.817521:37.695987
 # Обои выставляет theme-sync (выше), чтобы на старте не было двойного выбора.

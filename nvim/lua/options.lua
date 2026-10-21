@@ -27,10 +27,14 @@ vim.opt.pumheight = 10                             -- Popup menu height
 vim.opt.pumblend = 10                              -- Popup menu transparency
 vim.opt.synmaxcol = 300                            -- Syntax highlighting limit
 
--- Completion: manual trigger only (<C-Space> or <C-x><C-o>).
--- 'autocomplete' deliberately off: no menu on every keystroke.
+-- Completion: the menu opens while typing ('autocomplete') in LSP buffers only,
+-- see lsp_config.lua. 'noselect' comes implicitly with 'autocomplete': nothing is
+-- preselected, <Tab>/<C-n> picks, <C-y> accepts, <C-e> closes.
+-- Buffer words stay manual: <C-x><C-n> in LSP buffers, <C-Space>/<C-n> otherwise.
 vim.opt.completeopt = "menuone,fuzzy,noselect,popup"
 vim.opt.complete = ".^5,b^5,o"                     -- buffer words + 'omnifunc' (LSP)
+vim.opt.autocomplete = false                       -- off globally, on per LSP buffer
+vim.opt.autocompletedelay = 10                     -- ms before the menu appears
 vim.opt.wildoptions = "pum"                        -- cmdline autocompletion popup
 vim.opt.wildmode = "noselect:lastused,full"
 

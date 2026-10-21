@@ -2,6 +2,9 @@
 
 Personal dotfiles. One branch, host-specific bits under `hosts/`.
 
+> Русский перевод: [`README.ru.md`](README.ru.md). При расхождении верен этот
+> файл — перевод может отставать.
+
 ## Layout
 
 ```
@@ -179,6 +182,217 @@ keys). `Mod`+`Return` starts **ghostty**, `Mod`+`Shift`+`Return` — alacritty,
 which stays installed as a fallback terminal. sway-only features that niri has no equivalent for (splits, stacking,
 focus-parent, scratchpad, a resize mode) stay in `sway/config`.
 
+## Ghostty
+
+Primary terminal (`Mod`+`Return`); alacritty stays on `Mod`+`Shift`+`Return` as
+a fallback. `~/.config/ghostty` is a symlink to `ghostty/`, the config is
+`config.ghostty`, the palettes are `ghostty/themes/gruvbox-{dark,light}`.
+Theming, font, opacity and the ghostty↔alacritty parity checks are described in
+**Runtime state** below — this section is about using the terminal.
+
+Known-good version: **1.3.1**. Options and actions are version-specific: check
+`ghostty +list-actions` / `ghostty +show-config --docs` before trusting a snippet
+from the internet.
+
+### What it has that alacritty does not
+
+| feature                | notes                                                                |
+|------------------------|----------------------------------------------------------------------|
+| key tables             | modal input — this is what replaces alacritty's vi mode (below)      |
+| shell integration      | OSC 133/1337 marks: prompt jumping, correct `cwd` for new tabs/splits |
+| kitty keyboard protocol| apps (helix, neovim) can ask for physical keys, release events, …    |
+| command palette        | `ctrl+shift+p`, fuzzy search over every action                       |
+| inspector              | `ctrl+shift+i` — a TUI dump of the terminal state, screen contents included |
+| built-in search        | `ctrl+shift+f` over the terminal's own screen + scrollback           |
+| `reload_config`        | `ctrl+shift+,` — most options apply without restarting               |
+| tabs and splits        | rendered inside one window; the compositor still sees a single tile  |
+
+Missing on purpose / by design: no vi cursor over the scrollback (see
+**Scrollback**), no Russian keyboard mappings yet (the alacritty table was not
+ported; kitty-protocol apps like helix are fine because they receive physical
+keys, fish/readline are not).
+
+### Default keys worth knowing
+
+Every binding is listed by `ghostty +list-keybinds` (`--default` for the stock
+set, `--docs` with descriptions).
+
+| keys                          | action                                            |
+|-------------------------------|---------------------------------------------------|
+| `ctrl+shift+c` / `ctrl+shift+v` | copy selection (as `mixed`) / paste CLIPBOARD   |
+| `ctrl+insert` / `shift+insert`  | copy selection (as `mixed`) / paste PRIMARY     |
+| `ctrl+shift+a`                | select all                                        |
+| `ctrl+shift+y`                | **ours**: select all + copy as `plain`            |
+| `ctrl+shift+space`            | **ours**: enter `scroll-mode` (see below)         |
+| `shift+page_up` / `shift+page_down` | scroll one page                             |
+| `shift+home` / `shift+end`    | scroll to top / bottom                            |
+| `ctrl+shift+page_up/down`     | jump to previous / next prompt (needs shell integration) |
+| `ctrl+shift+f`, then `escape` | search, end search                                |
+| `ctrl+=` / `ctrl+-` / `ctrl+0`| font size +1 / −1 / reset                         |
+| `ctrl+shift+t` `ctrl+shift+n` | new tab / new window                              |
+| `ctrl+shift+o` `ctrl+shift+e` | split right / split down                          |
+| `ctrl+alt+arrows`             | move focus between splits                         |
+| `ctrl+shift+w` `ctrl+shift+q` | close tab / quit ghostty                          |
+| `ctrl+,` / `ctrl+shift+,`     | open config / reload config                       |
+
+`ctrl+shift+space` for `scroll-mode` is not a coincidence: it is alacritty's
+default `ToggleViMode` trigger, so muscle memory carries over between the two
+terminals.
+
+Minimal cheat sheet:
+
+```text
+select with mouse          → shift+insert (PRIMARY) | ctrl+shift+c → ctrl+shift+v (CLIPBOARD)
+whole scrollback → clip    → ctrl+shift+space, y
+whole scrollback → file    → ctrl+shift+space, w  (path in clipboard → nvim ctrl+shift+v)
+scroll without mouse       → ctrl+shift+space, then j/k, ctrl+d/ctrl+u, g/shift+g
+search                     → ctrl+shift+f  (inside scroll-mode: /, n, shift+n)
+scrolling inside tmux      → prefix [  (vi keys), y/Enter copy
+whole pane history in nvim → prefix e
+```
+
+### Scrollback
+
+`scrollback-limit` is measured in **bytes**, not lines (the active screen
+counts too, memory is allocated lazily, and the limit is per surface):
+`20_000_000` was measured on 1.3.1 in a 1280 px wide window (~150 columns) at
+~10 700 lines — roughly alacritty's `scrolling.history = 10000`. In a narrower
+window more lines fit, in a wider one fewer. Scrollback is memory only: it does
+not survive a restart of ghostty, and it is not written anywhere.
+
+Reading it without a mouse — `ctrl+shift+space` enters a `scroll-mode` key table
+(key tables are a 1.3 feature; there is no vi cursor, so this is scrolling, not
+editing):
+
+| key                | action                                                  |
+|--------------------|---------------------------------------------------------|
+| `j` / `k`          | one line down / up                                      |
+| `ctrl+d` / `ctrl+u`| half a page                                             |
+| `space`, `ctrl+f` / `ctrl+b` | one page                                      |
+| `g` / `shift+g`    | top / bottom                                            |
+| `]` / `[`          | next / previous prompt mark (`jump_to_prompt`)          |
+| `/`, `n` / `shift+n` | open search, next / previous hit                      |
+| `y`                | whole scrollback → clipboard as plain text              |
+| `w`                | whole scrollback → file, **path** → clipboard           |
+| `q`, `escape`      | leave the mode                                          |
+
+Four things that are easy to get wrong when editing that table:
+
+* `activate_key_table`, **not** `activate_key_table_once` — a one-shot table is
+  deactivated by the first binding that fires, so `j` would scroll exactly once.
+* `catch_all=ignore` is mandatory: lookup walks from the innermost table
+  outward, so without it every unbound key leaks to the shell (and to a running
+  TUI) instead of being swallowed by the mode.
+* Uppercase letters collide under ghostty's case folding: `g` and `G` are the
+  same trigger, so it must be `shift+g` (same for `shift+n`).
+* Every table binding needs its own `keybind = ` prefix (a bare
+  `scroll-mode/j=...` line is rejected as an unknown field), and `[` must be
+  written as `scroll-mode/[=<action>`: the table parser looks for `/` before the
+  first `=`, so `scroll-mode/[/jump_to_prompt:-1` is parsed as table
+  `scroll-mode` with the malformed key `[/jump_to_prompt:-1`.
+
+`jump_to_prompt` needs the OSC 133 marks from `shell-integration` (fish
+integration provides them).
+
+### Selection and copying
+
+* Mouse selection behaves like alacritty: `copy-on-select` defaults to
+  `primary` on Linux, i.e. the selection lands in **PRIMARY**, not in CLIPBOARD.
+  Paste it with `shift+insert` (or middle click); `ctrl+shift+v` pastes
+  CLIPBOARD instead.
+* `ctrl+shift+c` puts the selection into CLIPBOARD as `mixed` (plain text +
+  `text/html`); `ctrl+shift+y` and `scroll-mode/y` use `plain` on purpose —
+  `mixed` would build megabytes of HTML for a whole history dump.
+* The selection stays visible after copying (`selection-clear-on-copy = false`,
+  the default) but is dropped as soon as you type
+  (`selection-clear-on-typing = true`). To clear it manually: `escape` or a
+  single click.
+* There is **no keyboard action that starts a range selection**: `adjust_selection`
+  (default: `shift+arrows`) only moves an already existing selection and does
+  nothing without one, so `shift+arrows` on a fresh screen is a no-op. The only
+  keyboard-made selection is `ctrl+shift+a` / `ctrl+shift+y` (everything); after
+  that `shift+arrows` can still adjust it. For a specific range use tmux's
+  copy-mode below.
+* Selection colours are pinned in the theme files (dark `#3c3836`, light
+  `#d5c4a1`) instead of ghostty's default cell inversion, which on the dark
+  theme produced a highlight as bright as the light theme's background. The
+  cursor keeps the default inversion, exactly as in alacritty. `verify.sh`
+  compares both values against `[colors.selection]` in the alacritty themes.
+
+### Dumping the scrollback
+
+* `ctrl+shift+space`, then `y` — the **whole** scrollback to the clipboard. In
+  1.3.1 `select_all` takes history, not just the visible screen (measured: 400
+  lines of output → 399 newlines copied), even though the action reference
+  words it as "text on the screen".
+* `ctrl+shift+space`, then `w` — ghostty writes the scrollback as plain text
+  (long lines unwrapped) into `/tmp/<random>/history.txt` and copies **that
+  path** to the clipboard; then in nvim: `:e ` + `ctrl+shift+v`.
+  `write_scrollback_file` has three modes: `copy` (used here), `paste` (types
+  the path into the prompt) and `open` (`xdg-open` — useless here, `text/plain`
+  is bound to Helix). A `chain=text:nvim ` + `paste` shortcut is impossible: the
+  config trims trailing whitespace, so `text:nvim ` arrives as `nvim` (checked
+  with `od -c`).
+* Only the visible screen: `ctrl+shift+j` (`write_screen_file:paste,plain`),
+  `ctrl+alt+shift+j` to open it, `super+ctrl+shift+j` to copy the path.
+
+### Ghostty + tmux
+
+Why tmux on top: a tmux server keeps its own scrollback per pane and survives
+the terminal window (detach/reattach, an SSH drop). What matters for the
+terminal is that **tmux repaints the screen**, so ghostty's viewport holds only
+what tmux drew — ghostty's scrollback is nearly empty inside tmux, and `j`/`k`
+in `scroll-mode` or `shift+page_up` scroll almost nothing. Inside tmux:
+
+| goal                   | how                                                     |
+|------------------------|---------------------------------------------------------|
+| scroll a pane          | `prefix [` — copy-mode, vi keys (`setw -g mode-keys vi`) |
+| search pane history    | in copy-mode: `/` down, `?` up, `n` / `N` next/prev hit  |
+| copy a range           | in copy-mode: `space` starts, `v` block mode, `y`/`Enter` copy and leave |
+| copy to the system clipboard | the same — the binding pipes through `wl-copy`, so it does not need the terminal's OSC 52 support |
+| whole pane history in nvim | `prefix e`                                          |
+| new shell, same dir    | `prefix v` (side by side), `prefix w` (new window)       |
+
+Note that `prefix v` is bound to `split-window -h` — a vertical divider, panes
+side by side; stock tmux uses `%` and `"` for that, and both are unbound here.
+`prefix h` looks like the horizontal counterpart but is **not**: it appears twice
+in `.tmux.conf`, first as `split-window -v` and then as `select-pane -L`, and the
+later binding wins, so `prefix h` is pane navigation. Use `prefix v` twice for a
+second split, or add a distinct key (e.g. `|` and `-`) if a horizontal split is
+needed.
+
+`prefix e` is the counterpart of ghostty's `w`: it runs
+`capture-pane -S -20000 -J` (the whole `history-limit`, `-J` joins wrapped
+lines so the file has no mangled long lines), saves it to
+`/tmp/tmux-scroll.txt` and opens it in a 90%×90% `display-popup` running
+`nvim /tmp/tmux-scroll.txt`. The file is overwritten on every use, so nothing
+accumulates.
+
+Other tmux settings that interact with the terminal: `history-limit 20000`
+(matches ghostty's perspective), `set-clipboard on` (forwards OSC 52 from
+applications), `escape-time 0`, `terminal-overrides alacritty:Tc` for the
+fallback terminal (ghostty is truecolor-capable without an override). The tmux
+palette follows the desktop theme — see **Tmux** below.
+
+### CLI
+
+Useful diagnostics:
+
+```sh
+ghostty +validate-config          # must be a *global* flag: --config-file=... first
+ghostty +show-config --docs       # current values with the manual inline
+ghostty +list-actions             # every action, with argument syntax
+ghostty +list-keybinds --default --docs
+ghostty +list-themes              # built-in theme names
+ghostty +list-fonts
+```
+
+`+validate-config` silently returns 1 if the file is passed after the action
+(`ghostty +validate-config --config-file=…` returns 1 with no diagnostics), so
+always write `ghostty --config-file=… +validate-config`. It catches typos and
+wrong value types (`…/b.conf:1:totally-bogus-option: unknown field`, exit 1),
+so run it after every config edit — the same check `install/verify.sh` does.
+
 ## Runtime state и переключение темы
 
 The repository is a **read-only configuration source**: no application writes
@@ -296,12 +510,13 @@ in `colors.css`, while the repo keeps only the layout in `ironbar/style.css`
 without any `@define-color`. The watcher follows the wrapper, so after editing
 the repo stylesheet, re-run `theme-sync` (or touch the wrapper) to reload.
 
-**Ghostty.** The primary terminal (`Mod`+`Return`); alacritty stays installed
-as a fallback on `Mod`+`Shift`+`Return`. `~/.config/ghostty` is a symlink to
-`ghostty/`, the config is `config.ghostty` (the legacy `config` file must not
-exist: ghostty would load both and warn), and the palettes are
-`ghostty/themes/gruvbox-{dark,light}` — plain config snippets, the same
-gruvbox hex values as `alacritty/themes/themes/` (checked by `verify.sh`).
+**Ghostty.** Only theming is covered here — fonts, key bindings, scrollback,
+selection and the tmux workflow are in the **Ghostty** section above.
+`~/.config/ghostty` is a symlink to `ghostty/`, the config is `config.ghostty`
+(the legacy `config` file must not exist: ghostty would load both and warn), and
+the palettes are `ghostty/themes/gruvbox-{dark,light}` — plain config snippets,
+the same gruvbox hex values as `alacritty/themes/themes/` (checked by
+`verify.sh`).
 
 Theme names are file names **without** an extension: ghostty looks up exactly
 `$XDG_CONFIG_HOME/ghostty/themes/<name>`, so the files are
@@ -322,88 +537,14 @@ terminals look identical: alacritty sets no font family, so it gets fontconfig's
 `window.padding` defaults to `{0,0}` while ghostty's default is 2;
 `background-opacity-cells = true` because alacritty fades the whole window
 through the compositor, whereas ghostty by default fades only cells without an
-explicit background; `scrollback-limit = 20_000_000` because ghostty counts
-**bytes**, not lines — measured on 1.3.1 in a 1280 px window (~150 columns),
-20 MB held ~10 700 lines, i.e. about alacritty's `scrolling.history = 10000`
-(40 MB held ~22 000; the limit is allocated lazily).
+explicit background.
 
-The theme files set **no** `cursor-*` keys: ghostty's default inverts the cell
-(cursor = foreground/background of the cell under it), which is exactly what
-alacritty does. Selection **is** pinned explicitly in both, because gruvbox's
-`bg2` (`#504945`) is a light colour and read as a highlight from the light theme
-on the dark background: dark uses `bg1` (`#3c3836`), light keeps `bg2`
-(`#d5c4a1`). `verify.sh` checks both hex values against
-`[colors.selection]` in the alacritty themes, so the fallback terminal matches.
-
-There is **no built-in vi mode** (unlike `alacritty`'s `ToggleViMode` with a
-block cursor over the scrollback): ghostty has no vi-cursor actions and
-`adjust_selection` does not create a selection. What it does have since 1.3 are
-**key tables**, which implement modal input. The config adds a `scroll-mode`
-table on `ctrl+shift+space` (free in both ghostty and niri, where `Mod+Space` is
-Super+Space, while ctrl+shift+a stays ghostty's default `select_all`):
-
-```
-keybind = ctrl+shift+space=activate_key_table:scroll-mode
-keybind = scroll-mode/j=scroll_page_lines:1   # k: -1
-keybind = scroll-mode/ctrl+d=scroll_page_fractional:0.5   # ctrl+u: -0.5
-keybind = scroll-mode/space=scroll_page_fractional:1      # ctrl+f/ctrl+b: page
-keybind = scroll-mode/g=scroll_to_top         # shift+g: scroll_to_bottom
-keybind = scroll-mode/]=jump_to_prompt:1      # [: jump_to_prompt:-1
-keybind = scroll-mode//=start_search          # n/shift+n: navigate_search
-keybind = scroll-mode/y=select_all            # + copy_to_clipboard:plain
-keybind = scroll-mode/w=write_scrollback_file:copy   # dump + path in clipboard
-keybind = scroll-mode/q=deactivate_key_table  # escape: the same
-keybind = scroll-mode/catch_all=ignore
-```
-
-Three things that are easy to get wrong:
-
-* `activate_key_table`, **not** `activate_key_table_once` — a one-shot table is
-  deactivated by the first binding that fires, so `j` would scroll exactly once.
-* `catch_all=ignore` is mandatory: lookup walks from the innermost table
-  outward, so without it every unbound key leaks to the shell (and to a running
-  TUI) instead of being swallowed by the mode.
-* Uppercase letters collide under ghostty's case folding: `g` and `G` are the
-  same trigger, so it must be `shift+g` (same for `shift+n`).
-
-`y` copies the **whole** scrollback (`select_all` selects history too, not just
-the visible screen) as `plain`: `mixed` also builds `text/html`, which is
-pointless for a history dump. Character-wise motions and a visual mode are not
-available: there is no cursor to move, so range selection stays in tmux.
-
-Inside tmux the ghostty table is useless (tmux repaints the screen, the terminal
-viewport is nearly empty) — use tmux's own `copy-mode` (`prefix [`, vi keys are
-enabled) and `prefix e`, which writes the whole pane scrollback to
-`/tmp/tmux-scroll.txt` and opens it in nvim in a popup.
-
-**Dumping the scrollback to nvim.** `ctrl+shift+space`, then `w`: ghostty writes the
-scrollback as plain text (long lines unwrapped) into
-`/tmp/<random>/history.txt` and copies that path to the clipboard — then
-`nvim ` + `ctrl+shift+v`. `write_scrollback_file` has three modes (`copy`,
-`paste` into the prompt, `open` via xdg-open); `open` is useless here because
-`text/plain` is bound to Helix, and a `chain=text:nvim ` + `paste` shortcut is
-impossible: the config trims trailing whitespace, so `text:nvim ` arrives as
-`nvim` (checked with `od -c`).
-
-Every table binding needs its own `keybind = ` prefix (a bare `scroll-mode/j=...`
-line is rejected as an unknown field), and `[` must be written as
-`scroll-mode/[=<action>`: the table parser looks for `/` before the first `=`,
-so `scroll-mode/[/jump_to_prompt:-1` is parsed as table `scroll-mode` with the
-malformed key `[/jump_to_prompt:-1`.
-
-`jump_to_prompt` needs `shell-integration` (fish integration provides the
-OSC 133 prompt marks).
-
-Russian keyboard mappings (`Ctrl/Alt` + Cyrillic, generated for alacritty) are
-deliberately **not** ported yet. Writing app processes that speak the kitty
-keyboard protocol (ghostty supports it, helix uses it) receive physical keys
-and may work without mappings; fish/readline still need them.
-
-Useful: `ghostty +validate-config`, `ghostty +show-config`,
-`ghostty +list-themes`, `ghostty +list-actions`, `ghostty +list-keybinds --docs`.
-`+validate-config` must get the file as a **global** flag
-(`ghostty --config-file=... +validate-config`): after the action it silently
-returns 1 with no diagnostics at all.
+Selection colours are pinned in the theme files instead of relying on ghostty's
+default cell inversion (dark `bg1` `#3c3836`, light `bg2` `#d5c4a1`; rationale in
+**Ghostty → Selection and copying**), while `cursor-*` stays unset so the cursor
+keeps the default inversion, exactly like alacritty. `verify.sh` checks both
+selection hex values against `[colors.selection]` in the alacritty themes, so
+the fallback terminal matches.
 
 **Neovim.** `nvim/lua/theme.lua` watches `~/.local/state/dotfiles` with
 `vim.uv.new_fs_event` (80 ms debounce, `new_fs_poll` fallback), so already
@@ -550,7 +691,7 @@ The installer:
    during the install instead of the first interactive start; skip with
    `--no-nvim`). Plugins are not pacman packages: `vim.pack.add()` in
    `nvim/lua/plugins.lua` manages them, pinned by `nvim/nvim-pack-lock.json`.
-   Git-ревью (хунки, stage, diff перед коммитом) — см. `nvim/README.md`.
+   Git-ревью (хуки, stage, diff перед коммитом) — см. `nvim/README.md`.
 
 The `headless` profile installs only the base set plus fish/opencode/editors
 and their dependencies — no GUI, no Sway. Dev/DevOps tooling can be opted in

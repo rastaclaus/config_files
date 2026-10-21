@@ -1,0 +1,163 @@
+#!/usr/bin/env bash
+#
+# Привести Mattermost Desktop к режиму dark|light:
+#
+#   1. тема чата — это user preference на сервере (категория theme), поэтому
+#      она записывается через REST API серверов из config.json;
+#   2. тема окна — поле darkMode в config.json (Electron рисует им таб-бар,
+#      иконку трея и overlay заголовка); themeSyncing НЕ включается;
+#   3. приложение перезапускается, потому что config.json читается только
+#      на старте (и чтобы Electron не перезаписал наши правки при выходе).
+#
+# Токен берётся из ~/.config/Mattermost/Cookies на чтение (SQLite, plaintext)
+# и никуда не сохраняется. Любая ошибка только логируется: переключение темы
+# не должно валить theme-sync.
+#
+#   wayland/mattermost-theme dark|light
+#
+# MATTERMOST_THEME_NO_RESTART=1 — не трогать процессы (написать prefs + config).
+set -euo pipefail
+
+mode="${1:-}"
+case "$mode" in
+    dark|light) ;;
+    *) echo "usage: $0 dark|light" >&2; exit 2 ;;
+esac
+
+REPO="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/.." && pwd)"
+CFG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/Mattermost"
+CFG="$CFG_DIR/config.json"
+COOKIES="$CFG_DIR/Cookies"
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/dotfiles/mattermost.log"
+
+[[ -f "$CFG" ]] || exit 0
+command -v jq >/dev/null 2>&1 || exit 0
+
+mkdir -p "${LOG%/*}"
+# Не даём логу расти бесконечно: при переключении пару раз в день хватает 64 КиБ.
+if [[ -f "$LOG" ]] && (( $(stat -c %s "$LOG" 2>/dev/null || echo 0) > 65536 )); then
+    tail -n 200 "$LOG" > "$LOG.tmp" && mv "$LOG.tmp" "$LOG"
+fi
+log() { printf '%s %s\n' "$(date '+%F %T')" "$*" >> "$LOG"; }
+
+preset="$REPO/theme/$mode/mattermost.json"
+[[ -f "$preset" ]] || { log "missing preset: $preset"; exit 0; }
+
+# Приложение должно быть закрыто: иначе при выходе Electron запишет свой
+# config.json поверх нашего и может подменить darkMode.
+# Ищем именно процессы Electron с нашим app.asar: pgrep -f один матчит и
+# посторонние командные строки, где просто встречается путь.
+electron_mm_pids() {
+    local pid exe
+    while read -r pid; do
+        exe="$(readlink -f "/proc/$pid/exe" 2>/dev/null || true)"
+        [[ "$exe" == */electron* ]] && printf '%s\n' "$pid"
+    done < <(pgrep -f 'mattermost-desktop/app\.asar' 2>/dev/null || true)
+}
+
+app_running() { [[ -n "$(electron_mm_pids)" ]]; }
+
+# shellcheck disable=SC2046 # список pid'ов без пробелов/спецсимволов
+kill_mm() { # kill_mm <signal>
+    local pids
+    pids="$(electron_mm_pids)"
+    [[ -n "$pids" ]] && kill "-$1" $pids 2>/dev/null || true
+}
+
+was_running=0
+if app_running; then
+    was_running=1
+    if [[ -z "${MATTERMOST_THEME_NO_RESTART:-}" ]]; then
+        log "stopping Mattermost"
+        kill_mm TERM
+        for _ in $(seq 1 50); do
+            app_running || break
+            sleep 0.1
+        done
+        if app_running; then
+            log "SIGTERM ignored, sending SIGKILL"
+            kill_mm KILL
+            for _ in $(seq 1 30); do
+                app_running || break
+                sleep 0.1
+            done
+        fi
+    fi
+fi
+
+# --- 1. тема чата: user preference на каждом настроенном сервере -------------
+# Значение — JSON-объект темы целиком (не имя): webapp в v10 парсит его как JSON.
+value="$(jq -c . "$preset")"
+
+if [[ -f "$COOKIES" ]] && command -v sqlite3 >/dev/null 2>&1; then
+    # Доменные cookies хранятся с ведущей точкой (.ntechlab.com), host-only — без
+    # неё. Берём самое длинное совпадение: точный host или родительский домен.
+    cookie_value() { # cookie_value <host> <name>
+        sqlite3 -readonly "$COOKIES" \
+            "select value from cookies where name='$2' \
+             and (host_key = '$1' or host_key = '.' || '$1' \
+                  or '$1' like '%.' || ltrim(host_key, '.')) \
+             order by length(host_key) desc limit 1;" 2>/dev/null || true
+    }
+
+    mapfile -t servers < <(jq -r '.servers[]?.url // empty' "$CFG" 2>/dev/null || true)
+    for url in "${servers[@]}"; do
+        [[ -n "$url" ]] || continue
+        url="${url%/}"
+        host="${url#*://}"; host="${host%%/*}"; host="${host%%:*}"
+
+        token="$(cookie_value "$host" MMAUTHTOKEN)"
+        if [[ -z "$token" ]]; then
+            log "$host: no MMAUTHTOKEN in Cookies, chat theme unchanged"
+            continue
+        fi
+
+        # id спрашиваем у сервера: cookie MMUSERID может быть от другой сессии.
+        uid="$(curl -fsS -m 10 -H "Authorization: Bearer $token" \
+            "$url/api/v4/users/me" 2>>"$LOG" | jq -r '.id // empty' 2>/dev/null || true)"
+        [[ -n "$uid" ]] || { log "$host: cannot resolve user id, chat theme unchanged"; continue; }
+
+        body="$(jq -n -c --arg uid "$uid" --arg v "$value" \
+            '[{user_id:$uid, category:"theme", name:"", value:$v}]')"
+        if curl -fsS -m 10 -o /dev/null -X PUT "$url/api/v4/users/$uid/preferences" \
+                -H "Authorization: Bearer $token" \
+                -H 'Content-Type: application/json' \
+                --data-binary "$body" 2>>"$LOG"; then
+            log "$host: chat theme -> $mode"
+        else
+            log "$host: failed to update chat theme (offline or expired session?)"
+        fi
+    done
+else
+    log "no Cookies DB or sqlite3, chat theme unchanged"
+fi
+
+# --- 2. тема окна ------------------------------------------------------------
+# themeSyncing оставляем как есть: при false окно живёт на nativeTheme="system"
+# (GTK/портал, его двигает gsettings выше по theme-sync), а darkMode задаёт
+# отрисовку таб-бара/трея. При true desktop сам возьмёт тему сервера.
+if app_running; then
+    log "Mattermost is running; config.json left untouched"
+else
+    want=false; [[ "$mode" == dark ]] && want=true
+    tmp="$(mktemp "$CFG.XXXXXX" 2>/dev/null || true)"
+    if [[ -z "$tmp" ]]; then
+        log "cannot create a temp file next to config.json"
+    elif jq --argjson dm "$want" '.darkMode = $dm' "$CFG" > "$tmp" 2>>"$LOG"; then
+        chmod --reference="$CFG" "$tmp" 2>/dev/null || chmod 600 "$tmp"
+        mv -f "$tmp" "$CFG"
+        log "config.json: darkMode=$want (themeSyncing untouched)"
+    else
+        rm -f "$tmp"
+        log "failed to patch config.json"
+    fi
+fi
+
+# --- 3. перезапуск -----------------------------------------------------------
+if [[ "$was_running" == 1 && -z "${MATTERMOST_THEME_NO_RESTART:-}" ]] && ! app_running; then
+    if setsid -f mattermost-desktop >/dev/null 2>&1; then
+        log "Mattermost restarted"
+    else
+        log "failed to restart Mattermost"
+    fi
+fi

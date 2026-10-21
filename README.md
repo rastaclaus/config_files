@@ -115,6 +115,14 @@ Shared Wayland helpers (compositor-agnostic, detected at runtime) live in
 `wayland/` (`theme-switch` lives in `applications/`, since it also works on
 headless hosts):
 
+- `compositor-env.sh` — sourceable helper that finds a **live** compositor
+  socket. `darkman.service` outlives the compositor, so the `NIRI_SOCKET` /
+  `SWAYSOCK` it passes on can point at a socket from a previous niri/sway run;
+  the helper falls back to the newest `$XDG_RUNTIME_DIR/niri.wayland-*.sock` /
+  `sway-ipc.*.sock` and validates it with a real IPC request, exporting the
+  working value for child processes. `theme-sync` re-resolves on every switch,
+  which is what makes wallpapers and Mattermost follow `darkman toggle` even
+  after niri was restarted.
 - `wallpapers.sh` — wallpaper via `awww` (falls back to `swaybg`) on every
   active output; picks only `*_dark.*` or `*_light.*` files to match the
   current theme (see `Runtime state`), and caches the halves of a panoramic
@@ -123,6 +131,8 @@ headless hosts):
   name (`WALLPAPER_NO_NOTIFY=1` silences it).
 - `toggletouch.sh` — touchpad toggle (`niri msg action toggle-touchpad` or
   `swaymsg input ... events`).
+- `mattermost-theme <mode>` — chat and window theme for Mattermost Desktop,
+  called from `theme-sync` (see **Runtime state** below).
 - `./applications/theme-switch [dark|light]` — manual theme switch; a wrapper
   over `theme-sync` (also works on headless, see **Runtime state**).
 
@@ -183,6 +193,7 @@ directory:
   helix/runtime/themes/dotfiles.toml   # theme "dotfiles" (inherits gruvbox_*)
   ironbar/colors.css                   # @define-color palette
   ironbar/style.css                    # wrapper: colors.css + repo style.css
+  mattermost.log                       # лог wayland/mattermost-theme (если есть)
 ```
 
 The path is hard-coded (not `$XDG_STATE_HOME`): alacritty and rofi do not expand
@@ -203,6 +214,34 @@ rewrites the files above and then:
   attached client never learns about a runtime palette change on its own;
 - re-runs `wayland/wallpapers.sh` in the background, so the wallpaper switches
   to a picture of the matching mode (`THEME_SYNC_NO_WALLPAPER=1` opts out).
+
+**Mattermost.** `wayland/mattermost-theme <mode>` runs from the reload branch
+of `theme-sync` when `~/.config/Mattermost/config.json` exists and there is a
+live graphical session (a wayland or X11 socket — no compositor IPC needed,
+since the app is only restarted into that session):
+
+- the chat theme is **not** stored locally: it is a server-side user preference
+  (category `theme`, value is the whole JSON of the preset, not its name), so
+  the script writes `theme/{dark,light}/mattermost.json` — Onyx and Quartz from
+  Mattermost v10.10.1 — through `PUT /api/v4/users/<id>/preferences` for every
+  server listed in `config.json`. The session token and user id are read
+  read-only from `~/.config/Mattermost/Cookies` and are never copied anywhere;
+- the window chrome follows `darkMode` in `config.json` (Electron tab bar, tray
+  icon, title-bar overlay), and `themeSyncing` is left alone: at its default
+  `false` the desktop app keeps `nativeTheme.themeSource = "system"`, i.e. it
+  follows the GTK colour scheme that `theme-sync` already sets above. Turning
+  `themeSyncing` on instead makes the window take the server chat theme, which
+  also works — the script does not overwrite that choice;
+- `config.json` is only read at startup, and Electron rewrites it when it
+  quits, so the order is `kill → API + config.json → start`. The app is
+  restarted (`SIGTERM`, then `SIGKILL` after 5 s) only if it was running;
+- network or session failures are logged to `~/.local/state/dotfiles/mattermost.log`
+  and never break the switch. `MATTERMOST_THEME_NO_RESTART=1` writes the
+  preference and the config without touching the processes,
+  `THEME_SYNC_NO_MATTERMOST=1` skips the script from `theme-sync`, and
+  `THEME_SYNC_NO_RELOAD=1` skips the whole reload branch (so `verify.sh` stays
+  side-effect free). The app is restarted only when `background-mode` really
+  changes, so `theme-sync` calls with the current mode are a no-op for it.
 
 **Manual switch.** `theme-switch [dark|light]` (`applications/theme-switch`,
 linked into `~/.local/bin`) is a thin wrapper over `theme-sync`; without an

@@ -41,6 +41,9 @@ WALLPAPER_BG="${WALLPAPER_BG:-000000}"
 STATE_DIR="$HOME/.local/state/dotfiles"
 SLICE_DIR="$WALLPAPER_DIR/.slices"
 
+# shellcheck source=wayland/compositor-env.sh
+. "$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)/compositor-env.sh"
+
 if [[ ! -d "$WALLPAPER_DIR" ]]; then
     echo "wallpapers: no such directory: $WALLPAPER_DIR" >&2
     exit 1
@@ -98,13 +101,14 @@ fi
 # Do not trust the mere presence of SWAYSOCK/NIRI_SOCKET: a stale SWAYSOCK can
 # linger in the systemd user environment after a sway session (sway imports it
 # and never unsets it; niri-session's `import-environment` then pulls it back
-# in), which would make us pick the wrong compositor and print a scary
-# "Unable to connect" error at startup. Require the socket to actually exist.
+# in), and a socket left over from a previous compositor run still exists as a
+# file while no process listens on it. compositor-env.sh picks a socket that
+# actually answers IPC and exports it, so we never select the wrong compositor.
 #
 # Each line is: name x y width height phys_width phys_height, where x/y/width/
 # height are logical coordinates (used for layout) and phys_* are the physical
 # pixels of the current mode (used as the render target size).
-if [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]]; then
+if theme_resolve_niri; then
     # niri reports an output as active when it is mapped to a logical output;
     # an unmapped/disabled output has "logical": null (there is no "active" key).
     mapfile -t geom < <(niri msg --json outputs | jq -r '
@@ -115,7 +119,7 @@ if [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]]; then
         | .value.modes[.value.current_mode] as $m
         | [$o.name, $l.x, $l.y, $l.width, $l.height, $m.width, $m.height]
         | map(tostring) | join(" ")')
-elif [[ -n "${SWAYSOCK:-}" && -S "${SWAYSOCK}" ]]; then
+elif theme_resolve_sway; then
     mapfile -t geom < <(swaymsg -t get_outputs | jq -r '
         .[]
         | select(.active)

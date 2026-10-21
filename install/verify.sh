@@ -73,6 +73,19 @@ else
     bad "darkman hook missing or not executable: ~/.local/share/darkman/theme"
 fi
 
+# darkman.service переживает перезапуск niri/sway, поэтому унаследованный
+# NIRI_SOCKET/SWAYSOCK может указывать на мёртвый сокет, и обои с Mattermost
+# молча пропускались. compositor-env.sh обязан найти живой сокет заново.
+if env NIRI_SOCKET=/nonexistent/niri.sock SWAYSOCK=/nonexistent/sway.sock \
+        bash -c '. "$1"; theme_compositor_resolve' _ "$REPO/wayland/compositor-env.sh" \
+        >/dev/null 2>&1; then
+    ok "compositor-env.sh resolves a live socket ignoring stale env"
+elif [[ "$declared_profile" == "headless" ]]; then
+    ok "no compositor to resolve (headless)"
+else
+    bad "compositor-env.sh could not find a live compositor socket"
+fi
+
 # merge-каталоги: реальные каталоги, файлы — ссылки внутрь репозитория
 for d in fish helix opencode; do
     if [[ -L "$HOME/.config/$d" ]]; then
@@ -172,6 +185,24 @@ else
     bad "ironbar wrapper is missing imports (expected colors.css and $REPO/ironbar/style.css)"
 fi
 
+# Mattermost: пресеты чата пишутся в серверный user preference как JSON, поэтому
+# файл должен парситься jq и нести ожидаемый type (quartz/onyx).
+if command -v jq >/dev/null 2>&1; then
+    while read -r mm_mode mm_type; do
+        f="$REPO/theme/$mm_mode/mattermost.json"
+        if ! jq -e . "$f" >/dev/null 2>&1; then
+            bad "theme/$mm_mode/mattermost.json is missing or not valid JSON"
+        elif [[ "$(jq -r '.type // empty' "$f")" != "$mm_type" ]]; then
+            bad "theme/$mm_mode/mattermost.json: expected type '$mm_type'"
+        else
+            ok "theme/$mm_mode/mattermost.json ($mm_type)"
+        fi
+    done <<'EOF'
+dark Onyx
+light Quartz
+EOF
+fi
+
 # ------------------------------------- 5. нет хардкода домашнего пути
 # Exec в .desktop не раскрывает ~/$HOME, поэтому туда легко вписать /home/<user>.
 # Ловим такие пути в трекаемых файлах; документация — исключение.
@@ -220,7 +251,10 @@ case "$cur" in
     dark|light) ;;
     *) cur=light ;;
 esac
-"$REPO/wayland/theme-sync" "$cur"
+# Тот же режим уже записан выше циклом, но theme-sync всё равно прогоняется,
+# чтобы восстановить reload-часть; Mattermost при этом не перезапускается
+# (скрипт срабатывает только на реальной смене режима).
+THEME_SYNC_NO_MATTERMOST=1 "$REPO/wayland/theme-sync" "$cur"
 ok "restored mode: $cur"
 
 # ------------------------------- 8. дрейф пакетов (только по CLEANUP_CHECK=1)

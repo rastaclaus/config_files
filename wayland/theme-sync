@@ -10,10 +10,13 @@
 #
 # THEME_SYNC_NO_RELOAD=1 — только записать файлы (используется verify.sh).
 # THEME_SYNC_NO_WALLPAPER=1 — не трогать обои.
+# THEME_SYNC_NO_MATTERMOST=1 — не перезапускать Mattermost.
 set -euo pipefail
 
 SCRIPT="$(readlink -f "${BASH_SOURCE[0]}")"
 REPO="$(cd "$(dirname "$SCRIPT")/.." && pwd)"
+# shellcheck source=wayland/compositor-env.sh
+. "$REPO/wayland/compositor-env.sh"
 # ВАЖНО: путь фиксирован (XDG-дефолт), потому что alacritty/rofi не умеют
 # подставлять переменные окружения в import-пути. При смене XDG_STATE_HOME
 # нужно править и эти конфиги.
@@ -27,6 +30,7 @@ esac
 
 mkdir -p "$STATE/alacritty" "$STATE/helix/runtime/themes" "$STATE/ironbar"
 
+prev_mode="$(cat "$STATE/background-mode" 2>/dev/null || true)"
 printf '%s\n' "$mode" > "$STATE/background-mode"
 
 # cat > файл сохраняет inode (нужно для inotify-вотчеров ironbar).
@@ -49,6 +53,12 @@ copy "$REPO/theme/$mode/ironbar.css" "$STATE/ironbar/colors.css"
 } > "$STATE/ironbar/style.css"
 
 [[ ${THEME_SYNC_NO_RELOAD:-0} == 1 ]] && exit 0
+
+# Композитор мог быть перезапущен уже после старта darkman.service, и тогда
+# унаследованные NIRI_SOCKET/SWAYSOCK указывают в никуда: обои и Mattermost
+# молча пропускались. Резолвим живой сокет заново и экспортируем его.
+have_compositor=0
+theme_compositor_resolve && have_compositor=1
 
 # GTK / xdg-desktop-portal
 if command -v gsettings >/dev/null 2>&1; then
@@ -115,6 +125,18 @@ if [[ -x "$HOME/.cargo/bin/nvim-ctrl" ]]; then
     "$HOME/.cargo/bin/nvim-ctrl" "set background=$mode" 2>/dev/null || true
 fi
 
+# Mattermost Desktop: тема чата (серверный user preference) + тема окна
+# (darkMode в config.json). Скрипт сам перезапускает приложение; если его нет,
+# тихо выходит. Приложению нужна живая графическая сессия, а не IPC
+# композитора, поэтому проверяем wayland/X11-сокет, а не NIRI_SOCKET.
+# Рестарт делаем только при реальной смене режима: verify.sh в конце вызывает
+# theme-sync с уже действующим режимом, и приложение не должно дёргаться.
+if [[ -z "${THEME_SYNC_NO_MATTERMOST:-}" ]] && [[ "${prev_mode:-}" != "$mode" ]] \
+    && [[ -f "${XDG_CONFIG_HOME:-$HOME/.config}/Mattermost/config.json" ]] \
+    && theme_display_alive; then
+    "$REPO/wayland/mattermost-theme" "$mode" || true
+fi
+
 # rofi / fish / ironbar подхватывают изменения сами:
 # rofi — при следующем запуске, fish — на следующем промпте,
 # ironbar — watcher обёртки.
@@ -124,9 +146,7 @@ fi
 # тормозить переключение темы. THEME_SYNC_NO_WALLPAPER=1 — не трогать обои.
 # Композитор проверяется по живому сокету: при запуске из TTY/verify.sh
 # wallpapers.sh иначе ругнётся "neither sway nor niri is running".
-if [[ -z "${THEME_SYNC_NO_WALLPAPER:-}" ]] \
-    && { [[ -n "${NIRI_SOCKET:-}" && -S "${NIRI_SOCKET}" ]] \
-        || [[ -n "${SWAYSOCK:-}" && -S "${SWAYSOCK}" ]]; }; then
+if [[ -z "${THEME_SYNC_NO_WALLPAPER:-}" ]] && (( have_compositor )); then
     wlog="${XDG_RUNTIME_DIR:-${TMPDIR:-/tmp}}/wallpapers.log"
     if command -v setsid >/dev/null 2>&1; then
         setsid -f "$REPO/wayland/wallpapers.sh" >>"$wlog" 2>&1 || true

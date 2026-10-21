@@ -375,7 +375,7 @@ in `scroll-mode` or `shift+page_up` scroll almost nothing. Inside tmux:
 | scroll a pane          | `prefix [` — copy-mode, vi keys (`setw -g mode-keys vi`) |
 | search pane history    | in copy-mode: `/` down, `?` up, `n` / `N` next/prev hit  |
 | copy a range           | in copy-mode: `space` starts, `v` block mode, `y`/`Enter` copy and leave |
-| copy to the system clipboard | the same — the binding pipes through `wl-copy`, so it does not need the terminal's OSC 52 support |
+| copy to the system clipboard | the same — via `wl-copy` where it exists, otherwise tmux emits OSC 52 itself (headless host), see **SSH: terminfo and the clipboard** |
 | whole pane history in nvim | `prefix e` (for alt-screen apps only the visible screen, see below) |
 | new shell, same dir    | `prefix v` (side by side), `prefix w` (new window)       |
 
@@ -403,6 +403,59 @@ applications), `escape-time 0`, `terminal-overrides alacritty:Tc` for the
 fallback terminal (ghostty is truecolor-capable without an override). The tmux
 palette follows the desktop theme — see **Tmux** below.
 
+### SSH: terminfo and the clipboard
+
+`ssh` always forwards the client's `TERM` (it travels in the pty request, not
+through `AcceptEnv`), so a session started from ghostty arrives on the server as
+`TERM=xterm-ghostty`. If that entry is missing in the remote terminfo database,
+tmux does not start at all:
+
+```
+$ tmux new -s work
+missing or unsuitable terminal: xterm-ghostty
+```
+
+The same entry decides whether the clipboard works: tmux needs its `Ms`
+capability to set the terminal clipboard with an OSC 52 sequence. So one line in
+`ghostty/config.ghostty` fixes both, and nothing has to be installed on the
+servers by hand:
+
+```
+shell-integration-features = ssh-terminfo
+```
+
+The `ssh` wrapper from shell integration (`ghostty +ssh`) pipes ghostty's
+embedded entry into `tic -x -` on the remote host on the first connection:
+`~/.terminfo/x/xterm-ghostty`, under your own user, no root. The result is
+cached in `~/.cache/ghostty` (`ghostty +ssh-cache` clears it), so a new server
+heals itself. If the install fails (no `tic`, read-only home) ghostty falls back
+to `TERM=xterm-256color` and the session keeps working. Unlisted features keep
+their struct defaults (`cursor`, `title`, `path` on; `ssh-env`, `sudo` off), so
+naming one feature does not disable the others.
+
+Do not substitute the `ghostty` entry shipped by ncurses 6.6: it has no `Tc`, and
+tmux then reports `#{client_termfeatures}` without `RGB`, i.e. no truecolor
+inside tmux. Ghostty's own entry carries both `Tc` and `Ms`.
+
+Clipboard over SSH:
+
+| direction | path |
+|-----------|------|
+| copy inside tmux (copy-mode, `y`) | tmux buffer → OSC 52 → ghostty sets the local clipboard |
+| copy from an app in a pane (nvim `clipboard=osc52`) | `set-clipboard on` accepts the sequence and forwards it to the client |
+| paste into the remote shell | local `ctrl+shift+v`, bracketed paste over the wire — no OSC 52 |
+| read the local clipboard on the server (nvim `"+p`) | OSC 52 read, gated by `clipboard-read` |
+
+`clipboard-write` defaults to `allow`, so writing needs no confirmation;
+`clipboard-read` defaults to `ask`, and the config sets it to `allow` to avoid the
+prompt on every `"+p`. That is a deliberate trade-off: with `allow`, any process
+on the server can read the local clipboard.
+
+Headless hosts need no `wl-copy` for this: the `y` binding pipes through
+`wl-copy` when it exists, and when it does not the pipe fails silently while tmux
+still sets the buffer and emits OSC 52. Copying from copy-mode keeps working —
+verified on `awdesk` (headless, no Wayland) with `tmux 3.8`.
+
 ### CLI
 
 Useful diagnostics:
@@ -414,6 +467,7 @@ ghostty +list-actions             # every action, with argument syntax
 ghostty +list-keybinds --default --docs
 ghostty +list-themes              # built-in theme names
 ghostty +list-fonts
+ghostty +ssh-cache                # forget which hosts got the terminfo installed
 ```
 
 `+validate-config` silently returns 1 if the file is passed after the action

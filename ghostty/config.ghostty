@@ -55,6 +55,33 @@ scrollback-limit = 20_000_000
 mouse-hide-while-typing = true
 shell-integration = detect
 
+# ------------------------------------------------------- ssh: terminfo, OSC 52
+# sshd всегда передаёт TERM клиента, поэтому на удалённом хосте сессия
+# приезжает как TERM=xterm-ghostty. Если там нет такой terminfo, tmux вообще
+# не стартует: `missing or unsuitable terminal: xterm-ghostty`. Запись
+# `ghostty` из ncurses 6.6+ не спасает — в ней нет Tc, и tmux теряет
+# truecolor (`#{client_termfeatures}` без RGB). Замерено на tmux 3.8.
+#
+# ssh-terminfo — единственный способ не ставить ничего руками на каждый
+# сервер: обёртка `ssh` из shell-integration (`ghostty +ssh`) пайпит
+# встроенную запись в `tic -x -` на удалённом хосте при первом подключении.
+# Результат — ~/.terminfo/x/xterm-ghostty под твоим пользователем, без root,
+# успех кэшируется в ~/.cache/ghostty (сброс — `ghostty +ssh-cache`). Не
+# вышло (нет tic, read-only home) — ghostty сам откатывается на
+# TERM=xterm-256color, сессия остаётся рабочей.
+#
+# Дефолты полей структуры: cursor/title/path = true, ssh-env/sudo = false.
+# Неперечисленные фичи сохраняют свой дефолт, поэтому cursor/title/path
+# остаются включёнными, а ssh-env и sudo — выключенными, как и были.
+shell-integration-features = ssh-terminfo
+
+# Чтение клипборда удалённым приложением (OSC 52 read: nvim `"+p`).
+# Дефолт `ask` — запрос на каждое чтение; `allow` убирает запрос, но тогда
+# любой процесс на сервере сможет прочитать локальный клипборд. Запись
+# (clipboard-write) и так `allow` по умолчанию — OSC 52 от tmux и приложений
+# работает без спроса. Обе опции есть с 1.2.0 (src/config/Config.zig).
+clipboard-read = allow
+
 # ------------------------------------------- модальный scroll-mode (без мыши)
 # Встроенного vi-режима в ghostty нет: есть только набор actions
 # (scroll_page_lines/fractional, scroll_to_top/bottom, jump_to_prompt, search)

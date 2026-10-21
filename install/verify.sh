@@ -127,6 +127,21 @@ if [[ -L "$xo" && "$(readlink -f "$xo")" == "$REPO/applications/xdg-open" && -x 
     else
         bad "xdg-open shim does not delegate (--version failed)"
     fi
+    # Dump-ветка: путь той же формы, что пишет ghostty. Если ghostty нет
+    # (headless), шим обязан делегировать, а не падать на `exec ghostty`.
+    if ! command -v ghostty >/dev/null 2>&1; then
+        tmproot="$(mktemp -d)"
+        # Имя каталога ghostty — 16 случайных байт в base64url (22 символа).
+        dumpdir="$tmproot/AAAAAAAAAAAAAAAAAAAAAA"
+        mkdir -p "$dumpdir"
+        printf 'x\n' > "$dumpdir/history.txt"
+        if TMPDIR="$tmproot" "$xo" "$dumpdir/history.txt" >/dev/null 2>&1; then
+            ok "xdg-open shim delegates ghostty dumps without ghostty"
+        else
+            bad "xdg-open shim fails on a ghostty dump path without ghostty installed"
+        fi
+        rm -rf "$tmproot"
+    fi
 else
     bad "~/.local/bin/xdg-open is not a symlink to applications/xdg-open"
 fi
@@ -218,6 +233,25 @@ else
         bad "legacy ~/.config/ghostty/config exists; only config.ghostty is supported"
     else
         ok "no legacy ghostty config file"
+    fi
+fi
+
+# Содержимое конфига — свойство репозитория, а не хоста: проверяем на любом
+# профиле, включая headless (там ghostty нет, но правку в репо поймать нужно).
+if [[ -f "$REPO/ghostty/config.ghostty" ]]; then
+    if grep -Eq '^[[:space:]]*shell-integration-features[[:space:]]*=.*\bssh-terminfo\b' \
+            "$REPO/ghostty/config.ghostty"; then
+        ok "ghostty shell-integration-features includes ssh-terminfo"
+    else
+        bad "ghostty config has no ssh-terminfo: remote TERM=xterm-ghostty will have no terminfo"
+    fi
+
+    # clipboard-read=allow убирает запрос на OSC 52 read (nvim `"+p` на сервере).
+    cr="$(sed -n 's/^[[:space:]]*clipboard-read[[:space:]]*=[[:space:]]*//p' "$REPO/ghostty/config.ghostty" | head -n 1)"
+    if [[ "$cr" == "allow" ]]; then
+        ok "ghostty clipboard-read = allow"
+    else
+        warn "ghostty clipboard-read is '${cr:-<default ask>}': OSC 52 reads will prompt"
     fi
 fi
 

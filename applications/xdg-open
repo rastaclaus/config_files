@@ -22,6 +22,11 @@
 # writeScreenFile для loc=history возвращает null, удаляет tempdir и до
 # xdg-open не доходит. Там работает только screen_file (ctrl+alt+shift+j).
 #
+# На headless-хосте (profile=headless, ghostty не установлен) шим ставится всё
+# равно: без ghostty он просто делегирует в /usr/bin/xdg-open. Проверка
+# `command -v ghostty` нужна именно для dump-пути — без неё `exec ghostty`
+# падал бы с rc=127 вместо делегирования.
+#
 # set -euo pipefail намеренно не используется: скрипт короткий, а падать на
 # неожиданном аргументе в общей цепочке xdg-open нельзя — лучше делегировать.
 set -u
@@ -45,7 +50,7 @@ is_ghostty_dump() {
     [ -s "$path" ]
 }
 
-if [ "$#" -eq 1 ] && [ "${1#/}" != "$1" ] && is_ghostty_dump "$1"; then
+if [ "$#" -eq 1 ] && [ "${1#/}" != "$1" ] && is_ghostty_dump "$1" && command -v ghostty >/dev/null 2>&1; then
     exec ghostty +new-window "--title=scrollback: ${1##*/}" -e nvim "$1"
 fi
 

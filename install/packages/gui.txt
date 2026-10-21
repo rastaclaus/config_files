@@ -19,6 +19,7 @@ vulkan-mesa-layers           # слои Vulkan для драйверов Mesa
 radeontop                    # мониторинг GPU AMD
 
 # --- terminal / launcher ---
+ghostty                      # основной терминал (конфиг ghostty/)
 alacritty                    # терминал на GPU (конфиг alacritty/)
 rofi                         # лаунчер и меню (конфиг rofi/)
 rofi-emoji                   # плагин эмодзи для rofi

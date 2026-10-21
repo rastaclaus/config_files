@@ -7,6 +7,13 @@ background = '#fbf1c7'
 # soft contrast background = = '#f2e5bc'
 foreground = '#3c3836'
 
+# Selection colors
+# bg2 (#d5c4a1) на светлой теме — тёплое затемнение, текст остаётся тёмным.
+# verify.sh сверяет эти hex с ghostty/themes/gruvbox-light.
+[colors.selection]
+text = '#3c3836'
+background = '#d5c4a1'
+
 # Normal colors
 [colors.normal]
 black   = '#fbf1c7'

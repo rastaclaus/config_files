@@ -185,6 +185,215 @@ else
     bad "ironbar wrapper is missing imports (expected colors.css and $REPO/ironbar/style.css)"
 fi
 
+# ------------------------------------------------- 4b. Ghostty: конфиг и темы
+# ghostty читает конфиг из ~/.config/ghostty (симлинк в репозиторий), а палитры
+# — из ghostty/themes/<name> по имени из `theme = light:...,dark:...`
+# (имя файла без расширения: ghostty ищет ровно "<name>").
+if [[ "$declared_profile" == "headless" ]]; then
+    ok "ghostty config not needed on headless"
+else
+    if [[ -L "$HOME/.config/ghostty" && "$(readlink -f "$HOME/.config/ghostty")" == "$REPO/ghostty" ]]; then
+        ok "~/.config/ghostty -> repo"
+    else
+        bad "~/.config/ghostty is not a symlink to $REPO/ghostty"
+    fi
+    # Легаси-файл `config` ghostty читает первым; вместе с config.ghostty это
+    # даёт предупреждение в лог и непредсказуемый порядок настроек.
+    if [[ -e "$HOME/.config/ghostty/config" ]]; then
+        bad "legacy ~/.config/ghostty/config exists; only config.ghostty is supported"
+    else
+        ok "no legacy ghostty config file"
+    fi
+fi
+
+# Сам конфиг должен проходить парсер ghostty: опечатка в ключе (например,
+# забытый `keybind =` перед `scroll-mode/...`) видна только здесь.
+if [[ "$declared_profile" != "headless" ]] && command -v ghostty >/dev/null 2>&1; then
+    # --config-file — глобальный флаг, поэтому стоит ДО `+validate-config`:
+    # после команды он молча возвращает rc=1 без диагностики.
+    if diag="$(ghostty --config-file="$REPO/ghostty/config.ghostty" +validate-config 2>&1)"; then
+        ok "ghostty +validate-config"
+    else
+        while IFS= read -r line; do bad "ghostty config: $line"; done <<< "$diag"
+    fi
+fi
+
+# Имена тем в config.ghostty должны существовать файлами в ghostty/themes.
+if [[ -f "$REPO/ghostty/config.ghostty" ]]; then
+    themes_line="$(sed -n 's/^[[:space:]]*theme[[:space:]]*=[[:space:]]*//p' "$REPO/ghostty/config.ghostty" | head -n 1)"
+    for t in $(tr ',:' '\n\n' <<< "$themes_line" | sed '/^\(light\|dark\)$/d' | tr -d ' '); do
+        # Ghostty ищет файл темы по точному имени из `theme =`, без
+        # расширения (расширение .conf молча не находится).
+        if [[ -f "$REPO/ghostty/themes/$t" ]]; then
+            ok "ghostty theme $t"
+        else
+            bad "ghostty theme '$t' from config.ghostty not found in ghostty/themes/"
+        fi
+    done
+fi
+
+# Палитры двух терминалов не должны разъезжаться: alacritty остаётся fallback'ом.
+# Обе функции печатают строки "<слот> <hex без #>" и сортируют их, чтобы
+# сравнивать diff'ом: bg/fg плюс слоты палитры 0..15.
+alacritty_palette() { # <файл темы alacritty>
+    awk -F"'" '
+        /^\[/ { sec = "" }
+        /^\[colors\.primary\]/ { sec = "primary"; next }
+        /^\[colors\.normal\]/  { sec = "normal"; next }
+        /^\[colors\.bright\]/  { sec = "bright"; next }
+        sec != "" && /^[a-z_]+[ \t]*=/ {
+            key = $1; gsub(/[ \t=]/, "", key);
+            if (sec == "primary") {
+                if (key == "background") { print "bg " $2; next }
+                if (key == "foreground") { print "fg " $2; next }
+            } else {
+                order[1] = "black"; order[2] = "red"; order[3] = "green"; order[4] = "yellow";
+                order[5] = "blue"; order[6] = "magenta"; order[7] = "cyan"; order[8] = "white";
+                for (i = 1; i <= 8; i++) if (key == order[i])
+                    printf "%d %s\n", (sec == "normal" ? i - 1 : i + 7), $2;
+            }
+        }
+    ' "$1" | sed 's/#//g' | sort -k1,1
+}
+
+ghostty_palette() { # <файл темы ghostty>
+    awk -F"=" '
+        /^[[:space:]]*background[[:space:]]*=/ {
+            v = $2; gsub(/[[:space:]#]/, "", v); print "bg " v
+        }
+        /^[[:space:]]*foreground[[:space:]]*=/ {
+            v = $2; gsub(/[[:space:]#]/, "", v); print "fg " v
+        }
+        /^[[:space:]]*palette[[:space:]]*=/ {
+            n = $2; v = $3; gsub(/[[:space:]]/, "", n); gsub(/[[:space:]#]/, "", v);
+            print n " " v
+        }
+    ' "$1" | sort -k1,1
+}
+
+for pair in "dark:gruvbox_dark:gruvbox-dark" "light:gruvbox_light:gruvbox-light"; do
+    IFS=: read -r m al gh <<< "$pair"
+    al_file="$REPO/alacritty/themes/themes/$al.toml"
+    gh_file="$REPO/ghostty/themes/$gh"
+    if [[ ! -f "$al_file" || ! -f "$gh_file" ]]; then
+        bad "palette source missing for $m ($al_file / $gh_file)"
+    elif diff -u <(alacritty_palette "$al_file") <(ghostty_palette "$gh_file") >/dev/null; then
+        ok "ghostty $gh palette matches alacritty $al"
+    else
+        bad "ghostty $gh palette drifts from alacritty $al: $(diff <(alacritty_palette "$al_file") <(ghostty_palette "$gh_file") | head -n 4 | tr '\n' ' ')"
+    fi
+
+    # Прозрачность: у alacritty она в state-фрагменте темы (theme/<mode>/
+    # alacritty.toml), у ghostty — в файле темы. Значения должны совпадать,
+    # иначе окна двух терминалов на одном рабочем столе выглядят по-разному.
+    al_op="$(awk -F= '/^\[window\]/ { s = 1; next } /^\[/ { s = 0 }
+                       s && /^[[:space:]]*opacity[[:space:]]*=/ {
+                           gsub(/[[:space:]]/, "", $2); print $2; exit }' \
+             "$REPO/theme/$m/alacritty.toml" 2>/dev/null)"
+    gh_op="$(awk -F= '/^[[:space:]]*background-opacity[[:space:]]*=/ {
+                           v = $2; gsub(/[[:space:]]/, "", v); print v; exit }' "$gh_file")"
+    if [[ -z "$al_op" || -z "$gh_op" ]]; then
+        bad "opacity missing: theme/$m/alacritty.toml='$al_op' ghostty/$gh='$gh_op'"
+    elif [[ "$al_op" == "$gh_op" ]]; then
+        ok "ghostty $gh opacity $gh_op matches alacritty $m"
+    else
+        bad "ghostty $gh background-opacity '$gh_op' != alacritty $m opacity '$al_op'"
+    fi
+
+    # Выделение должно совпадать у обоих терминалов: bg2 в gruvbox-раскладке
+    # светлый, на тёмном фоне он читался как подсветка из светлой темы, поэтому
+    # dark переведён на bg1. Курсор по-прежнему не переопределяем — дефолт
+    # ghostty (инверсия клетки) совпадает с alacritty.
+    if grep -qE '^[[:space:]]*cursor-(color|text)[[:space:]]*=' "$gh_file"; then
+        bad "ghostty $gh overrides cursor colors; keep the ghostty default (as in alacritty)"
+    else
+        ok "ghostty $gh keeps default cursor colors"
+    fi
+
+    al_sel="$(awk -F"'" '
+        /^\[colors\.selection\]/ { s = 1; next }
+        /^\[/ { s = 0 }
+        s && /^[a-z_]+[ \t]*=/ {
+            key = $1; gsub(/[ \t=]/, "", key);
+            col = $2; gsub(/#/, "", col);
+            print key " " col
+        }
+    ' "$al_file" | sort)"
+    gh_sel="$(awk -F= '
+        /^[[:space:]]*selection-(background|foreground)[[:space:]]*=/ {
+            key = $1; v = $2;
+            gsub(/[[:space:]]/, "", key); gsub(/[[:space:]#]/, "", v);
+            sub(/^selection-/, "", key);
+            if (key == "background") key = "background";
+            if (key == "foreground") key = "text";
+            print key " " v
+        }
+    ' "$gh_file" | sort)"
+    if [[ -z "$al_sel" && -z "$gh_sel" ]]; then
+        ok "ghostty $gh keeps default selection colors"
+    elif [[ "$al_sel" == "$gh_sel" ]]; then
+        ok "ghostty $gh selection matches alacritty $al ($(tr '\n' ' ' <<< "$al_sel"))"
+    else
+        bad "ghostty $gh selection drifts from alacritty $al: alacritty='$(tr '\n' ' ' <<< "$al_sel")' ghostty='$(tr '\n' ' ' <<< "$gh_sel")'"
+    fi
+done
+
+# ------------------------------------------- 4c-bis. niri: конфиг и рамка окон
+# Синтаксис ловим до запуска сессии: кривая правка конфига роняет niri на старте.
+if command -v niri >/dev/null 2>&1 && [[ -f "$REPO/niri/config.kdl" ]]; then
+    if niri validate -c "$REPO/niri/config.kdl" >/dev/null 2>&1; then
+        ok "niri config is valid"
+    else
+        bad "niri config is not valid: $(niri validate -c "$REPO/niri/config.kdl" 2>&1 | head -n 3 | tr '\n' ' ')"
+    fi
+fi
+
+# Фокус-рамка niri по умолчанию рисуется как ЗАЛИТЫЙ прямоугольник за окном
+# (docs: "rendered as a solid background rectangle behind windows... will show
+# up through semitransparent windows"). У терминала с background-opacity < 1
+# она просвечивает и красит всё окно в свой цвет. Правило
+# `draw-border-with-background false` рисует её контуром ВОКРУГ окна.
+if [[ -f "$REPO/niri/config.kdl" ]]; then
+    if awk '
+        /^[[:space:]]*window-rule[[:space:]]*\{/ { inblk = 1; app = 0; bg = 0; next }
+        inblk && /ghostty/ { app = 1 }
+        inblk && /draw-border-with-background[[:space:]]+false/ { bg = 1 }
+        inblk && /^[[:space:]]*\}[[:space:]]*$/ { if (app && bg) found = 1; inblk = 0 }
+        END { exit(found ? 0 : 1) }
+    ' "$REPO/niri/config.kdl"; then
+        ok "niri draws border around translucent terminals (no focus-ring bleed)"
+    else
+        bad "niri has no window-rule with draw-border-with-background false for ghostty"
+    fi
+fi
+
+# ------------------------------------------ 4c. хуки темы: состав и синтаксис
+hooks_dir="$REPO/wayland/theme-hooks.d"
+hooks=()
+for h in "$hooks_dir"/*.sh; do
+    [[ -e "$h" ]] || continue
+    hooks+=( "$h" )
+done
+if (( ${#hooks[@]} == 0 )); then
+    bad "no theme hooks in wayland/theme-hooks.d"
+else
+    for h in "${hooks[@]}"; do
+        name="${h##*/}"
+        if [[ ! -x "$h" ]]; then
+            bad "theme hook not executable: $name"
+        elif ! bash -n "$h" 2>/dev/null; then
+            bad "theme hook has syntax errors: $name"
+        else
+            ok "theme hook $name"
+        fi
+    done
+fi
+if [[ -r "$REPO/wayland/theme-hook-lib.sh" ]]; then
+    ok "theme hook library"
+else
+    bad "missing wayland/theme-hook-lib.sh"
+fi
+
 # Mattermost: пресеты чата пишутся в серверный user preference как JSON, поэтому
 # файл должен парситься jq и нести ожидаемый type (quartz/onyx).
 if command -v jq >/dev/null 2>&1; then
@@ -253,8 +462,17 @@ case "$cur" in
 esac
 # Тот же режим уже записан выше циклом, но theme-sync всё равно прогоняется,
 # чтобы восстановить reload-часть; Mattermost при этом не перезапускается
-# (скрипт срабатывает только на реальной смене режима).
-THEME_SYNC_NO_MATTERMOST=1 "$REPO/wayland/theme-sync" "$cur"
+# (скрипт срабатывает только на реальной смене режима). Заодно проверяем, что
+# ни один хук не упал: их коды пишутся в лог рядом со строкой переключения.
+hooklog="$(mktemp)"
+THEME_SYNC_NO_MATTERMOST=1 THEME_HOOK_LOG="$hooklog" "$REPO/wayland/theme-sync" "$cur"
+failed_hooks="$(grep -E ' rc=[1-9][0-9]*$' "$hooklog" || true)"
+if [[ -n "$failed_hooks" ]]; then
+    while IFS= read -r line; do bad "theme hook failed: $line"; done <<< "$failed_hooks"
+else
+    ok "all theme hooks exited 0 (mode $cur)"
+fi
+rm -f "$hooklog"
 ok "restored mode: $cur"
 
 # ------------------------------- 8. дрейф пакетов (только по CLEANUP_CHECK=1)

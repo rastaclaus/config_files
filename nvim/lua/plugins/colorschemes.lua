@@ -1,12 +1,6 @@
--- Фон берём из state-файла, который пишет wayland/theme-sync.
-local mode_file = vim.fn.expand("~/.local/state/dotfiles/background-mode")
-local f = io.open(mode_file, "r")
-if f then
-	local mode = f:read("*l")
-	f:close()
-	if mode == "light" or mode == "dark" then
-		vim.o.background = mode
-	end
-end
+-- Фон берётся из state-файла, который пишет wayland/theme-sync.
+-- theme.start() применяет режим при старте и дальше следит за файлом, чтобы
+-- уже открытые Neovim переключались без внешних сигналов (см. lua/theme.lua).
+require("theme").start()
 
 vim.cmd.colorscheme("gruvbox")

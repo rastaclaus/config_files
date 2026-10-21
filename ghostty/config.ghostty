@@ -1,0 +1,111 @@
+# Ghostty. Симлинк: ~/.config/ghostty -> repo/ghostty (см. install/symlinks.conf).
+#
+# Канонический путь конфига в 1.3.x — config.ghostty; легаси-файл `config` тоже
+# читается (первым), но если существуют оба, ghostty пишет предупреждение в лог.
+# Поэтому в каталоге только этот файл.
+#
+# Источник истины по версии/опциям: `ghostty +show-config --docs`,
+# `ghostty +list-actions`, `ghostty +list-keybinds --docs`.
+
+# ---------------------------------------------------------------- шрифт
+# 1:1 с alacritty: тот шрифт не задаёт, поэтому берётся fontconfig-«monospace»,
+# а `fc-match monospace` на этой машине отдаёт Noto Sans Mono; размер у
+# alacritty по умолчанию 11.25. JetBrains Mono (он же дефолт ghostty и есть в
+# install/packages/gui.txt) остаётся вторым — как fallback для отсутствующих в
+# Noto глифов и для хостов, где Noto Sans Mono не установлен.
+font-family = Noto Sans Mono
+font-family = JetBrains Mono
+font-size = 11.25
+
+# ----------------------------------------------------------------- тема
+# Два файла в ghostty/themes/, выбор — по схеме рабочего стола. Сигнал даёт
+# gsettings color-scheme, который выставляет wayland/theme-hooks.d/10-gtk.sh;
+# ghostty читает его через libadwaita (adw.StyleManager) и на смену схемы сам
+# перезагружает конфиг — проверено на 1.3.1, окно меняет фон без перезапуска.
+# Хук 20-ghostty.sh (SIGUSR2) нужен для правок файлов тем и как страховка.
+#
+# Имена тем — это имена файлов в ghostty/themes БЕЗ расширения: ghostty ищет
+# ровно "<name>", поэтому gruvbox-dark, а не gruvbox-dark.conf.
+#
+# Прозрачность лежит в самих темах: у dark и light она может отличаться.
+theme = light:gruvbox-light,dark:gruvbox-dark
+# window-theme=auto при разных light/dark темах ghostty сам заменяет на
+# `system` (иначе он выводил бы схему окна из фона темы и ломал переключение),
+# поэтому здесь явно `system`: схему окна определяет рабочий стол.
+window-theme = system
+
+# --------------------------------------------------------------- окно
+# niri/sway рисуют тайлинг сами, CSD не нужен.
+window-decoration = none
+# У alacritty window.padding по умолчанию {0,0}, у ghostty — 2.
+window-padding-x = 0
+window-padding-y = 0
+# Alacritty делает прозрачным всё окно сразу, ghostty по умолчанию — только
+# «пустой» фон, а клетки с явно заданным цветом остаются непрозрачными.
+background-opacity-cells = true
+# У alacritty scrolling.history = 10000 строк, у ghostty лимит в БАЙТАХ.
+# Замер на 1.3.1 в окне 1280 px (~150 колонок): 20 МБ = ~10 700 строк,
+# 40 МБ = ~22 000. Берём 20 МБ — это и есть «как у alacritty»; в более широком
+# окне строк поместится меньше, в узком — больше. Память выделяется лениво.
+scrollback-limit = 20_000_000
+
+# ----------------------------------------------------------- поведение
+# Копирование по выделению оставлено дефолтным (`true` на Linux = только
+# PRIMARY — ровно как selection.save_to_clipboard = false в alacritty).
+mouse-hide-while-typing = true
+shell-integration = detect
+
+# ------------------------------------------- модальный scroll-mode (без мыши)
+# Встроенного vi-режима в ghostty нет: есть только набор actions
+# (scroll_page_lines/fractional, scroll_to_top/bottom, jump_to_prompt, search)
+# и key tables (1.3+), из которых и собирается модальный «скроллбар».
+#
+# ВАЖНО:
+#   * activate_key_table, а не activate_key_table_once: one-shot гаснет после
+#     ПЕРВОГО нажатия, т.е. j сработал бы ровно один раз.
+#   * catch_all=ignore обязателен: поиск биндинга идёт изнутри наружу, и без
+#     него незабинженные буквы утекают в шелл (в т.ч. в полноэкранные TUI).
+#   * Верхний регистр пишется как shift+X: ghostty складывает регистр ключей,
+#     поэтому `g` и `G` — один и тот же триггер, а `shift+g` — отдельный.
+#   * Выделения с клавиатуры не существует (adjust_selection работает только
+#     поверх уже созданного), поэтому `y` = «весь скроллбек»: select_all по
+#     доке берёт историю целиком, а не только экран.
+#   * Всё это скроллит вьюпорт ghostty. Внутри tmux он почти пуст — там нужен
+#     собственный copy-mode tmux (`prefix [`), а дамп — `prefix e`.
+# ctrl+shift+space свободен и в niri (Mod+Space — это Super+Space), и в ghostty;
+# дефолтный select_all остаётся на ctrl+shift+a, «весь вывод в буфер» — ctrl+shift+y.
+keybind = ctrl+shift+space=activate_key_table:scroll-mode
+
+keybind = scroll-mode/j=scroll_page_lines:1
+keybind = scroll-mode/k=scroll_page_lines:-1
+keybind = scroll-mode/ctrl+d=scroll_page_fractional:0.5
+keybind = scroll-mode/ctrl+u=scroll_page_fractional:-0.5
+keybind = scroll-mode/space=scroll_page_fractional:1
+keybind = scroll-mode/ctrl+f=scroll_page_fractional:1
+keybind = scroll-mode/ctrl+b=scroll_page_fractional:-1
+keybind = scroll-mode/g=scroll_to_top
+keybind = scroll-mode/shift+g=scroll_to_bottom
+# jump_to_prompt работает по OSC 133-меткам, которые ставит shell-integration.
+keybind = scroll-mode/]=jump_to_prompt:1
+keybind = scroll-mode/[=jump_to_prompt:-1
+keybind = scroll-mode//=start_search
+keybind = scroll-mode/n=navigate_search:next
+keybind = scroll-mode/shift+n=navigate_search:previous
+# y — весь скроллбек в буфер (plain: mixed дополнительно генерирует text/html
+# на мегабайты, для дампа истории это лишнее).
+keybind = scroll-mode/y=select_all
+keybind = chain=copy_to_clipboard:plain
+keybind = chain=deactivate_key_table
+# w — дамп скроллбека в файл: ghostty пишет его в /tmp/<random>/history.txt и
+# кладёт ПУТЬ в буфер; дальше `nvim ` + ctrl+shift+v. Режим paste вставил бы
+# путь прямо в промпт, open отдал бы файл в xdg-open (а у нас text/plain —
+# Helix), поэтому copy.
+keybind = scroll-mode/w=deactivate_key_table
+keybind = chain=write_scrollback_file:copy
+keybind = scroll-mode/q=deactivate_key_table
+keybind = scroll-mode/escape=deactivate_key_table
+keybind = scroll-mode/catch_all=ignore
+
+# Без входа в режим: весь скроллбек в буфер (было дефолтным ctrl+shift+a).
+keybind = ctrl+shift+y=select_all
+keybind = chain=copy_to_clipboard:plain

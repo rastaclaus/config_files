@@ -1,10 +1,10 @@
 configuration {
-  terminal: "alacritty";
+  terminal: "ghostty";
   modi: "combi,run,ssh,emoji";
   show-icons: true;
   font: "Source Code Pro 10";
   combi-modi: "window,drun";
-  // run-command: "alacritty -e fish -c '{cmd}'";
+  // run-command: "ghostty -e fish -c '{cmd}'";
 }
 // Fallback, если state ещё не создан; импорт ниже имеет приоритет.
 @theme "gruvbox-dark-soft"

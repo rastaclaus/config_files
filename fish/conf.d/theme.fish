@@ -5,6 +5,15 @@
 # Имена тем — по файлам fish/themes/{dark,light}.theme. Цвета промпта там
 # заданы hex-значениями: именованные (green/brgreen/red) рисуются палитрой
 # терминала и на headless-хосте не меняются вместе с темой.
+
+# fish 4.x по умолчанию не перерисовывает командную строку при SIGWINCH в
+# терминалах, которые сами переносят текст (alacritty, ghostty). Из-за этого
+# уже нарисованный промпт остаётся в старой теме до следующего Enter.
+# wayland/theme-hooks.d/50-fish.sh шлёт SIGWINCH, а без этой переменной
+# обработчик fish его игнорирует. Цена: промпт перерисовывается и при обычном
+# ресайзе окна.
+set -g fish_handle_reflow 1
+
 function __dotfiles_apply_theme --description 'Apply dark/light fish theme'
     set -l mode_file $HOME/.local/state/dotfiles/background-mode
     test -r $mode_file; or return 0

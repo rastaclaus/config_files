@@ -5,7 +5,7 @@ Personal dotfiles. One branch, host-specific bits under `hosts/`.
 ## Layout
 
 ```
-fish/ helix/ nvim/ opencode/ direnv/ alacritty/ rofi/ darkman/
+fish/ helix/ nvim/ opencode/ direnv/ ghostty/ alacritty/ rofi/ darkman/
 networkmanager-dmenu/ xdg-desktop-portal/ applications/
 sway/ niri/ ironbar/ waybar/ wayland/                 # Wayland sessions (gui)
 theme/dark/ theme/light/                              # color palettes
@@ -158,8 +158,9 @@ Portals: sway keeps `xdg-desktop-portal-wlr`, niri uses `niri-portals.conf`
 
 Dark/light switching is driven by **darkman**: a single hook
 `~/.local/share/darkman/theme` (symlink to `darkman/theme`) sends a notification
-and runs `wayland/theme-sync`, which rewrites the runtime state and reloads the
-running applications (see `Runtime state` below). Qt apps follow the GTK theme
+and runs `wayland/theme-sync`, which rewrites the runtime state and then runs
+one script per application from `wayland/theme-hooks.d/` (see
+`Runtime state` below). Qt apps follow the GTK theme
 through Qt's GTK platform theme, which is read from the environment — a one-time
 manual step, since the repo does not manage `/etc/environment`:
 
@@ -174,7 +175,8 @@ as child processes, so an `export` inside them never reaches the session.
 
 Key bindings are kept in sync between `sway/config` and `niri/config.kdl`
 (`Mod`+h/j/k/l, workspace `Mod`+1..0, terminal/launcher, screenshots, media
-keys). sway-only features that niri has no equivalent for (splits, stacking,
+keys). `Mod`+`Return` starts **ghostty**, `Mod`+`Shift`+`Return` — alacritty,
+which stays installed as a fallback terminal. sway-only features that niri has no equivalent for (splits, stacking,
 focus-parent, scratchpad, a resize mode) stay in `sway/config`.
 
 ## Runtime state и переключение темы
@@ -194,31 +196,53 @@ directory:
   ironbar/colors.css                   # @define-color palette
   ironbar/style.css                    # wrapper: colors.css + repo style.css
   mattermost.log                       # лог wayland/mattermost-theme (если есть)
+  theme-hooks.log                      # вывод хуков + коды возврата
 ```
 
 The path is hard-coded (not `$XDG_STATE_HOME`): alacritty and rofi do not expand
 environment variables in `import`/`?import` paths.
 
 **Switching.** darkman calls `~/.local/share/darkman/theme` with `dark|light`;
-the hook shows a notification and runs `wayland/theme-sync <mode>`, which
-rewrites the files above and then:
+the hook shows a notification and runs `wayland/theme-sync <mode>`. `theme-sync`
+only writes the state files above and dispatches hooks — it knows nothing about
+individual applications. Each hook in `wayland/theme-hooks.d/` is called as
 
-- updates GTK (`gsettings`): `adw-gtk3-dark` / `adw-gtk3` + color-scheme;
-- pushes the new palette and opacity to **running** alacritty instances via
-  `alacritty msg config` (`live_config_reload` watches only the main config,
-  not imported files); new windows read the state import themselves;
-- sends `SIGUSR1` to helix (it reloads config and theme);
-- tells running Neovim to `set background=...` via `nvim-ctrl`;
-- forces the theme of a running tmux server (`tmux set -s theme dark|light`),
-  because alacritty answers `OSC 11` but does not implement `DECSET 2031`, so an
-  attached client never learns about a runtime palette change on its own;
-- re-runs `wayland/wallpapers.sh` in the background, so the wallpaper switches
-  to a picture of the matching mode (`THEME_SYNC_NO_WALLPAPER=1` opts out).
+```
+<NN>-<app>.sh <dark|light>
+```
 
-**Mattermost.** `wayland/mattermost-theme <mode>` runs from the reload branch
-of `theme-sync` when `~/.config/Mattermost/config.json` exists and there is a
-live graphical session (a wayland or X11 socket — no compositor IPC needed,
-since the app is only restarted into that session):
+with `THEME_STATE`, `THEME_HOOK_LOG`, `THEME_PREV_MODE` and `THEME_GUI` in the
+environment, under `timeout 15`. A hook decides on its own whether it applies
+(application not installed or not running → `exit 0`, which is not an error),
+never writes into the repo, and its failure is only logged to
+`~/.local/state/dotfiles/theme-hooks.log` — it cannot break the switch. Adding an application means dropping a new file into that directory;
+`theme-sync` stays untouched.
+
+| hook               | what it does                                                        |
+|--------------------|---------------------------------------------------------------------|
+| `10-gtk.sh`        | `gsettings`: `adw-gtk3(-dark)` + `color-scheme` (the signal every libadwaita app follows) |
+| `20-ghostty.sh`    | `SIGUSR2` to a running ghostty (config re-read; colours apply live)  |
+| `25-alacritty.sh`  | `alacritty msg config` for palette + opacity (fallback terminal)     |
+| `30-helix.sh`      | `SIGUSR1` (helix reloads config and theme)                           |
+| `40-tmux.sh`       | `tmux set -s theme` for a running server + status-line refresh       |
+| `50-fish.sh`       | `SIGWINCH` to fish, so the drawn prompt is repainted immediately      |
+| `60-redraw.sh`     | `SIGWINCH` to ANSI-coloured TUIs (`htop`, `less`, `ncdu`; extend with `DOTFILES_THEME_REDRAW`) |
+| `90-mattermost.sh` | Mattermost restart, only when `THEME_PREV_MODE` really differs        |
+
+The shared helpers live in `wayland/theme-hook-lib.sh` (`theme_have`,
+`theme_running`, `theme_gui`, `theme_log`, `theme_state_dir`). Neovim has no
+hook on purpose: it watches the state file itself (see **Neovim** below).
+
+After the hooks, `theme-sync` re-runs `wayland/wallpapers.sh` in the background,
+so the wallpaper switches to a picture of the matching mode
+(`THEME_SYNC_NO_WALLPAPER=1` opts out).
+
+**Mattermost.** `wayland/theme-hooks.d/90-mattermost.sh` calls
+`wayland/mattermost-theme <mode>` when `~/.config/Mattermost/config.json` exists
+and there is a live graphical session (a wayland or X11 socket — no compositor
+IPC needed, since the app is only restarted into that session). The hook is a
+no-op unless `THEME_PREV_MODE` differs from the new mode, so `verify.sh` and a
+repeated `theme-sync` with the current mode never restart the app:
 
 - the chat theme is **not** stored locally: it is a server-side user preference
   (category `theme`, value is the whole JSON of the preset, not its name), so
@@ -238,10 +262,8 @@ since the app is only restarted into that session):
 - network or session failures are logged to `~/.local/state/dotfiles/mattermost.log`
   and never break the switch. `MATTERMOST_THEME_NO_RESTART=1` writes the
   preference and the config without touching the processes,
-  `THEME_SYNC_NO_MATTERMOST=1` skips the script from `theme-sync`, and
-  `THEME_SYNC_NO_RELOAD=1` skips the whole reload branch (so `verify.sh` stays
-  side-effect free). The app is restarted only when `background-mode` really
-  changes, so `theme-sync` calls with the current mode are a no-op for it.
+  `THEME_SYNC_NO_MATTERMOST=1` skips the hook, and `THEME_SYNC_NO_RELOAD=1`
+  skips state reloads and every hook (so `verify.sh` stays side-effect free).
 
 **Manual switch.** `theme-switch [dark|light]` (`applications/theme-switch`,
 linked into `~/.local/bin`) is a thin wrapper over `theme-sync`; without an
@@ -274,6 +296,123 @@ in `colors.css`, while the repo keeps only the layout in `ironbar/style.css`
 without any `@define-color`. The watcher follows the wrapper, so after editing
 the repo stylesheet, re-run `theme-sync` (or touch the wrapper) to reload.
 
+**Ghostty.** The primary terminal (`Mod`+`Return`); alacritty stays installed
+as a fallback on `Mod`+`Shift`+`Return`. `~/.config/ghostty` is a symlink to
+`ghostty/`, the config is `config.ghostty` (the legacy `config` file must not
+exist: ghostty would load both and warn), and the palettes are
+`ghostty/themes/gruvbox-{dark,light}` — plain config snippets, the same
+gruvbox hex values as `alacritty/themes/themes/` (checked by `verify.sh`).
+
+Theme names are file names **without** an extension: ghostty looks up exactly
+`$XDG_CONFIG_HOME/ghostty/themes/<name>`, so the files are
+`ghostty/themes/gruvbox-dark` and `gruvbox-light` (a `.conf` suffix is silently
+not found).
+
+The config uses `theme = light:gruvbox-light,dark:gruvbox-dark`: ghostty picks
+the file itself and follows `gsettings ... color-scheme` through libadwaita,
+reloading on the scheme change — verified on 1.3.1, the background changes
+without any hook. `20-ghostty.sh` (`SIGUSR2`) is needed for edited palette files
+and as a safety net if libadwaita does not see the scheme.
+
+Font, padding and transparency are matched to alacritty on purpose, so the two
+terminals look identical: alacritty sets no font family, so it gets fontconfig's
+`monospace` (on this machine `Noto Sans Mono`, size 11.25 by default) —
+`font-family = Noto Sans Mono` with `JetBrains Mono` as a fallback and
+`font-size = 11.25`; `window-padding-x/y = 0` because alacritty's
+`window.padding` defaults to `{0,0}` while ghostty's default is 2;
+`background-opacity-cells = true` because alacritty fades the whole window
+through the compositor, whereas ghostty by default fades only cells without an
+explicit background; `scrollback-limit = 20_000_000` because ghostty counts
+**bytes**, not lines — measured on 1.3.1 in a 1280 px window (~150 columns),
+20 MB held ~10 700 lines, i.e. about alacritty's `scrolling.history = 10000`
+(40 MB held ~22 000; the limit is allocated lazily).
+
+The theme files set **no** `cursor-*` keys: ghostty's default inverts the cell
+(cursor = foreground/background of the cell under it), which is exactly what
+alacritty does. Selection **is** pinned explicitly in both, because gruvbox's
+`bg2` (`#504945`) is a light colour and read as a highlight from the light theme
+on the dark background: dark uses `bg1` (`#3c3836`), light keeps `bg2`
+(`#d5c4a1`). `verify.sh` checks both hex values against
+`[colors.selection]` in the alacritty themes, so the fallback terminal matches.
+
+There is **no built-in vi mode** (unlike `alacritty`'s `ToggleViMode` with a
+block cursor over the scrollback): ghostty has no vi-cursor actions and
+`adjust_selection` does not create a selection. What it does have since 1.3 are
+**key tables**, which implement modal input. The config adds a `scroll-mode`
+table on `ctrl+shift+space` (free in both ghostty and niri, where `Mod+Space` is
+Super+Space, while ctrl+shift+a stays ghostty's default `select_all`):
+
+```
+keybind = ctrl+shift+space=activate_key_table:scroll-mode
+keybind = scroll-mode/j=scroll_page_lines:1   # k: -1
+keybind = scroll-mode/ctrl+d=scroll_page_fractional:0.5   # ctrl+u: -0.5
+keybind = scroll-mode/space=scroll_page_fractional:1      # ctrl+f/ctrl+b: page
+keybind = scroll-mode/g=scroll_to_top         # shift+g: scroll_to_bottom
+keybind = scroll-mode/]=jump_to_prompt:1      # [: jump_to_prompt:-1
+keybind = scroll-mode//=start_search          # n/shift+n: navigate_search
+keybind = scroll-mode/y=select_all            # + copy_to_clipboard:plain
+keybind = scroll-mode/w=write_scrollback_file:copy   # dump + path in clipboard
+keybind = scroll-mode/q=deactivate_key_table  # escape: the same
+keybind = scroll-mode/catch_all=ignore
+```
+
+Three things that are easy to get wrong:
+
+* `activate_key_table`, **not** `activate_key_table_once` — a one-shot table is
+  deactivated by the first binding that fires, so `j` would scroll exactly once.
+* `catch_all=ignore` is mandatory: lookup walks from the innermost table
+  outward, so without it every unbound key leaks to the shell (and to a running
+  TUI) instead of being swallowed by the mode.
+* Uppercase letters collide under ghostty's case folding: `g` and `G` are the
+  same trigger, so it must be `shift+g` (same for `shift+n`).
+
+`y` copies the **whole** scrollback (`select_all` selects history too, not just
+the visible screen) as `plain`: `mixed` also builds `text/html`, which is
+pointless for a history dump. Character-wise motions and a visual mode are not
+available: there is no cursor to move, so range selection stays in tmux.
+
+Inside tmux the ghostty table is useless (tmux repaints the screen, the terminal
+viewport is nearly empty) — use tmux's own `copy-mode` (`prefix [`, vi keys are
+enabled) and `prefix e`, which writes the whole pane scrollback to
+`/tmp/tmux-scroll.txt` and opens it in nvim in a popup.
+
+**Dumping the scrollback to nvim.** `ctrl+shift+space`, then `w`: ghostty writes the
+scrollback as plain text (long lines unwrapped) into
+`/tmp/<random>/history.txt` and copies that path to the clipboard — then
+`nvim ` + `ctrl+shift+v`. `write_scrollback_file` has three modes (`copy`,
+`paste` into the prompt, `open` via xdg-open); `open` is useless here because
+`text/plain` is bound to Helix, and a `chain=text:nvim ` + `paste` shortcut is
+impossible: the config trims trailing whitespace, so `text:nvim ` arrives as
+`nvim` (checked with `od -c`).
+
+Every table binding needs its own `keybind = ` prefix (a bare `scroll-mode/j=...`
+line is rejected as an unknown field), and `[` must be written as
+`scroll-mode/[=<action>`: the table parser looks for `/` before the first `=`,
+so `scroll-mode/[/jump_to_prompt:-1` is parsed as table `scroll-mode` with the
+malformed key `[/jump_to_prompt:-1`.
+
+`jump_to_prompt` needs `shell-integration` (fish integration provides the
+OSC 133 prompt marks).
+
+Russian keyboard mappings (`Ctrl/Alt` + Cyrillic, generated for alacritty) are
+deliberately **not** ported yet. Writing app processes that speak the kitty
+keyboard protocol (ghostty supports it, helix uses it) receive physical keys
+and may work without mappings; fish/readline still need them.
+
+Useful: `ghostty +validate-config`, `ghostty +show-config`,
+`ghostty +list-themes`, `ghostty +list-actions`, `ghostty +list-keybinds --docs`.
+`+validate-config` must get the file as a **global** flag
+(`ghostty --config-file=... +validate-config`): after the action it silently
+returns 1 with no diagnostics at all.
+
+**Neovim.** `nvim/lua/theme.lua` watches `~/.local/state/dotfiles` with
+`vim.uv.new_fs_event` (80 ms debounce, `new_fs_poll` fallback), so already
+running editors switch without any external binary or RPC socket — the old
+`nvim-ctrl` branch in `theme-sync` never worked, the binary was not installed
+anywhere. On change it sets `vim.o.background` and re-runs `:colorscheme`:
+gruvbox.nvim reads `background` only in `load()` and does not listen to
+`OptionSet`.
+
 **Fish.** `fish_variables` and the fisher plugins are local to `~/.config/fish`
 and not in git; the declarative plugin list stays in `fish/fish_plugins`.
 `fish/conf.d/theme.fish` applies the theme from `background-mode` on the prompt
@@ -281,7 +420,10 @@ and not in git; the declarative plugin list stays in `fish/fish_plugins`.
 colours), so the old universal `background_mode` variable is gone and prompt
 colours change without relying on the terminal's ANSI palette. `wm` writes
 `~/.local/state/dotfiles/compositor` — the same file the installer seeds — and
-no longer touches universal variables.
+no longer touches universal variables. `theme.fish` also sets
+`fish_handle_reflow 1`: without it fish 4.x ignores `SIGWINCH` in terminals that
+reflow text, and the already drawn prompt would keep the old theme until the
+next `Enter`. The price is a prompt repaint on every window resize.
 
 **Tmux.** `.tmux.conf` keeps both palettes inline as `dark-theme-*` /
 `light-theme-*` (values taken from the gruvbox alacritty themes), and the styles
@@ -289,11 +431,12 @@ use the `theme*` names, so tmux recolours itself when the client theme changes.
 This needs tmux >= 3.8 (`theme`, `theme*` and `client-light-theme` /
 `client-dark-theme` hooks); older versions fall through `%if` to the previous
 static Solarized palette. There is no state file and no `source-file`: `theme` is
-a server option, and `theme-sync` only runs `tmux set -s theme <mode>` when a
+a server option, and `40-tmux.sh` only runs `tmux set -s theme <mode>` when a
 server is already running. tmux does not detect the change by itself — alacritty
 answers `OSC 11` but does not implement `DECSET 2031`, so the server has to be
-told explicitly. Note that `theme` is server-wide, so every client attached to
-the same server shares one mode.
+told explicitly (ghostty does implement 2031, but the hook is harmless
+there). Note that `theme` is server-wide, so every client attached to the same
+server shares one mode.
 
 **Waybar.** It does not take part in switching and stays in rollback mode with
 its static palette. To bring it back, do the same thing: generate a wrapper in
@@ -304,13 +447,18 @@ palette.
 current mode, that the merge directories and symlinks are laid out correctly,
 that there are no dangling links or legacy hooks, and that switching the theme
 leaves `git status` unchanged (it is read-only and restores the current mode).
-It also checks that `~/.local/bin/theme-switch` points into the repo and that
-the legacy `background_mode` universal variable is not set.
+It also checks that `~/.local/bin/theme-switch` points into the repo, that the
+legacy `background_mode` universal variable is not set, that every file in
+`wayland/theme-hooks.d/` is executable and syntactically valid, that the ghostty
+theme files exist and their palettes still match the alacritty ones, and that
+the hooks of the final switch all exited 0.
 
-**Limitations.** `XDG_STATE_HOME` must stay at its default. fish applies the new
-theme on the next prompt, helix on `SIGUSR1` (new helix windows pick it up
-immediately), rofi on its next launch, tmux on `theme-sync` (a running server is
-updated in place, a server started later picks the mode up on attach).
+**Limitations.** `XDG_STATE_HOME` must stay at its default. fish repaints via
+`SIGWINCH`, helix reloads on `SIGUSR1` (new helix windows pick it up
+immediately), neovim via its own watcher, ghostty via `SIGUSR2` (already open
+windows are repainted), rofi on its next launch, tmux on `theme-sync` (a running
+server is updated in place, a server started later picks the mode up on
+attach).
 
 ## OpenCode / MCP
 

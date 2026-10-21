@@ -61,7 +61,8 @@ niri validate -c ./config.kdl # проверить конкретный файл
 
 | Клавиши                | Действие                                   |
 |------------------------|--------------------------------------------|
-| `Mod+Return`           | Терминал (alacritty)                       |
+| `Mod+Return`           | Терминал (ghostty)                         |
+| `Mod+Shift+Return`     | Терминал (alacritty, fallback)             |
 | `Mod+D`                | Лаунчер (rofi combi)                       |
 | `Mod+Shift+U`          | rofi: юникод-символы                       |
 | `Mod+Shift+S`          | rofi: эмодзи                               |
@@ -173,6 +174,33 @@ layout {
       }
   }
   ```
+
+### Почему активное окно тонировалось в цвет рамки
+
+Из документации niri (`Configuration: Layout` → `focus-ring` and `border`):
+
+> By default, focus ring and border are rendered as a solid background
+> rectangle behind windows. That is, they will show up through semitransparent
+> windows.
+
+То есть `width` рамки — это не только толщина обводки: рамка рисуется
+**залитым прямоугольником ЗА окном**. Пока окно непрозрачное, видна только
+полоска по краю. У полупрозрачного терминала (`background-opacity 0.8`) рамка
+просвечивает через весь фон: `0.8·#282828 + 0.2·#7fc8ff ≈ #394853` — замер по
+скриншоту давал `#3c4b56` (та самая «синева» на активном окне). В fullscreen
+рамки нет, поэтому там фон чистый `#282828`; у неактивного окна цвет рамки
+`#505050` нейтральный, поэтому его тонировка незаметна.
+
+Лечится правилом (уже в конфиге): рамка рисуется **контуром вокруг** окна,
+даже если клиент оставил свои CSD — окно больше не красится, тонкая синяя
+обводка остаётся.
+
+```kdl
+window-rule {
+    match app-id=r#"^(com\.mitchellh\.ghostty|Alacritty)$"#
+    draw-border-with-background false
+}
+```
 
 Ещё полезное (по желанию), всё в `layout`:
 

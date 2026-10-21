@@ -109,3 +109,21 @@ keybind = scroll-mode/catch_all=ignore
 # Без входа в режим: весь скроллбек в буфер (было дефолтным ctrl+shift+a).
 keybind = ctrl+shift+y=select_all
 keybind = chain=copy_to_clipboard:plain
+
+# ------------------------------------- скроллбек → nvim в новом окне (одна клавиша)
+# Команду из keybind запустить нельзя: в ghostty нет action'а spawn/exec, а
+# new_split/new_window принимают только направление (new_split) или ничего
+# (new_window) — команду туда не передать. Зато у write_*_file есть action
+# `open`, который отдаёт путь в xdg-open, а его перехватывает шим
+# ~/.local/bin/xdg-open (applications/xdg-open в репозитории): дампы ghostty он
+# открывает как `ghostty +new-window -e nvim <путь>`, всё остальное делегирует
+# в /usr/bin/xdg-open. Поэтому text/plain остаётся за Helix, а не переезжает.
+#
+# `open` без второго аргумента = emit plain (WriteScreen.open = .{ .action =
+# .open, .emit = .plain }), т.е. файл `history.txt`, а не html/vt.
+#
+# ВАЖНО: внутри alt-screen (opencode TUI, htop, vim, less) ghostty историю не
+# хранит вообще, write_scrollback_file там ничего не пишет и до xdg-open не
+# доходит — клавиша молча ничего не делает. Для видимого экрана есть дефолтный
+# ctrl+alt+shift+j (write_screen_file:open,plain), он идёт через тот же шим.
+keybind = ctrl+alt+o=write_scrollback_file:open

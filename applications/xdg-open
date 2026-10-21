@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+#
+# Шим поверх xdg-open для ghostty: дамп скроллбека/экрана открывается в nvim в
+# НОВОМ ОКНЕ того же инстанса ghostty, всё остальное уходит в /usr/bin/xdg-open.
+#
+# Зачем. У action `write_scrollback_file:open` (и `write_screen_file:open`)
+# внутри ghostty жёстко зашит вызов `xdg-open <путь>` (src/os/open.zig,
+# std.process.Child.init(&.{ "xdg-open", url })). В лоб это бесполезно: у нас
+# text/plain в mimeapps.list привязан к Helix. Переопределять глобальную
+# ассоциацию text/plain не хочется — поэтому перехватываем только дампы ghostty
+# и только их. ~/.local/bin стоит в PATH раньше /usr/bin (в т.ч. в окружении
+# самого ghostty), поэтому вызов попадает сюда.
+#
+# Что считается дампом ghostty (src/Surface.zig, writeScreenFile +
+# src/os/TempDir.zig): каталог $TMPDIR/<22 симв. base64url> (16 случайных байт,
+# base64 без padding) и файл в нём — @tagName(loc) + расширение по emit:
+#   history.txt   — write_scrollback_file
+#   screen.txt    — write_screen_file
+#   selection.txt — write_selection_file
+#
+# ВАЖНО: в alt-screen (opencode TUI, htop, vim) ghostty историю не пишет вовсе —
+# writeScreenFile для loc=history возвращает null, удаляет tempdir и до
+# xdg-open не доходит. Там работает только screen_file (ctrl+alt+shift+j).
+#
+# set -euo pipefail намеренно не используется: скрипт короткий, а падать на
+# неожиданном аргументе в общей цепочке xdg-open нельзя — лучше делегировать.
+set -u
+
+is_ghostty_dump() {
+    local path=$1 dir stem tmp
+    # basename — ровно один из трёх файлов, которые пишет ghostty
+    case ${path##*/} in
+        history.txt|screen.txt|selection.txt) ;;
+        *) return 1 ;;
+    esac
+    dir=${path%/*}
+    stem=${dir##*/}
+    tmp=${TMPDIR:-${TMP:-/tmp}}
+    # ровно один уровень под tmp: dir == "$tmp/$stem" (иначе сработало бы и на
+    # $tmp/a/b/history.txt, который ghostty никогда не создаёт)
+    [ "$dir" = "$tmp/$stem" ] || return 1
+    # имя каталога — 22 символа base64url (без '/' и '+', см. b64_alphabet)
+    [[ $stem =~ ^[A-Za-z0-9_-]{22}$ ]] || return 1
+    # пустой дамп открывать нечего (и, например, history.txt на alt-screen)
+    [ -s "$path" ]
+}
+
+if [ "$#" -eq 1 ] && [ "${1#/}" != "$1" ] && is_ghostty_dump "$1"; then
+    exec ghostty +new-window "--title=scrollback: ${1##*/}" -e nvim "$1"
+fi
+
+exec /usr/bin/xdg-open "$@"

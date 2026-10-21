@@ -229,6 +229,8 @@ fish/readline — нет).
 | `ctrl+insert` / `shift+insert`  | копировать выделение (как `mixed`) / вставить PRIMARY |
 | `ctrl+shift+a`                | выделить всё                                      |
 | `ctrl+shift+y`                | **наше**: выделить всё + скопировать как `plain`   |
+| `ctrl+alt+o`                  | **наше**: весь скроллбек → файл → nvim в новом окне (см. **Дамп скроллбека**) |
+| `ctrl+alt+shift+j`            | видимый экран → файл → nvim в новом окне (стоковая привязка) |
 | `ctrl+shift+space`            | **наше**: войти в `scroll-mode` (см. ниже)         |
 | `shift+page_up` / `shift+page_down` | прокрутить на страницу                      |
 | `shift+home` / `shift+end`    | в начало / в конец                                |
@@ -250,7 +252,9 @@ fish/readline — нет).
 ```text
 выделить мышью            → shift+insert (PRIMARY) | ctrl+shift+c → ctrl+shift+v (CLIPBOARD)
 весь скроллбек в буфер    → ctrl+shift+space, y
+весь скроллбек в nvim     → ctrl+alt+o  (новое окно ghostty; внутри TUI — нет, см. ниже)
 весь скроллбек в файл     → ctrl+shift+space, w  (в буфере путь → nvim ctrl+shift+v)
+видимый экран в nvim      → ctrl+alt+shift+j
 листать без мыши          → ctrl+shift+space, затем j/k, ctrl+d/ctrl+u, g/shift+g
 поиск                     → ctrl+shift+f  (внутри scroll-mode: /, n, shift+n)
 прокрутка внутри tmux     → prefix [  (vi-клавиши), y/Enter — копировать
@@ -335,12 +339,33 @@ tables появились в 1.3; vi-курсора нет, поэтому эт�
   строки не переносятся) в `/tmp/<random>/history.txt` и копирует **этот путь** в
   буфер; дальше в nvim: `:e ` + `ctrl+shift+v`. У `write_scrollback_file` три
   режима: `copy` (используется здесь), `paste` (впечатывает путь в промпт) и
-  `open` (`xdg-open` — здесь бесполезно, `text/plain` привязан к Helix).
+  `open` — он отдаёт путь в `xdg-open`, см. следующий пункт.
   Комбинация `chain=text:nvim ` + `paste` невозможна: конфиг обрезает
   завершающие пробелы, поэтому `text:nvim ` приходит как `nvim` (проверено через
   `od -c`).
+* `ctrl+alt+o` — **весь скроллбек в nvim одной клавишей**:
+  `write_scrollback_file:open` → `xdg-open <путь>` → шим `~/.local/bin/xdg-open`
+  (`applications/xdg-open`) → `ghostty +new-window -e nvim <путь>`. Открывается
+  новое окно того же инстанса ghostty (D-Bus), с той же темой и конфигом, `:q`
+  возвращает к терминалу. Шим — единственный способ запустить процесс из
+  keybind: в ghostty нет action'а `spawn`/`exec`, а `new_split` принимает только
+  направление, `new_window` — ничего, поэтому «сплит с редактором» из keybind
+  невозможен (вручную: `w` → `ctrl+shift+o` → `nvim ` + `ctrl+shift+v`).
+  Почему шим, а не XDG: `text/plain` в `mimeapps.list` привязан к Helix, и
+  менять эту ассоциацию глобально ради дампов не нужно — шим перехватывает
+  ровно `$TMPDIR/<22 симв. base64url>/{history,screen,selection}.txt` и
+  делегирует всё остальное в `/usr/bin/xdg-open`.
 * Только видимый экран: `ctrl+shift+j` (`write_screen_file:paste,plain`),
-  `ctrl+alt+shift+j` — открыть его, `super+ctrl+shift+j` — скопировать путь.
+  `ctrl+alt+shift+j` — открыть его в nvim тем же шимом, `super+ctrl+shift+j` —
+  скопировать путь.
+* **Внутри полноэкранного TUI (opencode, htop, vim, less) «полного скроллбека»
+  не существует**: приложение работает в alternate screen и перерисовывает одну
+  сетку, истории там не бывает ни в ghostty, ни в tmux. Для `loc=history`
+  ghostty в alt-screen вообще возвращает null — файл не создаётся, `xdg-open` не
+  вызывается, `ctrl+alt+o` и `w` молча ничего не делают. Работает только
+  `ctrl+alt+shift+j` (видимый экран) и собственные средства приложения:
+  `prefix e` в tmux, `/export` (`ctrl+x x`) и `ctrl+z` (`terminal_suspend`) в
+  opencode.
 
 ### Ghostty + tmux
 
@@ -356,7 +381,7 @@ tmux — скроллбек ghostty внутри tmux почти пуст, и `j
 | поиск по истории панели       | в copy-mode: `/` вниз, `?` вверх, `n` / `N` следующий/предыдущий хит |
 | скопировать диапазон          | в copy-mode: `space` начинает, `v` — блочный режим, `y`/`Enter` копируют и выходят |
 | скопировать в системный буфер | то же — привязка пайпит через `wl-copy`, поэтому не зависит от поддержки OSC 52 в терминале |
-| вся история панели в nvim     | `prefix e`                                                |
+| вся история панели в nvim     | `prefix e` (для alt-screen приложений — только видимый экран, см. ниже) |
 | новый шелл в том же каталоге  | `prefix v` (рядом), `prefix w` (новое окно)               |
 
 Обратите внимание: `prefix v` привязан к `split-window -h` — вертикальный
@@ -372,6 +397,10 @@ tmux — скроллбек ghostty внутри tmux почти пуст, и `j
 рваных длинных строк), сохраняет в `/tmp/tmux-scroll.txt` и открывает в
 `display-popup` 90%×90%, запуская `nvim /tmp/tmux-scroll.txt`. Файл
 перезаписывается при каждом использовании, поэтому ничего не накапливается.
+Оговорка про alt-screen: для полноэкранного TUI (opencode, htop, vim) панель
+хранит только видимую сетку, поэтому «вся история» — это история main screen
+плюс текущий экран; проверить: `less README.ru.md` в панели → `prefix e` даёт
+~24 строки, а не 600+.
 
 Другие настройки tmux, взаимодействующие с терминалом: `history-limit 20000`
 (соответствует перспективе ghostty), `set-clipboard on` (пробрасывает OSC 52 от

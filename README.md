@@ -223,6 +223,8 @@ set, `--docs` with descriptions).
 | `ctrl+insert` / `shift+insert`  | copy selection (as `mixed`) / paste PRIMARY     |
 | `ctrl+shift+a`                | select all                                        |
 | `ctrl+shift+y`                | **ours**: select all + copy as `plain`            |
+| `ctrl+alt+o`                  | **ours**: whole scrollback → file → nvim in a new window (see **Dumping the scrollback**) |
+| `ctrl+alt+shift+j`            | visible screen → file → nvim in a new window (stock binding) |
 | `ctrl+shift+space`            | **ours**: enter `scroll-mode` (see below)         |
 | `shift+page_up` / `shift+page_down` | scroll one page                             |
 | `shift+home` / `shift+end`    | scroll to top / bottom                            |
@@ -244,7 +246,9 @@ Minimal cheat sheet:
 ```text
 select with mouse          → shift+insert (PRIMARY) | ctrl+shift+c → ctrl+shift+v (CLIPBOARD)
 whole scrollback → clip    → ctrl+shift+space, y
+whole scrollback → nvim    → ctrl+alt+o  (new ghostty window; inside a TUI — no, see below)
 whole scrollback → file    → ctrl+shift+space, w  (path in clipboard → nvim ctrl+shift+v)
+visible screen → nvim      → ctrl+alt+shift+j
 scroll without mouse       → ctrl+shift+space, then j/k, ctrl+d/ctrl+u, g/shift+g
 search                     → ctrl+shift+f  (inside scroll-mode: /, n, shift+n)
 scrolling inside tmux      → prefix [  (vi keys), y/Enter copy
@@ -329,12 +333,34 @@ integration provides them).
   (long lines unwrapped) into `/tmp/<random>/history.txt` and copies **that
   path** to the clipboard; then in nvim: `:e ` + `ctrl+shift+v`.
   `write_scrollback_file` has three modes: `copy` (used here), `paste` (types
-  the path into the prompt) and `open` (`xdg-open` — useless here, `text/plain`
-  is bound to Helix). A `chain=text:nvim ` + `paste` shortcut is impossible: the
+  the path into the prompt) and `open`, which hands the path to `xdg-open` — see
+  the next bullet. A `chain=text:nvim ` + `paste` shortcut is impossible: the
   config trims trailing whitespace, so `text:nvim ` arrives as `nvim` (checked
   with `od -c`).
+* `ctrl+alt+o` — the **whole scrollback into nvim with one key**:
+  `write_scrollback_file:open` → `xdg-open <path>` → the
+  `~/.local/bin/xdg-open` shim (`applications/xdg-open`) → `ghostty +new-window
+  -e nvim <path>`. A new window of the same ghostty instance (D-Bus) opens, with
+  the same theme and config; `:q` returns to the terminal. The shim is the only
+  way to start a process from a keybind: ghostty has no `spawn`/`exec` action,
+  `new_split` takes only a direction and `new_window` takes nothing, so a
+  "split with the editor" from a keybind is impossible (manually: `w` →
+  `ctrl+shift+o` → `nvim ` + `ctrl+shift+v`). Why a shim instead of XDG:
+  `text/plain` in `mimeapps.list` is bound to Helix, and there is no reason to
+  change that association globally just for dumps — the shim intercepts exactly
+  `$TMPDIR/<22-char base64url>/{history,screen,selection}.txt` and delegates
+  everything else to `/usr/bin/xdg-open`.
 * Only the visible screen: `ctrl+shift+j` (`write_screen_file:paste,plain`),
-  `ctrl+alt+shift+j` to open it, `super+ctrl+shift+j` to copy the path.
+  `ctrl+alt+shift+j` opens it in nvim through the same shim,
+  `super+ctrl+shift+j` copies the path.
+* **Inside a full-screen TUI (opencode, htop, vim, less) there is no "full
+  scrollback" at all**: the app runs on the alternate screen and repaints a
+  single grid, so no history exists — neither in ghostty nor in tmux. For
+  `loc=history` ghostty returns null on the alternate screen: no file is
+  created, `xdg-open` is never called, and `ctrl+alt+o` / `w` silently do
+  nothing. What does work: `ctrl+alt+shift+j` (visible screen) and the app's own
+  means — `prefix e` in tmux, `/export` (`ctrl+x x`) and `ctrl+z`
+  (`terminal_suspend`) in opencode.
 
 ### Ghostty + tmux
 
@@ -350,7 +376,7 @@ in `scroll-mode` or `shift+page_up` scroll almost nothing. Inside tmux:
 | search pane history    | in copy-mode: `/` down, `?` up, `n` / `N` next/prev hit  |
 | copy a range           | in copy-mode: `space` starts, `v` block mode, `y`/`Enter` copy and leave |
 | copy to the system clipboard | the same — the binding pipes through `wl-copy`, so it does not need the terminal's OSC 52 support |
-| whole pane history in nvim | `prefix e`                                          |
+| whole pane history in nvim | `prefix e` (for alt-screen apps only the visible screen, see below) |
 | new shell, same dir    | `prefix v` (side by side), `prefix w` (new window)       |
 
 Note that `prefix v` is bound to `split-window -h` — a vertical divider, panes
@@ -366,7 +392,10 @@ needed.
 lines so the file has no mangled long lines), saves it to
 `/tmp/tmux-scroll.txt` and opens it in a 90%×90% `display-popup` running
 `nvim /tmp/tmux-scroll.txt`. The file is overwritten on every use, so nothing
-accumulates.
+accumulates. Alt-screen caveat: for a full-screen TUI (opencode, htop, vim) the
+pane keeps only the visible grid, so "the whole history" is the main-screen
+history plus the current screen; check it: `less README.md` in a pane →
+`prefix e` yields ~24 lines, not 600+.
 
 Other tmux settings that interact with the terminal: `history-limit 20000`
 (matches ghostty's perspective), `set-clipboard on` (forwards OSC 52 from

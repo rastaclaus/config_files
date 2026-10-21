@@ -116,6 +116,21 @@ else
     bad "~/.local/bin/theme-switch is not a symlink to applications/theme-switch"
 fi
 
+# xdg-open — шим для ghostty (дамп скроллбека → nvim в новом окне). Должен быть
+# симлинком в репозиторий и должен делегировать: `--version` не открывает ни
+# одного файла, поэтому безопасен как smoke-тест.
+xo="$HOME/.local/bin/xdg-open"
+if [[ -L "$xo" && "$(readlink -f "$xo")" == "$REPO/applications/xdg-open" && -x "$xo" ]]; then
+    ok "~/.local/bin/xdg-open -> repo"
+    if "$xo" --version >/dev/null 2>&1; then
+        ok "xdg-open shim delegates (/usr/bin/xdg-open --version)"
+    else
+        bad "xdg-open shim does not delegate (--version failed)"
+    fi
+else
+    bad "~/.local/bin/xdg-open is not a symlink to applications/xdg-open"
+fi
+
 # universal background_mode больше не читается fish (источник — state-файл).
 if command -v fish >/dev/null 2>&1 && fish -c 'set -q -U background_mode' 2>/dev/null; then
     bad "legacy background_mode universal variable is still set"

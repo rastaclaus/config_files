@@ -811,7 +811,8 @@ plan → build сам по себе оставляет старую модель
    `nvim --headless` (`NVIM_TS_INSTALL_SYNC=1`, чтобы парсеры собирались во время
    установки, а не при первом интерактивном старте; пропустить через `--no-nvim`).
    Плагины не являются pacman-пакетами: ими управляет `vim.pack.add()` в
-   `nvim/lua/plugins.lua`, версии закреплены в `nvim/nvim-pack-lock.json`.
+   `nvim/lua/plugins.lua`, версии закрепляются локально в
+   `nvim/nvim-pack-lock.json` (в git не попадает — см. `nvim/README.md`).
    Git-ревью (хуки, stage, diff перед коммитом) — см. `nvim/README.md`.
 
 Профиль `headless` ставит только базовый набор плюс fish/opencode/редакторы и их

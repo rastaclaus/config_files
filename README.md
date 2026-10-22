@@ -801,7 +801,8 @@ The installer:
    `nvim --headless` once (`NVIM_TS_INSTALL_SYNC=1`, so parsers are built
    during the install instead of the first interactive start; skip with
    `--no-nvim`). Plugins are not pacman packages: `vim.pack.add()` in
-   `nvim/lua/plugins.lua` manages them, pinned by `nvim/nvim-pack-lock.json`.
+   `nvim/lua/plugins.lua` manages them, pinned locally by
+   `nvim/nvim-pack-lock.json` (not tracked in git — see `nvim/README.md`).
    Git-ревью (хуки, stage, diff перед коммитом) — см. `nvim/README.md`.
 
 The `headless` profile installs only the base set plus fish/opencode/editors

@@ -55,7 +55,8 @@ is_ghostty_dump() {
     [ "$dir" = "$tmp/$stem" ] || return 1
     # имя каталога — 22 символа base64url (без '/' и '+', см. b64_alphabet)
     [[ $stem =~ ^[A-Za-z0-9_-]{22}$ ]] || return 1
-    # пустой дамп открывать нечего (и, например, history.txt на alt-screen)    [ -s "$path" ]
+    # пустой дамп открывать нечего (и, например, history.txt на alt-screen)
+    [ -s "$path" ]
 }
 
 if [ "$#" -eq 1 ] && [ "${1#/}" != "$1" ] && is_ghostty_dump "$1" && command -v ghostty >/dev/null 2>&1; then

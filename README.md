@@ -223,7 +223,7 @@ set, `--docs` with descriptions).
 | `ctrl+insert` / `shift+insert`  | copy selection (as `mixed`) / paste PRIMARY     |
 | `ctrl+shift+a`                | select all                                        |
 | `ctrl+shift+y`                | **ours**: select all + copy as `plain`            |
-| `ctrl+alt+o`                  | **ours**: whole scrollback → file → nvim in a new window (see **Dumping the scrollback**) |
+| `ctrl+alt+o`                  | **ours**: history + visible screen → file → nvim in a new window (see **Dumping the scrollback**) |
 | `ctrl+alt+shift+j`            | visible screen → file → nvim in a new window (stock binding) |
 | `ctrl+shift+space`            | **ours**: enter `scroll-mode` (see below)         |
 | `shift+page_up` / `shift+page_down` | scroll one page                             |
@@ -245,10 +245,10 @@ Minimal cheat sheet:
 
 ```text
 select with mouse          → shift+insert (PRIMARY) | ctrl+shift+c → ctrl+shift+v (CLIPBOARD)
-whole scrollback → clip    → ctrl+shift+space, y
-whole scrollback → nvim    → ctrl+alt+o  (new ghostty window; inside a TUI — no, see below)
-whole scrollback → file    → ctrl+shift+space, w  (path in clipboard → nvim ctrl+shift+v)
-visible screen → nvim      → ctrl+alt+shift+j
+whole screen → clip        → ctrl+shift+space, y
+whole screen → nvim        → ctrl+alt+o  (new ghostty window; inside a TUI — no, see below)
+whole screen → file        → ctrl+shift+space, w  (path in clipboard → nvim ctrl+shift+v)
+visible screen only        → ctrl+alt+shift+j
 scroll without mouse       → ctrl+shift+space, then j/k, ctrl+d/ctrl+u, g/shift+g
 search                     → ctrl+shift+f  (inside scroll-mode: /, n, shift+n)
 scrolling inside tmux      → prefix [  (vi keys), y/Enter copy
@@ -276,8 +276,8 @@ editing):
 | `g` / `shift+g`    | top / bottom                                            |
 | `]` / `[`          | next / previous prompt mark (`jump_to_prompt`)          |
 | `/`, `n` / `shift+n` | open search, next / previous hit                      |
-| `y`                | whole scrollback → clipboard as plain text              |
-| `w`                | whole scrollback → file, **path** → clipboard           |
+| `y`                | whole screen → clipboard as plain text                  |
+| `w`                | whole screen → file, **path** → clipboard               |
 | `q`, `escape`      | leave the mode                                          |
 
 Four things that are easy to get wrong when editing that table:
@@ -323,44 +323,72 @@ integration provides them).
   cursor keeps the default inversion, exactly as in alacritty. `verify.sh`
   compares both values against `[colors.selection]` in the alacritty themes.
 
+### Closing a window
+
+`confirm-close-surface = false` — no "close this surface?" dialog, neither from
+the window button, nor from `ctrl+shift+w` / `ctrl+shift+q`, nor from typing
+`exit` in the shell. The option is a tri-state: `true` (the default) asks only
+when shell integration reports a process still running, `always` asks
+unconditionally, `false` never asks. It is safe to disable here because the real
+work lives in tmux (the server survives the window — see **Ghostty + tmux**) and
+in nvim (swap files), so a stray `ctrl+shift+w` costs a keystroke to reopen, not
+the session. Reapply without a restart: `ctrl+shift+,` (`reload_config`).
+
 ### Dumping the scrollback
 
-* `ctrl+shift+space`, then `y` — the **whole** scrollback to the clipboard. In
-  1.3.1 `select_all` takes history, not just the visible screen (measured: 400
-  lines of output → 399 newlines copied), even though the action reference
-  words it as "text on the screen".
-* `ctrl+shift+space`, then `w` — ghostty writes the scrollback as plain text
-  (long lines unwrapped) into `/tmp/<random>/history.txt` and copies **that
+First, the trap: in ghostty's terminology "scrollback" is **not** "everything the
+terminal has ever printed". `write_scrollback_file` (`loc=history`) builds its
+selection from `pages.getTopLeft(.history)` to `pages.getBottomRight(.history)`,
+and the latter is `getTopLeft(.active).up(1)` (`src/terminal/PageList.zig`) —
+i.e. it stops one row above the top of the viewport. The **visible screen is not
+included**, so such a dump always lags one screenful of lines behind: measured on
+1.3.1 in a 1280×1406 window (~71 rows) with a process printing a line every
+0.3 s, `write_scrollback_file` was 21–22 s behind (= exactly one screen), while
+`write_screen_file` was 0–1 s behind. On slow interactive output that one
+screenful looks like "it lags by about a minute". Upstream confirms this is
+intentional framing, not a bug: issue #3496 "`write_scrollback_file` only writes
+the _scrollback_ (not the active screen)". `write_screen_file` (`loc=screen`)
+goes from the first page to the last page of the active screen — history **plus**
+the visible screen, nothing missing. Both our bindings below use
+`write_screen_file` for that reason.
+
+* `ctrl+shift+space`, then `y` — the whole screen (history + visible part) to the
+  clipboard. In 1.3.1 `select_all` takes `.screen`, i.e. history, not just the
+  visible screen (measured: 400 lines of output → 399 newlines copied), even
+  though the action reference words it as "text on the screen".
+* `ctrl+shift+space`, then `w` — ghostty writes the screen as plain text
+  (long lines unwrapped) into `/tmp/<random>/screen.txt` and copies **that
   path** to the clipboard; then in nvim: `:e ` + `ctrl+shift+v`.
-  `write_scrollback_file` has three modes: `copy` (used here), `paste` (types
-  the path into the prompt) and `open`, which hands the path to `xdg-open` — see
-  the next bullet. A `chain=text:nvim ` + `paste` shortcut is impossible: the
-  config trims trailing whitespace, so `text:nvim ` arrives as `nvim` (checked
-  with `od -c`).
-* `ctrl+alt+o` — the **whole scrollback into nvim with one key**:
-  `write_scrollback_file:open` → `xdg-open <path>` → the
-  `~/.local/bin/xdg-open` shim (`applications/xdg-open`) → `ghostty +new-window
-  -e nvim <path>`. A new window of the same ghostty instance (D-Bus) opens, with
-  the same theme and config; `:q` returns to the terminal. The shim is the only
-  way to start a process from a keybind: ghostty has no `spawn`/`exec` action,
-  `new_split` takes only a direction and `new_window` takes nothing, so a
-  "split with the editor" from a keybind is impossible (manually: `w` →
-  `ctrl+shift+o` → `nvim ` + `ctrl+shift+v`). Why a shim instead of XDG:
-  `text/plain` in `mimeapps.list` is bound to Helix, and there is no reason to
-  change that association globally just for dumps — the shim intercepts exactly
+  `write_screen_file` has three modes: `copy` (used here), `paste` (types the
+  path into the prompt) and `open`, which hands the path to `xdg-open` — see the
+  next bullet. A `chain=text:nvim ` + `paste` shortcut is impossible: the config
+  trims trailing whitespace, so `text:nvim ` arrives as `nvim` (checked with
+  `od -c`).
+* `ctrl+alt+o` — **history + visible screen into nvim with one key**:
+  `write_screen_file:open` → `xdg-open <path>` → the `~/.local/bin/xdg-open` shim
+  (`applications/xdg-open`) → `ghostty +new-window -e nvim <path>`. A new window
+  of the same ghostty instance (D-Bus) opens, with the same theme and config;
+  `:q` returns to the terminal. The shim is the only way to start a process from
+  a keybind: ghostty has no `spawn`/`exec` action, `new_split` takes only a
+  direction and `new_window` takes nothing, so a "split with the editor" from a
+  keybind is impossible (manually: `w` → `ctrl+shift+o` → `nvim ` +
+  `ctrl+shift+v`). Why a shim instead of XDG: `text/plain` in `mimeapps.list` is
+  bound to Helix, and there is no reason to change that association globally just
+  for dumps — the shim intercepts exactly
   `$TMPDIR/<22-char base64url>/{history,screen,selection}.txt` and delegates
   everything else to `/usr/bin/xdg-open`.
-* Only the visible screen: `ctrl+shift+j` (`write_screen_file:paste,plain`),
+* Visible screen only: `ctrl+shift+j` (`write_screen_file:paste,plain`),
   `ctrl+alt+shift+j` opens it in nvim through the same shim,
   `super+ctrl+shift+j` copies the path.
 * **Inside a full-screen TUI (opencode, htop, vim, less) there is no "full
   scrollback" at all**: the app runs on the alternate screen and repaints a
   single grid, so no history exists — neither in ghostty nor in tmux. For
   `loc=history` ghostty returns null on the alternate screen: no file is
-  created, `xdg-open` is never called, and `ctrl+alt+o` / `w` silently do
-  nothing. What does work: `ctrl+alt+shift+j` (visible screen) and the app's own
-  means — `prefix e` in tmux, `/export` (`ctrl+x x`) and `ctrl+z`
-  (`terminal_suspend`) in opencode.
+  created, `xdg-open` is never called, and `write_scrollback_file` silently does
+  nothing. `write_screen_file` still works there and dumps that alternate-screen
+  grid (which is all there is) — that is what `ctrl+alt+o` / `w` now do. For a
+  real transcript use the app's own means: `prefix e` in tmux, `/export`
+  (`ctrl+x x`) and `ctrl+z` (`terminal_suspend`) in opencode.
 
 ### Ghostty + tmux
 

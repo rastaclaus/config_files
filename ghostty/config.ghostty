@@ -54,6 +54,13 @@ scrollback-limit = 20_000_000
 # PRIMARY — ровно как selection.save_to_clipboard = false в alacritty).
 mouse-hide-while-typing = true
 shell-integration = detect
+# Подтверждение при закрытии панели (кнопка окна, ctrl+shift+w, выход из шелла
+# по exit) выключено. Поле троичное: `true` (дефолт) — спрашивать, только если
+# shell-integration видит живой процесс, `always` — спрашивать всегда,
+# `false` — закрывать молча. Именно последнее и нужно: работа идёт в tmux и
+# nvim, где tmux-сервер переживает закрытие окна, а лишний диалог на каждое
+# закрытие только мешает.
+confirm-close-surface = false
 
 # ------------------------------------------------------- ssh: terminfo, OSC 52
 # sshd всегда передаёт TERM клиента, поэтому на удалённом хосте сессия
@@ -123,12 +130,16 @@ keybind = scroll-mode/shift+n=navigate_search:previous
 keybind = scroll-mode/y=select_all
 keybind = chain=copy_to_clipboard:plain
 keybind = chain=deactivate_key_table
-# w — дамп скроллбека в файл: ghostty пишет его в /tmp/<random>/history.txt и
-# кладёт ПУТЬ в буфер; дальше `nvim ` + ctrl+shift+v. Режим paste вставил бы
+# w — дамп экрана+истории в файл: ghostty пишет его в /tmp/<random>/screen.txt
+# и кладёт ПУТЬ в буфер; дальше `nvim ` + ctrl+shift+v. Режим paste вставил бы
 # путь прямо в промпт, open отдал бы файл в xdg-open (а у нас text/plain —
 # Helix), поэтому copy.
+#
+# screen_file, а не scrollback_file — см. блок «почему screen, а не scrollback»
+# ниже: write_scrollback_file отдаёт всё, что ВЫШЕ вьюпорта, т.е. дамп всегда
+# отстаёт на один экран строк.
 keybind = scroll-mode/w=deactivate_key_table
-keybind = chain=write_scrollback_file:copy
+keybind = chain=write_screen_file:copy
 keybind = scroll-mode/q=deactivate_key_table
 keybind = scroll-mode/escape=deactivate_key_table
 keybind = scroll-mode/catch_all=ignore
@@ -137,7 +148,7 @@ keybind = scroll-mode/catch_all=ignore
 keybind = ctrl+shift+y=select_all
 keybind = chain=copy_to_clipboard:plain
 
-# ------------------------------------- скроллбек → nvim в новом окне (одна клавиша)
+# --------------------------------- скриншот терминала → nvim в новом окне (одна клавиша)
 # Команду из keybind запустить нельзя: в ghostty нет action'а spawn/exec, а
 # new_split/new_window принимают только направление (new_split) или ничего
 # (new_window) — команду туда не передать. Зато у write_*_file есть action
@@ -147,10 +158,29 @@ keybind = chain=copy_to_clipboard:plain
 # в /usr/bin/xdg-open. Поэтому text/plain остаётся за Helix, а не переезжает.
 #
 # `open` без второго аргумента = emit plain (WriteScreen.open = .{ .action =
-# .open, .emit = .plain }), т.е. файл `history.txt`, а не html/vt.
+# .open, .emit = .plain }), т.е. файл `screen.txt`, а не html/vt.
 #
-# ВАЖНО: внутри alt-screen (opencode TUI, htop, vim, less) ghostty историю не
-# хранит вообще, write_scrollback_file там ничего не пишет и до xdg-open не
-# доходит — клавиша молча ничего не делает. Для видимого экрана есть дефолтный
-# ctrl+alt+shift+j (write_screen_file:open,plain), он идёт через тот же шим.
-keybind = ctrl+alt+o=write_scrollback_file:open
+# ---------------------------------- почему screen, а не scrollback (важно)
+# write_scrollback_file != «весь вывод». «Scrollback» в терминологии ghostty —
+# это то, что ВЫШЕ вьюпорта: для loc=history выделение строится от
+# pages.getTopLeft(.history) до getBottomRight(.history), а последний в
+# PageList.zig (getBottomRight, ветка .history) — это getTopLeft(.active).up(1),
+# т.е. на строку выше верхней видимой. Итог: дамп всегда отстаёт на один экран
+# строк (в окне 1280x1406 при 11.25pt это ~71 строка) — на медленном выводе
+# выглядит как «отстаёт на минуту», а на быстром просто теряет последний экран.
+# Апстрим это подтверждает: issue #3496 «write_scrollback_file only writes the
+# scrollback (not the active screen)».
+#
+# write_screen_file (loc=screen) — от getTopLeft(.screen) до
+# getBottomRight(.screen), т.е. от первой страницы до последней: вся история
+# ПЛЮС видимый экран, без отставания. Проверено на 1.3.1: процесс печатал
+# строку раз в 0.3 с, write_scrollback_file отставал на 21-22 с (= ровно один
+# экран строк), write_screen_file — на 0-1 с.
+#
+# Побочно: в alt-screen (opencode TUI, htop, vim, less) истории нет, поэтому
+# write_scrollback_file там возвращал null и клавиша молча ничего не делала;
+# write_screen_file в alt-screen снимает сам alt-экран, что и нужно.
+#
+# select_all (y / ctrl+shift+y) этого дефекта не имеет: он берёт тег .screen
+# (terminal/Screen.zig, selectAll), т.е. историю вместе с видимым экраном.
+keybind = ctrl+alt+o=write_screen_file:open

@@ -134,12 +134,16 @@ if [[ -L "$xo" && "$(readlink -f "$xo")" == "$REPO/applications/xdg-open" && -x 
         # Имя каталога ghostty — 16 случайных байт в base64url (22 символа).
         dumpdir="$tmproot/AAAAAAAAAAAAAAAAAAAAAA"
         mkdir -p "$dumpdir"
-        printf 'x\n' > "$dumpdir/history.txt"
-        if TMPDIR="$tmproot" "$xo" "$dumpdir/history.txt" >/dev/null 2>&1; then
-            ok "xdg-open shim delegates ghostty dumps without ghostty"
-        else
-            bad "xdg-open shim fails on a ghostty dump path without ghostty installed"
-        fi
+        # screen.txt — основной путь (write_screen_file), history.txt —
+        # write_scrollback_file; шим должен принимать оба.
+        for name in screen.txt history.txt; do
+            printf 'x\n' > "$dumpdir/$name"
+            if TMPDIR="$tmproot" "$xo" "$dumpdir/$name" >/dev/null 2>&1; then
+                ok "xdg-open shim delegates ghostty dumps ($name) without ghostty"
+            else
+                bad "xdg-open shim fails on a ghostty dump path ($name) without ghostty installed"
+            fi
+        done
         rm -rf "$tmproot"
     fi
 else

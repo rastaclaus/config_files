@@ -476,7 +476,216 @@ cp vpn/local.env.example vpn/local.env   # заполнить
 
 ---
 
-## 8. Чек-лист проверки
+## 8. Wi-Fi RTL8822CE: обязательная настройка
+
+Карта: **Realtek RTL8822CE** (PCIe `01:00.0`, 2×2 VHT, 80 МГц, до 867 Мбит PHY),
+драйвер `rtw88_8822ce` (mainline), прошивка `9.9.15`.
+
+```bash
+lspci -nnk | grep -A3 -i 'network controller'
+# Kernel driver in use: rtw88_8822ce
+ls /lib/firmware/rtw88/rtw8822c_fw.bin.zst    # нужен linux-firmware-realtek
+```
+
+> В новых Arch `linux-firmware` — метапакет. Если ставили не его, а только
+> `linux-firmware-*` по частям, для этой карты обязателен `linux-firmware-realtek`.
+
+Сразу после чистой установки Wi-Fi работает, но **медленно и с лагами**. Причин
+четыре, все воспроизводимые.
+
+### 8.1. Regdomain (страна) — базы нет вообще
+
+Симптом в журнале и `iw reg get`:
+
+```
+cfg80211: failed to load regulatory.db
+global
+country 00: DFS-UNSET
+```
+
+Пакет `wireless-regdb` не входит в `base`, поэтому ядро работает с «мировым»
+доменом: урезанный EIRP, `PASSIVE-SCAN` на всех 5 ГГц.
+
+```bash
+sudo pacman -S --needed wireless-regdb iw
+
+# раскомментировать строку с RU (файл содержит полный список стран)
+sudo sed -i 's/^#WIRELESS_REGDOM="RU"$/WIRELESS_REGDOM="RU"/' /etc/conf.d/wireless-regdom
+grep '^WIRELESS_REGDOM' /etc/conf.d/wireless-regdom      # WIRELESS_REGDOM="RU"
+```
+
+**Ловушка:** `iw reg set RU` (и `/usr/bin/set-wireless-regdom`, который дёргает
+udev-правило `85-regulatory.rules`) **молча ничего не делает**, если
+`regulatory.db` не была загружена при инициализации `cfg80211` — вернёт код 0, а
+`iw reg get` останется `country 00`. База читается только при загрузке модуля.
+Поэтому после установки пакета — **перезагрузка** (или перезагрузка стека):
+
+```bash
+sudo modprobe -r rtw88_8822ce rtw88_8822c rtw88_pci rtw88_core mac80211 cfg80211
+sudo modprobe rtw88_8822ce
+iw reg get | head -3      # country RU: ...
+```
+
+Проверка, что домен применился к каналам:
+
+```bash
+iw phy phy0 info | sed -n '/Band 2:/,/Band 3:/p' | grep -E '\* 5[0-9]{3}\.'
+# 5745..5825 МГц (149-165) должны быть без (disabled), 23 dBm
+```
+
+### 8.2. Энергосбережение — включено по умолчанию
+
+NetworkManager ставит `802-11-wireless.powersave = 0 (default)`, что включает
+power save. На `rtw88` это даёт пинг до собственного роутера в десятки мс:
+
+```
+до:    ping <IP-роутера> → avg 35.7 мс, max 123 мс, mdev 34.6
+после: ping <IP-роутера> → avg  5.4 мс, max  14 мс, mdev  3.5
+```
+
+```bash
+printf '[connection]\nwifi.powersave = 2\n' | sudo tee /etc/NetworkManager/conf.d/wifi-powersave-off.conf
+sudo systemctl restart NetworkManager
+iw dev wlp1s0 get power_save        # Power save: off
+```
+
+### 8.3. PCIe ASPM — известная проблема rtw88
+
+`rtw88_pci` по умолчанию оставляет ASPM включённым; на Realtek это даёт просадки
+throughput и «залипания».
+
+```bash
+printf 'options rtw88_pci disable_aspm=1\n' | sudo tee /etc/modprobe.d/rtw88.conf
+sudo mkinitcpio -P
+# reboot; проверить:
+cat /sys/module/rtw88_pci/parameters/disable_aspm    # Y
+```
+
+### 8.4. bgscan — главная причина «пачек» лагов
+
+NetworkManager добавляет в конфиг supplicant:
+
+```
+Config: added 'bgscan' value 'simple:30:-70:86400'
+```
+
+Это значит: сканировать каждые 30 с, **если сигнал ниже -70 dBm**. Наш AP в
+рабочей точке даёт ровно -68…-70, то есть порог срабатывает постоянно. Замер
+`iw event -t` показал **скан каждые 10–11 с**, каждый занимает ~1.8 с и уводит
+радио с канала:
+
+```
+до:    8 сканов / 90 с, пинг avg 37 мс, выбросы 65→78→106→138 мс пачками
+после: 0 сканов / 90 с, пинг avg 5.4 мс, max 9.4 мс, mdev 1.26
+```
+
+Опции отключить bgscan в NM нет, но bgscan не запускается, если клиент привязан
+к конкретному BSSID (роуминг бессмыслен). Фиксируем BSSID в профиле:
+
+```bash
+# BSSID своего AP взять из: nmcli -f SSID,BSSID,CHAN device wifi list
+sudo nmcli connection modify <SSID> 802-11-wireless.bssid <BSSID>
+sudo nmcli connection down <SSID>; sudo nmcli connection up <SSID>
+nmcli -f 802-11-wireless.bssid connection show <SSID>
+```
+
+Проверка, что сканы прекратились:
+
+```bash
+sudo timeout 60 iw event -t | grep -c 'scan started'    # ожидается 0
+```
+
+> Побочный эффект: ноут привязан к этому BSSID. При переезде/замене роутера —
+> `sudo nmcli connection modify <SSID> 802-11-wireless.bssid ""`.
+
+### 8.5. Роутер — канал и ширина
+
+> Плейсхолдеры: `<SSID>` — имя сети в профиле NetworkManager (`nmcli connection
+> show`), `<BSSID>` — MAC точки доступа (`nmcli -f SSID,BSSID,CHAN device wifi
+> list`), `<IP-роутера>` — шлюз (`ip route | awk '/default/{print $3}'`).
+> Ниже — замеры на конкретном бытовом AP оператора (2×2 VHT, 80 МГц); на другом
+> оборудовании цифры будут иными, но закономерности по диапазонам те же.
+
+Замеры в рабочей точке (за столом, через стены) и у роутера:
+
+| Настройка AP | За столом | У роутера |
+|---|---|---|
+| 5 ГГц, канал **44** (5220), 80 МГц | **-68 dBm**, MCS3-4 NSS1, 63 Мбит, пинг 5.4 мс | ~150 Мбит |
+| 5 ГГц, канал **149** (5745), 80 МГц | -75…-76 dBm, MCS0-1 NSS1, **4–15 Мбит** | **184–300 Мбит** |
+| 5 ГГц, канал 44, **40 МГц** | ~-58 dBm, MCS6 NSS2, хуже в пике | 111 Мбит |
+| 2,4 ГГц, канал 1, 20 МГц | -73 dBm, 5.5/6 Мбит, **пинг 1159 мс** | — |
+
+Выводы:
+- верхний диапазон (149–165) на 6–10 dB хуже проходит стены → за столом
+  не годится, у роутера наоборот лучший (эфир пуст, 23 dBm);
+- **2,4 ГГц в этом месте непригоден**: канал 1 забит, legacy-скорости, пинг
+  больше секунды;
+- 40 МГц **не** спасает при нормальном сигнале — 80 МГц выигрывает за счёт
+  вдвое большего числа поднесущих. Сужать имеет смысл только при MCS1-2.
+
+В веб-интерфейсе роутера (`http://<IP-роутера>`, обычно basic-auth)
+менять только: **Канал** и **Полоса пропускания**. `Полоса = Авто 20+40+80`,
+`Уровень сигнала = Высокий`. Смена канала применяется **только после
+Save + Reboot**; дважды в этой сессии настройка не вступала в силу без ребута.
+
+### 8.6. Ожидаемые цифры и потолок
+
+```
+у роутера: -50 dBm  → rx 585 Мбит (MCS7 NSS2), 184–300 Мбит TCP
+за столом : -68 dBm  → rx 175 Мбит (MCS4 NSS1),  63 Мбит TCP
+```
+
+За столом rate-control честно отключает второй поток (`NSS1`), потому что вторая
+антенна приходит на 5–9 dB слабее первой. Это физика, не настройка: софтом
+больше не выжать. Если нужны 200+, единственный путь — AP/репитер ближе к
+рабочему месту.
+
+Проверить, что обе антенны живы (второе число в скобках — вторая цепь):
+
+```bash
+sudo iw dev wlp1s0 station dump | grep '^\s*signal'
+# signal: -68 [-68, -69] dBm   ← разница цепей должна быть 0-3 dB
+```
+
+Если разница стабильно 5+ dB и вблизи роутера — смотреть антенные пигтейлы
+(они рядом с M.2-слотом, легко задеть при замене SSD).
+
+### 8.7. Диагностика Wi-Fi
+
+```bash
+iw dev wlp1s0 link                     # SSID, freq, signal, rx/tx bitrate, NSS
+iw dev wlp1s0 info                     # канал, ширина, txpower
+iw dev wlp1s0 get power_save
+iw reg get | head -3                   # country RU
+sudo iw dev wlp1s0 station dump | grep -E 'signal|bitrate|retries|failed|loss'
+sudo iw dev wlp1s0 survey dump         # noise / busy time по каналам
+sudo iw event -t                       # scan started / deauth в реальном времени
+nmcli -f SSID,BSSID,CHAN,FREQ,SIGNAL device wifi list
+sudo dmesg | grep -iE 'rtw|wlp1s0|regulatory'
+```
+
+Полезно знать:
+- `MCS`/`NSS` в `link` — главный индикатор: `NSS1` при 2×2 = потерян второй поток
+  (слабый сигнал или антенна);
+- `/sys/class/net/wlp1s0/speed` для Wi-Fi **не имеет смысла** (`Invalid argument`);
+- `tx retries`/`failed` у rtw88 показывает 0 даже при проблемах — ориентируйтесь
+  на `signal`, `MCS/NSS` и пинг до шлюза;
+- `ping` до шлюза — самый быстрый тест радио: 2–5 мс норма, >20 мс — power save,
+  сканы или забитый эфир.
+
+### 8.8. Откат
+
+```bash
+sudo rm /etc/NetworkManager/conf.d/wifi-powersave-off.conf
+sudo rm /etc/modprobe.d/rtw88.conf
+sudo sed -i 's/^WIRELESS_REGDOM=/WIRELESS_REGDOM=/' /etc/conf.d/wireless-regdom  # или вернуть "#"
+sudo nmcli connection modify <SSID> 802-11-wireless.bssid ""
+sudo mkinitcpio -P && sudo reboot
+```
+
+---
+
+## 9. Чек-лист проверки
 
 ```bash
 lsblk -f /dev/nvme0n1          # p1 vfat /boot, p2 ext4 /, p3 swap
@@ -489,4 +698,12 @@ cat /proc/swaps                # swap активен
 getent passwd artems | cut -d: -f7   # /usr/bin/fish
 cat ~/.local/state/dotfiles/compositor
 niri-session                   # или sway: рабочий стол стартует
+
+# Wi-Fi (см. раздел 8)
+iw reg get | head -2                                   # country RU
+iw dev wlp1s0 get power_save                           # Power save: off
+cat /sys/module/rtw88_pci/parameters/disable_aspm      # Y
+nmcli -f 802-11-wireless.bssid connection show <SSID>   # привязан BSSID
+ping -c 20 -i 0.2 <IP-роутера> | tail -1              # avg 2-10 мс
+iw dev wlp1s0 link | grep -E 'signal|bitrate'          # MCS/NSS + сигнал
 ```

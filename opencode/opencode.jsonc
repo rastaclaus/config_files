@@ -1799,11 +1799,11 @@
         "mistralai/mistral-medium-3-5": {
           "name": "mistralai/mistral-medium-3-5"
         },
-        "gryphe/mythomax-l2-13b": {
-          "name": "gryphe/mythomax-l2-13b"
-        },
         "cohere/command-r-08-2024": {
           "name": "cohere/command-r-08-2024"
+        },
+        "gryphe/mythomax-l2-13b": {
+          "name": "gryphe/mythomax-l2-13b"
         },
         "x-ai/grok-imagine-video-1.5": {
           "name": "x-ai/grok-imagine-video-1.5"
@@ -2189,12 +2189,12 @@
         "mistralai/mistral-small-24b-instruct-2501": {
           "name": "mistralai/mistral-small-24b-instruct-2501"
         },
-        "qwen/qwen3-32b": {
-          "name": "qwen/qwen3-32b"
-        },
         "google/gemini-3-flash-preview": {
           "name": "google/gemini-3-flash-preview",
           "attachment": true
+        },
+        "qwen/qwen3-32b": {
+          "name": "qwen/qwen3-32b"
         },
         "x-ai/grok-stt-1.0": {
           "name": "x-ai/grok-stt-1.0"
@@ -2258,14 +2258,14 @@
           "name": "openai/gpt-4.1-nano",
           "attachment": true
         },
-        "stepfun/step-3.7-flash": {
-          "name": "stepfun/step-3.7-flash"
-        },
         "black-forest-labs/flux-video-upscale": {
           "name": "black-forest-labs/flux-video-upscale"
         },
         "bytedance/seedance-2.5": {
           "name": "bytedance/seedance-2.5"
+        },
+        "stepfun/step-3.7-flash": {
+          "name": "stepfun/step-3.7-flash"
         },
         "meta/muse-glimmer-30b": {
           "name": "meta/muse-glimmer-30b"
@@ -2448,9 +2448,6 @@
         "qwen/qwen3-reranker-8b": {
           "name": "qwen/qwen3-reranker-8b"
         },
-        "z-ai/glm-4.7": {
-          "name": "z-ai/glm-4.7"
-        },
         "elevenlabs/eleven-flash-v2": {
           "name": "elevenlabs/eleven-flash-v2"
         },
@@ -2460,6 +2457,9 @@
         },
         "mistralai/ministral-3b-2512": {
           "name": "mistralai/ministral-3b-2512"
+        },
+        "z-ai/glm-4.7": {
+          "name": "z-ai/glm-4.7"
         },
         "ibm-granite/granite-4.0-h-micro": {
           "name": "ibm-granite/granite-4.0-h-micro"
@@ -2912,6 +2912,9 @@
         "prism-ml/ternary-bonsai-2-27b": {
           "name": "prism-ml/ternary-bonsai-2-27b"
         },
+        "google/lyria-3-pro-preview": {
+          "name": "google/lyria-3-pro-preview"
+        },
         "qwen/qwen3.8-omni-flash": {
           "name": "qwen/qwen3.8-omni-flash"
         },
@@ -2920,9 +2923,6 @@
         },
         "minimax/speech-2.8-turbo": {
           "name": "minimax/speech-2.8-turbo"
-        },
-        "google/lyria-3-pro-preview": {
-          "name": "google/lyria-3-pro-preview"
         },
         "minimax/speech-2.8-hd": {
           "name": "minimax/speech-2.8-hd"
@@ -2959,12 +2959,12 @@
         "qwen/qwen-image-2.1-turbo": {
           "name": "qwen/qwen-image-2.1-turbo"
         },
-        "elorian/glimpse": {
-          "name": "elorian/glimpse"
-        },
         "google/gemini-3.5-flash-lite": {
           "name": "google/gemini-3.5-flash-lite",
           "attachment": true
+        },
+        "elorian/glimpse": {
+          "name": "elorian/glimpse"
         },
         "mistralai/voxtral-mini-tts-2603": {
           "name": "mistralai/voxtral-mini-tts-2603"
@@ -3168,11 +3168,11 @@
         "meta/muse-spark-1.2-contributor": {
           "name": "meta/muse-spark-1.2-contributor"
         },
-        "sourceful/riverflow-v2-fast": {
-          "name": "sourceful/riverflow-v2-fast"
-        },
         "google/gemini-3-pro-image-preview": {
           "name": "google/gemini-3-pro-image-preview"
+        },
+        "sourceful/riverflow-v2-fast": {
+          "name": "sourceful/riverflow-v2-fast"
         },
         "openai/gpt-image-2.5-sunburst": {
           "name": "openai/gpt-image-2.5-sunburst"
@@ -3231,11 +3231,11 @@
         "qwen/qwen3.8-max-prime": {
           "name": "qwen/qwen3.8-max-prime"
         },
-        "black-forest-labs/flux.2-pro": {
-          "name": "black-forest-labs/flux.2-pro"
-        },
         "openai/o3-mini-high": {
           "name": "openai/o3-mini-high"
+        },
+        "black-forest-labs/flux.2-pro": {
+          "name": "black-forest-labs/flux.2-pro"
         },
         "mistralai/mistral-medium-3.1": {
           "name": "mistralai/mistral-medium-3.1"

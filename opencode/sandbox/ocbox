@@ -1,0 +1,300 @@
+#!/usr/bin/env bash
+#
+# ocbox — запуск OpenCode в одноразовом docker-контейнере с доступом только к
+# текущему проекту.
+#
+#   ocbox build                 собрать/обновить образ (после pacman -Syu на хосте!)
+#   ocbox doctor [--with-mcp]   проверить образ, монтирования и MCP
+#   ocbox shell [dir] [cmd…]    TUI opencode (или произвольная команда) в песочнице
+#   ocbox run [dir] <prompt>    opencode run без TUI
+#   ocbox serve [dir]           headless-сервер; хост-порт выбирается свободный (49380+)
+#   ocbox pair [dir]            ссылка/QR для подключения браузера к serve
+#   ocbox logs [dir]            лог serve-контейнера
+#   ocbox stop [dir]            остановить serve-контейнер
+#   ocbox export [dir] [id]     export сессии из песочницы в файл на хосте
+#   ocbox sync-config [dir]     перезалить ~/.config/opencode в volume проекта
+#   ocbox status [dir]          что сейчас запущено
+#   ocbox destroy [dir]         удалить контейнер и volume проекта
+#
+# Переменные:
+#   OCBOX_STRICT_CACHE=1   не монтировать хостовые кэши сборки
+#   OCBOX_MEMORY=12g       лимит памяти контейнера
+#   OCBOX_CPUS=6           лимит CPU
+#   OCBOX_PIDS=4096        лимит процессов
+set -euo pipefail
+
+SELF_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
+# shellcheck source=opencode/sandbox/env.sh
+source "$SELF_DIR/env.sh"
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
+OCBOX_MEMORY="${OCBOX_MEMORY:-12g}"
+OCBOX_CPUS="${OCBOX_CPUS:-6}"
+OCBOX_PIDS="${OCBOX_PIDS:-4096}"
+SERVE_CONTAINER_PORT=49374
+SERVE_HOST_PORT="${OCBOX_SERVE_PORT:-}"
+
+port_in_use() { # <port>
+    ss -ltnH "sport = :$1" 2>/dev/null | grep -q . && return 0
+    return 1
+}
+
+pick_serve_port() { # выдаёт свободный порт на 127.0.0.1, начиная с 49380
+    [[ -n "$SERVE_HOST_PORT" ]] && { printf '%s' "$SERVE_HOST_PORT"; return 0; }
+    local p
+    for p in $(seq 49380 49480); do
+        port_in_use "$p" || { printf '%s' "$p"; return 0; }
+    done
+    die "нет свободного порта в диапазоне 49380-49480 (задайте OCBOX_SERVE_PORT)"
+}
+
+die() { printf '\033[1;31mocbox:\033[0m %s\n' "$*" >&2; exit 1; }
+log() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
+
+resolve_project() {
+    local p="${1:-$PWD}"
+    [[ -d "$p" ]] || die "нет такого каталога: $p"
+    realpath "$p"
+}
+
+project_vol()  { ocbox_volume_name "$1"; }
+project_name() { ocbox_container_name "$1"; }
+
+require_image() {
+    docker image inspect "$OCBOX_IMAGE" >/dev/null 2>&1 \
+        || die "образ $OCBOX_IMAGE не собран: выполните 'ocbox build'"
+}
+
+# Копирует конфиг хоста в volume проекта (cp -L раскрывает merge-симлинки),
+# создаёт точки монтирования и выставляет владельца.
+sync_config() {
+    local vol="$1" d dirs="" stage
+    docker volume create "$vol" >/dev/null
+    # Точки монтирования для вложенных bind-монтирований должны существовать
+    # внутри volume, иначе docker создаёт их в слое образа, и они «исчезают»
+    # под смонтированным volume.
+    for d in "${OCBOX_RO_DIRS[@]}" "${OCBOX_RW_DIRS[@]}" "${OCBOX_CACHE_DIRS[@]}"; do
+        [[ -d "$d" ]] || continue
+        dirs+=" '${d#$HOME}'"
+    done
+
+    # Конфиг — merge-каталог симлинков в репозиторий. Раскрываем их на хосте
+    # (там цели существуют), а в контейнер отдаём уже готовое дерево: так
+    # вспомогательный контейнер не видит ни $HOME, ни репозиторий.
+    stage="$(mktemp -d "${TMPDIR:-/tmp}/ocbox-config.XXXXXX")"
+    # shellcheck disable=SC2064
+    trap "rm -rf '$stage'" RETURN
+    cp -aL "$CONFIG_DIR/." "$stage/"
+    # Пароль web-сервиса хоста в песочницу не переносим: контейнер создаст
+    # свой собственный service.json при первом старте сервиса.
+    rm -f "$stage/service.json"
+
+    docker run --rm --user 0:0 --network none \
+        -v "$vol":/dst \
+        -v "$stage":/src:ro \
+        "$OCBOX_IMAGE" sh -eu -c '
+            cp -f /dst/.config/opencode/service.json /tmp/svc.json 2>/dev/null || true
+            rm -rf /dst/.config/opencode
+            mkdir -p /dst/.config
+            cp -a /src /dst/.config/opencode
+            if [ -f /tmp/svc.json ]; then cp -f /tmp/svc.json /dst/.config/opencode/service.json; fi
+            for d in '"$dirs"'; do mkdir -p "/dst$d"; done
+            chown -R '"$OCBOX_UID:$OCBOX_GID"' /dst
+        ' >/dev/null
+}
+
+# Общие аргументы docker run. Вызывается как массив через docker_args <proj>.
+docker_args() {
+    local proj="$1" term="${TERM:-xterm-256color}"
+    local -a a=( --rm --init
+        --label ocbox=1 --label "ocbox.project=$proj"
+        --read-only
+        --tmpfs /tmp:exec,size=4g
+        --tmpfs /run
+        --shm-size=1g
+        --cap-drop=ALL
+        --security-opt=no-new-privileges
+        --pids-limit="$OCBOX_PIDS"
+        --memory="$OCBOX_MEMORY"
+        --cpus="$OCBOX_CPUS"
+        --user "$OCBOX_UID:$OCBOX_GID"
+        -w "$proj"
+        -e "TERM=$term"
+    )
+    [[ -n "${COLORTERM:-}" ]] && a+=( -e "COLORTERM=$COLORTERM" )
+    mapfile -t -d '' -O "${#a[@]}" a < <(ocbox_env_args)
+    a+=( -v "$(project_vol "$proj"):$OCBOX_HOME" )
+    mapfile -t -d '' -O "${#a[@]}" a < <(ocbox_mount_args "$proj")
+    printf '%s\0' "${a[@]}"
+}
+
+container_exists() { docker ps -a --format '{{.Names}}' | grep -qx "$1"; }
+
+cmd_build() {
+    log "сборка $OCBOX_IMAGE (это займёт несколько минут)"
+    docker build \
+        --build-arg "OCBOX_UID=$OCBOX_UID" \
+        --build-arg "OCBOX_GID=$OCBOX_GID" \
+        --build-arg "OCBOX_USER=$OCBOX_USER" \
+        -t "$OCBOX_IMAGE" "$SELF_DIR"
+    log "glibc образа: $(docker run --rm "$OCBOX_IMAGE" ldd --version | head -1)"
+    log "glibc хоста : $(ldd --version | head -1)"
+}
+
+cmd_doctor() {
+    bash "$SELF_DIR/preflight.sh" "$@"
+}
+
+cmd_shell() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
+    require_image
+    if [[ $# -eq 0 && ! ( -t 0 && -t 1 ) ]]; then
+        die "TUI требует терминал; без него используйте 'ocbox run \"…\"' или 'ocbox shell <dir> <команда>'"
+    fi
+    local -a d; mapfile -d '' -t d < <(docker_args "$proj")
+    sync_config "$(project_vol "$proj")"
+    local -a cmd=(opencode --standalone)
+    [[ $# -gt 0 ]] && cmd=("$@")
+    local -a tty=()
+    [[ -t 0 && -t 1 ]] && tty=( -it )
+    exec docker run "${tty[@]}" --name "$(project_name "$proj")-$$" "${d[@]}" \
+        "$OCBOX_IMAGE" "${cmd[@]}"
+}
+
+cmd_run() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
+    [[ $# -gt 0 ]] || die "нужен промпт: ocbox run [dir] \"…\""
+    require_image
+    local -a d; mapfile -d '' -t d < <(docker_args "$proj")
+    sync_config "$(project_vol "$proj")"
+    exec docker run "${d[@]}" "$OCBOX_IMAGE" \
+        opencode run --standalone "$@"
+}
+
+cmd_serve() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    require_image
+    local name hport; name="$(project_name "$proj")"
+    container_exists "$name" && docker rm -f "$name" >/dev/null
+    hport="$(pick_serve_port)"
+    local -a d; mapfile -d '' -t d < <(docker_args "$proj")
+    sync_config "$(project_vol "$proj")"
+    # Поднимаем управляемый сервис внутри контейнера (а не `opencode serve`):
+    # только для управляемого сервиса работает `opencode pair` со ссылкой
+    # для браузера. Контейнер держим живым через sleep.
+    docker run -d --name "$name" \
+        --label "ocbox.servePort=$hport" \
+        -p "127.0.0.1:$hport:$SERVE_CONTAINER_PORT" \
+        "${d[@]}" "$OCBOX_IMAGE" \
+        bash -c "opencode service set hostname 0.0.0.0 \
+              && opencode service set port $SERVE_CONTAINER_PORT \
+              && opencode service start \
+              && exec sleep infinity" >/dev/null
+
+    local pw=""
+    for _ in $(seq 1 20); do
+        pw="$(docker exec "$name" sh -c \
+            'jq -r .password "$HOME/.config/opencode/service.json" 2>/dev/null' || true)"
+        [[ -n "$pw" && "$pw" != "null" ]] && break
+        sleep 1
+    done
+
+    log "сервер запущен: http://127.0.0.1:$hport"
+    [[ -n "$pw" ]] && log "пароль сервера: $pw"
+    log "одноразовая ссылка для входа: ocbox pair $proj"
+}
+
+serve_port_of() { # <container> -> хост-порт, опубликованный для контейнера
+    docker inspect --format '{{index .Config.Labels "ocbox.servePort"}}' "$1" 2>/dev/null
+}
+
+cmd_logs() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local name; name="$(project_name "$proj")"
+    container_exists "$name" || die "контейнер $name не запущен: сначала 'ocbox serve'"
+    docker logs "$name" 2>&1
+}
+
+cmd_stop() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local name; name="$(project_name "$proj")"
+    container_exists "$name" || { log "контейнер $name не запущен"; return 0; }
+    docker rm -f "$name" >/dev/null
+    log "serve-контейнер $name остановлен (volume с сессиями сохранён)"
+}
+
+cmd_pair() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local name hport; name="$(project_name "$proj")"
+    container_exists "$name" || die "контейнер $name не запущен: сначала 'ocbox serve'"
+    hport="$(serve_port_of "$name")"
+    [[ -n "$hport" ]] || die "у контейнера $name нет опубликованного порта: перезапустите 'ocbox serve'"
+    # --url: браузер на хосте видит сервер как 127.0.0.1:<host-port>,
+    # а внутри контейнера сервер слушает <container-port>.
+    local -a tty=()
+    [[ -t 0 && -t 1 ]] && tty=( -it )
+    docker exec "${tty[@]}" "$name" \
+        opencode pair --url "http://127.0.0.1:$hport"
+}
+
+cmd_export() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
+    require_image
+    local -a d; mapfile -d '' -t d < <(docker_args "$proj")
+    sync_config "$(project_vol "$proj")"
+    mkdir -p "$OCBOX_STATE_DIR"
+
+    # Без явного ID берём самую свежую сессию проекта: `session export`
+    # в неинтерактивном режиме требует ID.
+    local sid="${1:-}"
+    if [[ -z "$sid" ]]; then
+        sid="$(docker run "${d[@]}" "$OCBOX_IMAGE" \
+            opencode session list --standalone --format json -n 1 2>/dev/null \
+            | jq -r '.[0].id // empty' 2>/dev/null)"
+    fi
+    [[ -n "$sid" ]] || die "в песочнице нет сессий проекта: сначала 'ocbox shell' или 'ocbox run …'"
+
+    local out="$OCBOX_STATE_DIR/$(basename "$proj")-session-$(date +%Y%m%d-%H%M%S).json"
+    if ! docker run "${d[@]}" "$OCBOX_IMAGE" \
+            opencode session export --standalone "$sid" > "$out"; then
+        rm -f "$out"
+        die "экспорт сессии $sid не удался"
+    fi
+    [[ -s "$out" ]] || { rm -f "$out"; die "экспорт сессии $sid вернул пустой результат"; }
+    log "сессия $sid выгружена: $out"
+    log "импорт на хосте:  opencode session import $out"
+}
+
+cmd_status() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    docker ps -a --filter "label=ocbox.project=$proj" \
+        --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+    docker volume ls --filter "name=$(project_vol "$proj")" --format 'volume: {{.Name}}'
+}
+
+cmd_destroy() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local name vol; name="$(project_name "$proj")"; vol="$(project_vol "$proj")"
+    container_exists "$name" && docker rm -f "$name" >/dev/null
+    docker volume rm "$vol" >/dev/null 2>&1 || true
+    log "удалены контейнер $name и volume $vol"
+}
+
+usage() { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; }
+
+case "${1:-}" in
+    build)       shift; cmd_build "$@" ;;
+    doctor)      shift; cmd_doctor "$@" ;;
+    shell)       shift; cmd_shell "$@" ;;
+    run)         shift; cmd_run "$@" ;;
+    serve)       shift; cmd_serve "$@" ;;
+    pair)        shift; cmd_pair "$@" ;;
+    logs)        shift; cmd_logs "$@" ;;
+    stop)        shift; cmd_stop "$@" ;;
+    export)      shift; cmd_export "$@" ;;
+    sync-config) shift; sync_config "$(project_vol "$(resolve_project "${1:-$PWD}")")" ;;
+    status)      shift; cmd_status "$@" ;;
+    destroy)     shift; cmd_destroy "$@" ;;
+    ""|-h|--help|help) usage ;;
+    *)           die "неизвестная команда: $1 (см. ocbox --help)" ;;
+esac

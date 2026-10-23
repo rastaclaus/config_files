@@ -1,26 +1,32 @@
 #!/usr/bin/env bash
 #
-# ocbox — запуск OpenCode в одноразовом docker-контейнере с доступом только к
-# текущему проекту.
+# ocbox — запуск OpenCode в одноразовой изолированной среде с доступом только
+# к текущему проекту.
 #
-#   ocbox build                 собрать/обновить образ (после pacman -Syu на хосте!)
-#   ocbox doctor [--with-mcp]   проверить образ, монтирования и MCP
+#   ocbox [--backend docker|vm] <команда> …
+#
+#   ocbox build [dir]           собрать/обновить среду (после pacman -Syu на хосте!)
+#   ocbox doctor [dir]          проверить среду, монтирования и MCP
 #   ocbox shell [dir] [cmd…]    TUI opencode (или произвольная команда) в песочнице
 #   ocbox run [dir] <prompt>    opencode run без TUI
 #   ocbox serve [dir]           headless-сервер; хост-порт выбирается свободный (49380+)
 #   ocbox pair [dir]            ссылка/QR для подключения браузера к serve
-#   ocbox logs [dir]            лог serve-контейнера
-#   ocbox stop [dir]            остановить serve-контейнер
+#   ocbox logs [dir]            лог serve
+#   ocbox stop [dir]            остановить среду проекта (состояние сохраняется)
 #   ocbox export [dir] [id]     export сессии из песочницы в файл на хосте
-#   ocbox sync-config [dir]     перезалить ~/.config/opencode в volume проекта
+#   ocbox sync-config [dir]     перезалить ~/.config/opencode в песочницу
 #   ocbox status [dir]          что сейчас запущено
-#   ocbox destroy [dir]         удалить контейнер и volume проекта
+#   ocbox destroy [dir]         удалить среду проекта вместе с её состоянием
+#   ocbox config [get|set|path] настройки ocbox (~/.config/ocbox/config)
 #
 # Переменные:
+#   OCBOX_BACKEND=vm       бэкэнд по умолчанию (перекрывает конфиг)
 #   OCBOX_STRICT_CACHE=1   не монтировать хостовые кэши сборки
-#   OCBOX_MEMORY=12g       лимит памяти контейнера
+#   OCBOX_MEMORY=12g       лимит памяти
 #   OCBOX_CPUS=6           лимит CPU
-#   OCBOX_PIDS=4096        лимит процессов
+#   OCBOX_PIDS=4096        лимит процессов (только docker)
+#   OCBOX_VM_DISK=100      размер диска VM в GiB (только vm)
+#   OCBOX_SERVE_PORT=…     фиксированный хост-порт для serve
 set -euo pipefail
 
 SELF_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
@@ -28,9 +34,6 @@ SELF_DIR="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 source "$SELF_DIR/env.sh"
 
 CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/opencode"
-OCBOX_MEMORY="${OCBOX_MEMORY:-12g}"
-OCBOX_CPUS="${OCBOX_CPUS:-6}"
-OCBOX_PIDS="${OCBOX_PIDS:-4096}"
 SERVE_CONTAINER_PORT=49374
 SERVE_HOST_PORT="${OCBOX_SERVE_PORT:-}"
 
@@ -59,15 +62,24 @@ resolve_project() {
 
 project_vol()  { ocbox_volume_name "$1"; }
 project_name() { ocbox_container_name "$1"; }
+project_vm()   { ocbox_vm_name "$1"; }
 
-require_image() {
+# ---------------------------------------------------------------- docker ----
+docker_require() {
+    command -v docker >/dev/null 2>&1 \
+        || die "docker не найден в PATH (нужен для --backend docker)"
+    docker info >/dev/null 2>&1 \
+        || die "docker не отвечает (демон не запущен или нет прав)"
+}
+
+docker_require_image() {
     docker image inspect "$OCBOX_IMAGE" >/dev/null 2>&1 \
         || die "образ $OCBOX_IMAGE не собран: выполните 'ocbox build'"
 }
 
 # Копирует конфиг хоста в volume проекта (cp -L раскрывает merge-симлинки),
 # создаёт точки монтирования и выставляет владельца.
-sync_config() {
+docker_sync_config() {
     local vol="$1" d dirs="" stage
     docker volume create "$vol" >/dev/null
     # Точки монтирования для вложенных bind-монтирований должны существовать
@@ -128,9 +140,16 @@ docker_args() {
     printf '%s\0' "${a[@]}"
 }
 
-container_exists() { docker ps -a --format '{{.Names}}' | grep -qx "$1"; }
+docker_container_exists() { docker ps -a --format '{{.Names}}' | grep -qx "$1"; }
 
-cmd_build() {
+docker_sync_config_cmd() { # <proj>
+    docker_require_image
+    docker_sync_config "$(project_vol "$1")"
+    log "конфиг залит в volume $(project_vol "$1")"
+}
+
+docker_build() {
+    docker_require
     log "сборка $OCBOX_IMAGE (это займёт несколько минут)"
     docker build \
         --build-arg "OCBOX_UID=$OCBOX_UID" \
@@ -141,18 +160,18 @@ cmd_build() {
     log "glibc хоста : $(ldd --version | head -1)"
 }
 
-cmd_doctor() {
+docker_doctor() {
     bash "$SELF_DIR/preflight.sh" "$@"
 }
 
-cmd_shell() {
+docker_shell() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
-    require_image
+    docker_require_image
     if [[ $# -eq 0 && ! ( -t 0 && -t 1 ) ]]; then
         die "TUI требует терминал; без него используйте 'ocbox run \"…\"' или 'ocbox shell <dir> <команда>'"
     fi
     local -a d; mapfile -d '' -t d < <(docker_args "$proj")
-    sync_config "$(project_vol "$proj")"
+    docker_sync_config "$(project_vol "$proj")"
     local -a cmd=(opencode --standalone)
     [[ $# -gt 0 ]] && cmd=("$@")
     local -a tty=()
@@ -161,24 +180,24 @@ cmd_shell() {
         "$OCBOX_IMAGE" "${cmd[@]}"
 }
 
-cmd_run() {
+docker_run() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
     [[ $# -gt 0 ]] || die "нужен промпт: ocbox run [dir] \"…\""
-    require_image
+    docker_require_image
     local -a d; mapfile -d '' -t d < <(docker_args "$proj")
-    sync_config "$(project_vol "$proj")"
+    docker_sync_config "$(project_vol "$proj")"
     exec docker run "${d[@]}" "$OCBOX_IMAGE" \
         opencode run --standalone "$@"
 }
 
-cmd_serve() {
+docker_serve() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"
-    require_image
+    docker_require_image
     local name hport; name="$(project_name "$proj")"
-    container_exists "$name" && docker rm -f "$name" >/dev/null
+    docker_container_exists "$name" && docker rm -f "$name" >/dev/null
     hport="$(pick_serve_port)"
     local -a d; mapfile -d '' -t d < <(docker_args "$proj")
-    sync_config "$(project_vol "$proj")"
+    docker_sync_config "$(project_vol "$proj")"
     # Поднимаем управляемый сервис внутри контейнера (а не `opencode serve`):
     # только для управляемого сервиса работает `opencode pair` со ссылкой
     # для браузера. Контейнер держим живым через sleep.
@@ -204,30 +223,30 @@ cmd_serve() {
     log "одноразовая ссылка для входа: ocbox pair $proj"
 }
 
-serve_port_of() { # <container> -> хост-порт, опубликованный для контейнера
+docker_serve_port_of() { # <container> -> хост-порт, опубликованный для контейнера
     docker inspect --format '{{index .Config.Labels "ocbox.servePort"}}' "$1" 2>/dev/null
 }
 
-cmd_logs() {
+docker_logs() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"
     local name; name="$(project_name "$proj")"
-    container_exists "$name" || die "контейнер $name не запущен: сначала 'ocbox serve'"
+    docker_container_exists "$name" || die "контейнер $name не запущен: сначала 'ocbox serve'"
     docker logs "$name" 2>&1
 }
 
-cmd_stop() {
+docker_stop() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"
     local name; name="$(project_name "$proj")"
-    container_exists "$name" || { log "контейнер $name не запущен"; return 0; }
+    docker_container_exists "$name" || { log "контейнер $name не запущен"; return 0; }
     docker rm -f "$name" >/dev/null
     log "serve-контейнер $name остановлен (volume с сессиями сохранён)"
 }
 
-cmd_pair() {
+docker_pair() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"
     local name hport; name="$(project_name "$proj")"
-    container_exists "$name" || die "контейнер $name не запущен: сначала 'ocbox serve'"
-    hport="$(serve_port_of "$name")"
+    docker_container_exists "$name" || die "контейнер $name не запущен: сначала 'ocbox serve'"
+    hport="$(docker_serve_port_of "$name")"
     [[ -n "$hport" ]] || die "у контейнера $name нет опубликованного порта: перезапустите 'ocbox serve'"
     # --url: браузер на хосте видит сервер как 127.0.0.1:<host-port>,
     # а внутри контейнера сервер слушает <container-port>.
@@ -237,11 +256,11 @@ cmd_pair() {
         opencode pair --url "http://127.0.0.1:$hport"
 }
 
-cmd_export() {
+docker_export() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
-    require_image
+    docker_require_image
     local -a d; mapfile -d '' -t d < <(docker_args "$proj")
-    sync_config "$(project_vol "$proj")"
+    docker_sync_config "$(project_vol "$proj")"
     mkdir -p "$OCBOX_STATE_DIR"
 
     # Без явного ID берём самую свежую сессию проекта: `session export`
@@ -265,36 +284,454 @@ cmd_export() {
     log "импорт на хосте:  opencode session import $out"
 }
 
-cmd_status() {
+docker_status_cmd() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"
+    docker_require
     docker ps -a --filter "label=ocbox.project=$proj" \
         --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
     docker volume ls --filter "name=$(project_vol "$proj")" --format 'volume: {{.Name}}'
 }
 
-cmd_destroy() {
+docker_destroy() {
     local proj; proj="$(resolve_project "${1:-$PWD}")"
     local name vol; name="$(project_name "$proj")"; vol="$(project_vol "$proj")"
-    container_exists "$name" && docker rm -f "$name" >/dev/null
+    docker_require
+    docker_container_exists "$name" && docker rm -f "$name" >/dev/null
     docker volume rm "$vol" >/dev/null 2>&1 || true
     log "удалены контейнер $name и volume $vol"
 }
 
-usage() { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; }
+# ------------------------------------------------------------------- lima ----
+# Одна VM на проект: имя ocbox-<slug>-vm, гость Arch с тем же пользователем
+# UID/GID и тем же $HOME, что на хосте (иначе пути pyenv/uv-симлинков ломаются).
+# Состояние (~/.local/share/opencode и прочий home) лежит на диске гостя —
+# диск переживает stop/start и удаляется только вместе с VM (`ocbox destroy`).
 
-case "${1:-}" in
-    build)       shift; cmd_build "$@" ;;
-    doctor)      shift; cmd_doctor "$@" ;;
-    shell)       shift; cmd_shell "$@" ;;
-    run)         shift; cmd_run "$@" ;;
-    serve)       shift; cmd_serve "$@" ;;
-    pair)        shift; cmd_pair "$@" ;;
-    logs)        shift; cmd_logs "$@" ;;
-    stop)        shift; cmd_stop "$@" ;;
-    export)      shift; cmd_export "$@" ;;
-    sync-config) shift; sync_config "$(project_vol "$(resolve_project "${1:-$PWD}")")" ;;
-    status)      shift; cmd_status "$@" ;;
-    destroy)     shift; cmd_destroy "$@" ;;
-    ""|-h|--help|help) usage ;;
-    *)           die "неизвестная команда: $1 (см. ocbox --help)" ;;
-esac
+# limactl по умолчанию шумит warning'ами в stderr (например, про версию
+# шаблона). Для повседневных вызовов глушим до error; OCBOX_LIMA_LOG_LEVEL=info
+# возвращает подробный вывод.
+ocb_lima() { limactl --log-level "${OCBOX_LIMA_LOG_LEVEL:-error}" "$@"; }
+
+lima_require() {
+    command -v limactl >/dev/null 2>&1 \
+        || die "limactl не найден: установите lima (yay -S lima)"
+}
+
+vm_has_kvm() { [[ -e /dev/kvm ]] && [[ -r /dev/kvm ]] && [[ -w /dev/kvm ]]; }
+
+vm_instance_dir() { printf '%s/%s' "${LIMA_HOME:-$HOME/.lima}" "$1"; }
+
+vm_state_dir() { printf '%s/vm-%s' "$OCBOX_STATE_DIR" "$(ocbox_slug "$1")"; }
+
+vm_exists() { lima_require; ocb_lima list --quiet 2>/dev/null | grep -qx "$1"; }
+
+# limactl list --format json печатает по объекту на строку (не JSON-массив).
+# stderr глушим: limactl сыпет warning'ами вроде "treating lima version ...".
+vm_status() { ocb_lima list --format '{{.Status}}' "$1" 2>/dev/null | head -1; }
+
+# Запуск VM. Lima 2.2.1 может вернуть fatal "did not receive an event with the
+# `running` status", хотя VM уже поднялась и провижининг отработал (в TCG
+# событие не успевает за таймаут). Поэтому ошибку проверяем по факту статуса.
+vm_start() { # <inst> [yaml]
+    local inst="$1" yaml="${2:-}" rc=0
+    if [[ -n "$yaml" ]]; then
+        ocb_lima start --tty=false --name="$inst" "$yaml" >&2 || rc=$?
+    else
+        ocb_lima start --tty=false "$inst" >&2 || rc=$?
+    fi
+    [[ $rc -eq 0 ]] && return 0
+    if [[ "$(vm_status "$inst")" == "Running" ]]; then
+        log "limactl вернул ошибку ожидания, но VM $inst запущена — продолжаю"
+        return 0
+    fi
+    die "не удалось запустить VM $inst (код $rc)"
+}
+
+vm_running() { [[ "$(vm_status "$1")" == "Running" ]]; }
+
+vm_port_of() { cat "$(vm_state_dir "$1")/port" 2>/dev/null || true; }
+
+vm_write_port() { # <proj> <port>
+    local dir; dir="$(vm_state_dir "$1")"
+    mkdir -p "$dir"
+    printf '%s\n' "$2" > "$dir/port"
+}
+
+# Записывает lima.yaml проекта в state-каталог ocbox (не в каталог инстанса:
+# тот создаёт limactl). YAML — исходник для `limactl start --name=…`.
+vm_write_yaml() { # <proj> <port>
+    local proj="$1" port="$2" dir
+    dir="$(vm_state_dir "$proj")"
+    mkdir -p "$dir"
+    ocbox_vm_yaml "$proj" "$port" > "$dir/lima.yaml"
+}
+
+# Экспорт окружения гостя в виде строк `export KEY=value;` с корректным
+# квотированием (значения могут содержать пробелы и спецсимволы).
+vm_env_exports() {
+    local k v term="${TERM:-xterm-256color}"
+    while IFS='=' read -r -d '' k v; do
+        printf 'export %s=%q;\n' "$k" "$v"
+    done < <(ocbox_vm_env_args)
+    printf 'export TERM=%q;\n' "$term"
+    [[ -n "${COLORTERM:-}" ]] && printf 'export COLORTERM=%q;\n' "$COLORTERM"
+}
+
+vm_shell_script() { # <inst> <workdir> <script>
+    local inst="$1" wd="$2" script="$3"
+    ocb_lima shell --workdir "$wd" "$inst" bash -lc "$(vm_env_exports)
+$script"
+}
+
+vm_exec() { # <inst> <workdir> <cmd…>
+    local inst="$1" wd="$2"; shift 2
+    local -a q=() a
+    for a in "$@"; do q+=( "$(printf '%q' "$a")" ); done
+    vm_shell_script "$inst" "$wd" "exec ${q[*]}"
+}
+
+# Создаёт VM проекта (если её нет) и дожидается готовности.
+vm_ensure_created() { # <proj>
+    local proj="$1" inst port
+    inst="$(project_vm "$proj")"
+    vm_exists "$inst" && return 0
+
+    port="$(vm_port_of "$proj")"
+    [[ -n "$port" ]] || port="$(pick_serve_port)"
+    vm_write_port "$proj" "$port"
+    vm_write_yaml "$proj" "$port"
+
+    vm_has_kvm || log "KVM недоступен: QEMU работает в режиме TCG (значительно медленнее)"
+    log "создание VM $inst (первый запуск скачивает образ и ставит пакеты)"
+    vm_start "$inst" "$(vm_state_dir "$proj")/lima.yaml"
+    log "VM $inst готова"
+}
+
+vm_ensure_running() { # <proj>
+    local proj="$1" inst
+    inst="$(project_vm "$proj")"
+    vm_ensure_created "$proj"
+    vm_running "$inst" && return 0
+    log "запуск VM $inst"
+    vm_start "$inst"
+}
+
+# Заливает ~/.config/opencode хоста в home гостя. service.json гостя
+# сохраняется: у песочницы свой пароль web-сервиса.
+vm_sync_config() { # <proj>
+    local proj="$1" inst stage_root stage f
+    inst="$(project_vm "$proj")"
+    vm_ensure_running "$proj"
+
+    stage_root="$(mktemp -d "${TMPDIR:-/tmp}/ocbox-config.XXXXXX")"
+    # shellcheck disable=SC2064
+    trap "rm -rf '$stage_root'" RETURN
+    stage="$stage_root/ocbox-config"
+    # cp -aL раскрывает merge-симлинки репозитория в обычное дерево: внутрь
+    # уезжает готовый конфиг, а не ссылки на каталог репозитория.
+    cp -aL "$CONFIG_DIR" "$stage"
+    rm -f "$stage/service.json"
+
+    vm_shell_script "$inst" "$OCBOX_HOME" '
+        mkdir -p "$HOME/.config"
+        rm -rf /tmp/ocbox-config
+    ' >/dev/null
+    ocb_lima copy -r "$stage" "$inst:/tmp/ocbox-config" >/dev/null
+    vm_shell_script "$inst" "$OCBOX_HOME" '
+        set -e
+        svc=""
+        if [ -f "$HOME/.config/opencode/service.json" ]; then
+            svc="$(cat "$HOME/.config/opencode/service.json")"
+        fi
+        rm -rf "$HOME/.config/opencode"
+        mv /tmp/ocbox-config "$HOME/.config/opencode"
+        if [ -n "$svc" ]; then printf "%s" "$svc" > "$HOME/.config/opencode/service.json"; fi
+    ' >/dev/null
+
+    # ~/.gitconfig — файл, а mount в Lima умеет только каталоги: копируем.
+    # Только если копии ещё нет, чтобы не затирать правки, сделанные в VM.
+    for f in "${OCBOX_RO_FILES[@]}"; do
+        [[ -f "$f" ]] || continue
+        vm_shell_script "$inst" "$OCBOX_HOME" "[ -f $(printf '%q' "$f") ]" >/dev/null 2>&1 && continue
+        ocb_lima copy "$f" "$inst:$f" >/dev/null 2>&1 || true
+    done
+}
+
+vm_build() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    lima_require
+    local inst; inst="$(project_vm "$proj")"
+
+    if ! vm_has_kvm; then
+        log "KVM недоступен (/dev/kvm): QEMU будет работать в TCG — режим заметно медленнее"
+    fi
+
+    local had_vm=0
+    vm_exists "$inst" && had_vm=1
+    vm_ensure_running "$proj"
+
+    if [[ $had_vm -eq 1 ]]; then
+        # Пере-прогон провижининга = аналог docker build: pacman -Syu и пакеты.
+        # При первом создании провижининг уже отработал, повторять не нужно.
+        log "обновление пакетов в VM $inst (аналог pacman -Syu в образе)"
+        vm_shell_script "$inst" "$OCBOX_HOME" 'sudo rm -f /var/lib/ocbox-provisioned' >/dev/null
+        ocb_lima stop "$inst" >/dev/null 2>&1 || true
+        vm_start "$inst"
+    fi
+    vm_sync_config "$proj"
+    log "гость : $(vm_exec "$inst" "$OCBOX_HOME" ldd --version | head -1)"
+    log "хост  : $(ldd --version | head -1)"
+}
+
+
+vm_sync_config_cmd() { # <proj>
+    vm_sync_config "$1"
+    log "конфиг залит в VM $(project_vm "$1")"
+}
+
+vm_doctor() {
+    bash "$SELF_DIR/preflight.sh" "$@"
+}
+
+vm_shell() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
+    vm_ensure_running "$proj"
+    local inst; inst="$(project_vm "$proj")"
+    if [[ $# -eq 0 && ! ( -t 0 && -t 1 ) ]]; then
+        die "TUI требует терминал; без него используйте 'ocbox run \"…\"' или 'ocbox shell <dir> <команда>'"
+    fi
+    vm_sync_config "$proj"
+    local -a cmd=(opencode --standalone)
+    [[ $# -gt 0 ]] && cmd=("$@")
+    vm_exec "$inst" "$proj" "${cmd[@]}"
+}
+
+vm_run() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
+    [[ $# -gt 0 ]] || die "нужен промпт: ocbox run [dir] \"…\""
+    vm_ensure_running "$proj"
+    local inst; inst="$(project_vm "$proj")"
+    vm_sync_config "$proj"
+    vm_exec "$inst" "$proj" opencode run --standalone "$@"
+}
+
+# Меняет статический portForward. limactl edit работает только на
+# остановленной VM, поэтому при необходимости гасим и поднимаем её обратно.
+vm_set_port() { # <proj> <port>
+    local proj="$1" port="$2" inst was_running=0
+    inst="$(project_vm "$proj")"
+    vm_running "$inst" && was_running=1
+    [[ $was_running -eq 1 ]] && ocb_lima stop "$inst" >/dev/null
+    ocb_lima edit --tty=false --set ".portForwards[0].hostPort = $port" "$inst" >/dev/null
+    vm_write_port "$proj" "$port"
+    [[ $was_running -eq 1 ]] && vm_start "$inst"
+    return 0
+}
+
+vm_serve() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local inst; inst="$(project_vm "$proj")"
+    vm_ensure_created "$proj"
+
+    # Порт зашит в portForwards (статический forward). Если пользователь задал
+    # OCBOX_SERVE_PORT и он отличается — правим конфиг на остановленной VM.
+    local hport; hport="$(vm_port_of "$proj")"
+    [[ -n "$hport" ]] || die "не знаю хост-порт VM: пересоздайте её через 'ocbox build'"
+    if [[ -n "$SERVE_HOST_PORT" && "$SERVE_HOST_PORT" != "$hport" ]]; then
+        log "меняю хост-порт VM: $hport -> $SERVE_HOST_PORT"
+        vm_set_port "$proj" "$SERVE_HOST_PORT"
+        hport="$SERVE_HOST_PORT"
+    fi
+    vm_ensure_running "$proj"
+
+    vm_sync_config "$proj"
+    vm_shell_script "$inst" "$OCBOX_HOME" "
+        set -e
+        opencode service set hostname 0.0.0.0
+        opencode service set port $SERVE_CONTAINER_PORT
+        opencode service start >/dev/null 2>&1 || opencode service restart >/dev/null
+    " >/dev/null
+
+    local pw=""
+    for _ in $(seq 1 20); do
+        pw="$(vm_shell_script "$inst" "$OCBOX_HOME" \
+            'jq -r .password "$HOME/.config/opencode/service.json" 2>/dev/null || true' 2>/dev/null || true)"
+        [[ -n "$pw" && "$pw" != "null" ]] && break
+        sleep 1
+    done
+
+    log "сервер запущен: http://127.0.0.1:$hport"
+    [[ -n "$pw" ]] && log "пароль сервера: $pw"
+    log "одноразовая ссылка для входа: ocbox pair $proj"
+}
+
+vm_logs() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local inst; inst="$(project_vm "$proj")"
+    vm_exists "$inst" || die "VM $inst не создана: сначала 'ocbox serve'"
+    vm_running "$inst" || die "VM $inst остановлена: сначала 'ocbox serve'"
+    vm_shell_script "$inst" "$OCBOX_HOME" \
+        'f="$HOME/.local/share/opencode/log/opencode.log"; if [ -f "$f" ]; then cat "$f"; else echo "лог пуст: сервис ещё не запускался"; fi'
+}
+
+vm_stop() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local inst; inst="$(project_vm "$proj")"
+    lima_require
+    vm_exists "$inst" || { log "VM $inst не создана"; return 0; }
+    vm_running "$inst" || { log "VM $inst уже остановлена"; return 0; }
+    ocb_lima stop "$inst" >/dev/null
+    log "VM $inst остановлена (диск с сессиями сохранён)"
+}
+
+vm_pair() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local inst hport; inst="$(project_vm "$proj")"
+    vm_exists "$inst" || die "VM $inst не создана: сначала 'ocbox serve'"
+    vm_running "$inst" || die "VM $inst остановлена: сначала 'ocbox serve'"
+    hport="$(vm_port_of "$proj")"
+    [[ -n "$hport" ]] || die "не знаю хост-порт VM: пересоздайте её через 'ocbox build'"
+    # Браузер на хосте видит сервер как 127.0.0.1:<hport> (статический
+    # portForward guest:49374), внутри гостя сервер слушает 49374.
+    vm_exec "$inst" "$OCBOX_HOME" opencode pair --url "http://127.0.0.1:$hport"
+}
+
+vm_export() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"; shift || true
+    vm_ensure_running "$proj"
+    local inst; inst="$(project_vm "$proj")"
+    vm_sync_config "$proj"
+    mkdir -p "$OCBOX_STATE_DIR"
+
+    local sid="${1:-}"
+    if [[ -z "$sid" ]]; then
+        sid="$(vm_exec "$inst" "$proj" opencode session list --standalone --format json -n 1 2>/dev/null \
+            | jq -r '.[0].id // empty' 2>/dev/null)"
+    fi
+    [[ -n "$sid" ]] || die "в песочнице нет сессий проекта: сначала 'ocbox shell' или 'ocbox run …'"
+
+    local out="$OCBOX_STATE_DIR/$(basename "$proj")-session-$(date +%Y%m%d-%H%M%S).json"
+    if ! vm_exec "$inst" "$proj" opencode session export --standalone "$sid" > "$out"; then
+        rm -f "$out"
+        die "экспорт сессии $sid не удался"
+    fi
+    [[ -s "$out" ]] || { rm -f "$out"; die "экспорт сессии $sid вернул пустой результат"; }
+    log "сессия $sid выгружена: $out"
+    log "импорт на хосте:  opencode session import $out"
+}
+
+vm_status_cmd() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local inst; inst="$(project_vm "$proj")"
+    lima_require
+    if vm_exists "$inst"; then
+        ocb_lima list "$inst" 2>/dev/null
+        printf 'vm: %s  port: %s\n' "$inst" "$(vm_port_of "$proj")"
+    else
+        log "VM $inst не создана (ocbox build)"
+    fi
+}
+
+vm_destroy() {
+    local proj; proj="$(resolve_project "${1:-$PWD}")"
+    local inst dir; inst="$(project_vm "$proj")"
+    lima_require
+    if vm_exists "$inst"; then
+        ocb_lima stop "$inst" >/dev/null 2>&1 || true
+        ocb_lima delete --force "$inst" >/dev/null
+    fi
+    dir="$(vm_state_dir "$proj")"
+    rm -rf "$dir"
+    log "удалена VM $inst вместе с её диском и состоянием"
+}
+
+# -------------------------------------------------------------- dispatch ----
+usage() {
+    sed -n '2,/^set -euo pipefail/p' "$0" \
+        | sed -e 's/^# \{0,1\}//' -e '$d'
+}
+
+config_cmd() {
+    local sub="${1:-get}"; shift || true
+    case "$sub" in
+        get)
+            if [[ $# -eq 0 ]]; then
+                printf 'backend=%s\n' "$(ocbox_backend)"
+                printf 'config=%s\n' "$OCBOX_CONFIG_FILE"
+                return 0
+            fi
+            ocbox_config_get "$1"
+            ;;
+        set)
+            [[ $# -eq 2 ]] || die "usage: ocbox config set <key> <value>"
+            if [[ "$1" == "backend" ]]; then
+                case "$2" in
+                    docker|vm) ;;
+                    *) die "backend должен быть docker или vm (получено: $2)" ;;
+                esac
+            fi
+            ocbox_config_set "$1" "$2"
+            log "сохранено: $1=$2 ($OCBOX_CONFIG_FILE)"
+            ;;
+        path) printf '%s\n' "$OCBOX_CONFIG_FILE" ;;
+        *) die "usage: ocbox config [get [key] | set <key> <value> | path]" ;;
+    esac
+}
+
+main() {
+    local -a args=()
+    local backend_flag=""
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --backend)
+                [[ $# -ge 2 ]] || die "--backend требует значение: docker|vm"
+                backend_flag="$2"; shift 2 ;;
+            --backend=*) backend_flag="${1#*=}"; shift ;;
+            *) args+=("$1"); shift ;;
+        esac
+    done
+    set -- "${args[@]}"
+    [[ $# -gt 0 ]] || { usage; exit 0; }
+
+    local cmd="$1"; shift
+
+    case "$cmd" in
+        -h|--help|help) usage; exit 0 ;;
+        config)
+            config_cmd "$@"
+            return 0 ;;
+    esac
+
+    if [[ -n "$backend_flag" ]]; then
+        case "$backend_flag" in
+            docker|vm) ;;
+            *) die "--backend должен быть docker или vm (получено: $backend_flag)" ;;
+        esac
+        ocbox_config_set backend "$backend_flag"
+    fi
+
+    local backend; backend="$(ocbox_backend)"
+    case "$backend" in
+        docker|vm) ;;
+        *) die "в конфиге неизвестный backend='$backend' (ожидается docker или vm)" ;;
+    esac
+    export OCBOX_BACKEND="$backend"
+
+    case "$cmd" in
+        build)       "${backend}_build" "$@" ;;
+        doctor)      "${backend}_doctor" "$@" ;;
+        shell)       "${backend}_shell" "$@" ;;
+        run)         "${backend}_run" "$@" ;;
+        serve)       "${backend}_serve" "$@" ;;
+        pair)        "${backend}_pair" "$@" ;;
+        logs)        "${backend}_logs" "$@" ;;
+        stop)        "${backend}_stop" "$@" ;;
+        export)      "${backend}_export" "$@" ;;
+        status)      "${backend}_status_cmd" "$@" ;;
+        destroy)     "${backend}_destroy" "$@" ;;
+        sync-config) "${backend}_sync_config_cmd" "$(resolve_project "${1:-$PWD}")" ;;
+        *)           die "неизвестная команда: $cmd (см. ocbox --help)" ;;
+    esac
+}
+
+main "$@"

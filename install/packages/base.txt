@@ -1,0 +1,99 @@
+# Official-repo packages installed on EVERY host (including the headless one).
+# One package per line; '#' starts a comment.
+#   gui.txt  -> Wayland/GUI only
+#   dev.txt  -> dev/DevOps tooling (gui profile; opt-in for headless hosts)
+#   hosts/<host>/packages.txt -> host-specific extras
+
+# --- base system / build ---
+base                        # минимальная базовая система Arch
+base-devel                  # инструменты сборки пакетов (gcc, make, patch, fakeroot)
+git                         # распределённая система контроля версий
+git-lfs                     # работа с большими файлами в Git (Large File Storage)
+git-delta                   # подсветка diff для git и lazygit
+openssh                     # SSH-клиент и сервер, ssh-keygen
+rsync                       # инкрементальная синхронизация файлов
+curl                        # HTTP-клиент для терминала
+wget                        # загрузчик файлов по сети
+jq                          # обработка JSON из командной строки
+tree                        # вывод дерева каталогов
+less                        # постраничный просмотр файлов (pager)
+man-db                      # система man-страниц
+unzip                       # распаковка .zip
+7zip                        # архиватор (7z, zip, rar и др.)
+unrar                       # распаковка .rar
+htop                        # интерактивный монитор процессов
+pkgconf                     # утилита pkg-config для флагов сборки
+make                        # сборка проектов по Makefile
+cmake                       # генератор систем сборки (C/C++)
+clang                       # компилятор C/C++ из LLVM
+lld                         # быстрый линкер LLVM
+pacman-contrib              # paccache/pactree: чистка кэша pacman, анализ зависимостей
+
+# --- shell / prompt / navigation ---
+fish                        # интерактивный shell (основной в этом репо)
+tmux                        # мультиплексор терминала
+fzf                         # нечёткий поиск по строкам/файлам
+fd                          # быстрый аналог find
+ripgrep                     # быстрый аналог grep (rg)
+direnv                      # автозагрузка переменных окружения из .envrc
+yazi                        # TUI-файловый менеджер
+
+# --- editors + LSP / formatters (node LSPs come from pacman, not npm) ---
+helix                       # редактор (конфиг в helix/)
+lua-language-server         # LSP для Lua
+lua-jsregexp                # regexp-движок для Lua LSP (Lua 5.4/5.3)
+lua51-jsregexp              # regexp-движок для Lua LSP (Lua 5.1)
+stylua                      # форматтер Lua
+selene                      # линтер Lua
+shfmt                       # форматтер shell-скриптов
+vim-devicons                # иконки для файловых плагинов vim
+marksman                    # LSP для Markdown
+tombi                       # LSP и форматтер для TOML
+gopls                       # официальный LSP для Go
+rust-analyzer               # LSP для Rust
+bash-language-server        # LSP для Bash
+dockerfile-language-server  # LSP для Dockerfile
+vscode-json-languageserver  # LSP для JSON
+yaml-language-server        # LSP для YAML
+prettier                    # форматтер JS/TS/JSON/CSS/Markdown
+
+# --- languages / runtimes ---
+go                          # язык Go и его toolchain
+rustup                      # менеджер toolchain Rust
+cargo-expand                # показ макросов после раскрытия (cargo expand)
+nodejs                      # среда выполнения JavaScript
+npm                         # менеджер пакетов Node.js
+yarn                        # альтернативный менеджер пакетов Node.js
+python                      # интерпретатор Python 3
+python-pip                  # менеджер пакетов pip
+python-setuptools           # сборка/установка Python-пакетов (setup.py)
+python-debugpy              # отладчик Python (DAP)
+python-pillow               # работа с изображениями (PIL)
+python-psutil               # информация о процессах и системе
+python-pynvim               # Python-провайдер для Neovim
+python-pyopenssl            # Python-биндинги OpenSSL
+python-requests             # HTTP-клиент для Python
+python-scipy                # научные вычисления для Python
+python-yaml                 # парсер YAML для Python
+uv                          # быстрый менеджер Python-пакетов и venv
+pyenv                       # управление версиями Python
+luarocks                    # менеджер пакетов Lua
+tree-sitter                 # библиотека инкрементального парсинга
+
+# --- cli helpers ---
+opencode                    # AI-агент для терминала (конфиг в opencode/)
+glow                        # рендер Markdown в терминале
+tree-sitter-cli             # CLI для сборки/тестирования грамматик tree-sitter
+imagemagick                 # обработка изображений (convert, magick)
+github-cli                  # официальный CLI GitHub (gh)
+lazygit                     # TUI для Git
+mercurial                   # распределённая VCS (hg)
+httpie                      # дружелюбный HTTP-клиент (http)
+
+# --- containers / orchestration ---
+# Держим в base: docker и kubectl нужны на каждом хосте, включая headless.
+# GUI-зависимостей нет (проверено по sync-базе: ни chromium, ни gtk, ни mesa).
+docker                      # контейнеризация (демон + CLI)
+docker-buildx               # плагин BuildKit для сборки образов
+docker-compose              # запуск многоконтейнерных приложений (v2 CLI)
+kubectl                     # CLI для Kubernetes

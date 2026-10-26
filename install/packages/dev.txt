@@ -1,0 +1,18 @@
+# Dev / DevOps tooling.
+# Installed for profile=gui by default. A headless host can opt in by listing
+# the wanted packages in its own hosts/<host>/packages.txt.
+# One package per line; '#' starts a comment.
+
+# --- containers / virtualisation / cloud ---
+buildah          # сборка OCI-образов без демона
+libvirt          # API/демон виртуализации (QEMU/KVM)
+qemu-base        # эмуляция и виртуализация QEMU (без GUI)
+postgresql-libs  # клиентские библиотеки PostgreSQL
+bind             # DNS-сервер и утилиты (dig, nslookup)
+
+# --- networking / debugging ---
+tcpdump          # перехват и анализ сетевого трафика
+openbsd-netcat   # nc для отладки TCP/UDP
+sshfs            # монтирование удалённых ФС через SSH
+speedtest-cli    # замер скорости интернета
+scanmem          # поиск и правка значений в памяти процессов

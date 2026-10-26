@@ -1,0 +1,4 @@
+# Extra official-repo packages specific to host "alen" (laptop).
+# One package per line. Examples:
+#   amd-ucode        # микрокод CPU AMD (выбрать по вендору: intel-ucode для Intel)
+#   linux-headers    # заголовки ядра для dkms и внешних модулей

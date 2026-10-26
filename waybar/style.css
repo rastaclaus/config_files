@@ -1,0 +1,68 @@
+/* Waybar style for sway and niri.
+ *
+ * Colors are declared with @define-color so the light/dark theme scripts
+ * (dark-mode.d/waybar-theme.sh, light-mode.d/waybar-theme.sh) can switch them
+ * with a simple sed. Waybar reloads the style automatically because
+ * reload_style_on_change is enabled in config-common.jsonc.
+ */
+
+@define-color bar_bg #fbf1c7;
+@define-color bar_fg #3c3836;
+@define-color bar_accent #b57614;
+@define-color bar_inactive #928374;
+@define-color bar_critical #9d0006;
+
+* {
+    font-family: "Source Code Pro", monospace;
+    font-size: 14px;
+    min-height: 0;
+}
+
+window#waybar {
+    background-color: @bar_bg;
+    color: @bar_fg;
+}
+
+#workspaces button {
+    padding: 0 6px;
+    color: @bar_inactive;
+    background: transparent;
+    border: none;
+}
+
+#workspaces button.focused,
+#workspaces button.active {
+    color: @bar_accent;
+}
+
+#workspaces button.urgent {
+    color: @bar_critical;
+}
+
+#clock,
+#cpu,
+#memory,
+#custom-weather,
+#battery,
+#tray,
+#window {
+    padding: 0 8px;
+    color: @bar_fg;
+}
+
+#cpu.critical,
+#memory.critical {
+    color: @bar_critical;
+}
+
+/* Battery: status classes are charging/discharging/full/plugged, and "state"
+ * classes (warning/critical) come from the module's "states" thresholds. */
+#battery.charging,
+#battery.plugged,
+#battery.warning:not(.charging) {
+    color: @bar_accent;
+}
+
+#battery.critical:not(.charging) {
+    color: @bar_critical;
+}

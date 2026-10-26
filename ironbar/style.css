@@ -1,0 +1,71 @@
+/* Ironbar style for sway and niri.
+ *
+ * Здесь только структура. Палитра (@define-color) приходит из
+ * ~/.local/state/dotfiles/ironbar/colors.css через обёртку, которую
+ * генерирует wayland/theme-sync. Запуск:
+ *   ironbar -t ~/.local/state/dotfiles/ironbar/style.css
+ * Ironbar следит за обёрткой и перезагружает CSS вместе с импортами.
+ */
+
+* {
+    font-family: "Source Code Pro", monospace;
+    font-size: 14px;
+    border: none;
+    box-shadow: none;
+    background-image: none;
+}
+
+.background {
+    background-color: @bar_bg;
+    color: @bar_fg;
+}
+
+#bar {
+    padding: 0 6px;
+}
+
+/* Every module sits in a .widget-container; keep a small even padding. */
+.widget-container {
+    padding: 0 4px;
+}
+
+/* Space out the right-hand (end) modules. */
+#end > * + * {
+    margin-left: 0.75em;
+}
+
+.workspaces .item {
+    color: @bar_inactive;
+}
+
+.workspaces .item.focused {
+    color: @bar_accent;
+}
+
+.workspaces .item.urgent {
+    color: @bar_critical;
+}
+
+.clock,
+.sysinfo,
+.script,
+.battery,
+.focused,
+.tray {
+    color: @bar_fg;
+}
+
+/* Battery: charged/charging accent, low/critical in the alert color. */
+.battery.charging,
+.battery.plugged,
+.battery.warning {
+    color: @bar_accent;
+}
+
+.battery.critical {
+    color: @bar_critical;
+}
+
+.popup-clock .calendar-clock {
+    font-size: 2em;
+}

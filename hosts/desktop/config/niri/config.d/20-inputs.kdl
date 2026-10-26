@@ -1,0 +1,15 @@
+// Host: desktop (hostname: adesk)
+// Host-specific input devices and pointer tuning.
+
+input {
+    keyboard {
+        repeat-delay 120
+        repeat-rate 90
+    }
+
+    // Optical mouse: scroll by holding the middle button.
+    mouse {
+        scroll-button 274
+        scroll-method "on-button-down"
+    }
+}

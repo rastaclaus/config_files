@@ -1,0 +1,11 @@
+// Physical outputs / monitor layout.
+//
+// This is the shared default (let niri configure outputs automatically). A host
+// that needs a specific layout ships its own copy of this file from
+// hosts/<host>/config/niri/config.d/10-outputs.kdl and the installer merges it
+// over this one.
+
+// output "eDP-1" {
+//     mode "1920x1080"
+//     scale 1
+// }

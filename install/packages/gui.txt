@@ -1,0 +1,79 @@
+# GUI / Wayland session packages. Installed only for profile=gui.
+
+# --- compositor + helpers ---
+sway                         # Wayland-композитор (i3-подобный; конфиг sway/)
+niri                         # Wayland-композитор со скроллящимися колонками (конфиг niri/)
+ironbar                      # панель статуса для Wayland (GTK4, конфиг ironbar/)
+waybar                       # панель статуса для Wayland (fallback для ironbar)
+xwayland-satellite           # Xwayland-сервер для niri
+awww                         # менеджер обоев Wayland (layer-shell): основной
+swaybg                       # установка обоев рабочего стола (fallback для awww)
+swayidle                     # реакция на простой (блокировка/гашение экрана)
+swaylock                     # экран блокировки
+swaync                       # центр уведомлений
+gammastep                    # сдвиг цветовой температуры (night light)
+brightnessctl                # управление яркостью подсветки
+geoclue                      # служба геолокации (для гаммы по солнцу)
+mesa-utils                   # утилиты Mesa (glxinfo, eglinfo)
+vulkan-mesa-layers           # слои Vulkan для драйверов Mesa
+radeontop                    # мониторинг GPU AMD
+
+# --- terminal / launcher ---
+ghostty                      # основной терминал (конфиг ghostty/)
+alacritty                    # терминал на GPU (конфиг alacritty/)
+rofi                         # лаунчер и меню (конфиг rofi/)
+rofi-emoji                   # плагин эмодзи для rofi
+
+# --- browser ---
+# Объявлен явно: на него ссылаются applications/chromium-{wayland,proxy}.
+# Раньше приезжал транзитивно как зависимость mermaid-cli.
+chromium                     # браузер (обёртки Wayland/прокси в applications/)
+
+# --- messengers / chat ---
+telegram-desktop             # мессенджер Telegram (Qt6)
+element-desktop              # клиент Matrix (Element, electron)
+mattermost-desktop           # клиент Mattermost (electron)
+
+# --- diagrams / previews (gui only: тянут chromium и opencv/ffmpeg) ---
+mermaid-cli                  # рендер диаграмм Mermaid (mmdc) -> chromium
+ueberzugpp                   # превью изображений в терминале (для yazi)
+
+# --- theme / appearance ---
+darkman                      # автопереключение светлой/тёмной темы
+adw-gtk-theme                # тема GTK-приложений в стиле Adwaita (dark/light)
+
+# --- fonts ---
+noto-fonts                   # базовые шрифты Noto
+noto-fonts-emoji             # шрифт эмодзи Noto Color Emoji
+adobe-source-code-pro-fonts  # моноширинный шрифт Source Code Pro
+ttf-dejavu-nerd              # Nerd Font на базе DejaVu
+ttf-nerd-fonts-symbols       # только иконки Nerd Fonts (fallback для терминала)
+ttf-jetbrains-mono           # шрифт JetBrains Mono
+ttf-roboto                   # шрифт Roboto
+terminus-font                # моноширинный шрифт Terminus (консоль)
+
+# --- network ---
+networkmanager               # демон управления сетью
+networkmanager-openvpn       # плагин OpenVPN для NetworkManager (см. vpn/)
+network-manager-applet       # трей-апплет NetworkManager
+libnma-gtk4                  # библиотека диалогов NetworkManager (GTK4)
+blueman                      # GUI для управления Bluetooth
+bluez-utils                  # утилиты Bluetooth (bluetoothctl)
+
+# --- audio ---
+pipewire                     # звуковой сервер
+pipewire-alsa                # поддержка ALSA через PipeWire
+pipewire-pulse               # совместимость с PulseAudio
+wireplumber                  # менеджер сессий PipeWire
+pavucontrol                  # микшер и управление звуком (GUI)
+
+# --- wayland utils / portals / notifications ---
+wl-clipboard                 # буфер обмена в Wayland (wl-copy/wl-paste)
+wtype                        # эмуляция ввода с клавиатуры в Wayland
+grim                         # скриншоты в Wayland
+slurp                        # выбор области экрана (для grim)
+libnotify                    # отправка уведомлений (notify-send)
+xorg-xwayland                # сервер X11 для запуска X-приложений
+xdg-desktop-portal           # шлюз к системным сервисам для приложений
+xdg-desktop-portal-gtk       # GTK-бэкенд порталов
+xdg-desktop-portal-gnome     # GNOME-бэкенд порталов

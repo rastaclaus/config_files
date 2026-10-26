@@ -1,0 +1,8 @@
+# AUR dev / DevOps tooling. Installed for profile=gui by default.
+
+nodejs-compose-language-service        # LSP для docker-compose
+bridge-utils                           # утилиты для сетевых мостов (brctl)
+bun-bin                                # быстрый JS/TS-рантайм и менеджер пакетов
+mongodb-tools-bin                      # CLI MongoDB (mongodump, mongorestore и др.)
+mongosh-bin                            # оболочка MongoDB
+multipass                              # запуск VM Ubuntu из CLI

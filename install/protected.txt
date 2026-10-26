@@ -1,0 +1,53 @@
+# Пакеты, которые cleanup.sh не удаляет никогда — даже если их нет ни в одном
+# манифесте. Здесь только системный минимум: ядро, загрузчик, сеть, авторизация.
+#
+# Обычные приложения сюда НЕ относятся: их место — hosts/<host>/keep.txt.
+# Формат: одно имя пакета на строку, '#' — комментарий.
+
+# --- ядро, загрузчик, микрокод ---
+linux
+linux-headers
+linux-firmware
+amd-ucode
+grub
+efibootmgr
+
+# --- файловые системы, диски, железо ---
+filesystem
+dosfstools
+ntfs-3g
+parted
+dmidecode
+flashrom
+usbutils
+usb_modeswitch
+
+# --- init, авторизация, упаковка пакетов ---
+base
+base-devel
+systemd
+systemd-sysvcompat
+pacman
+pacman-contrib
+archlinux-keyring
+shadow
+sudo
+openssh
+
+# --- сеть: менеджеры, VPN/анонимайзеры, PXE-стенд из install/instructions ---
+networkmanager
+iwd
+iw
+dnsmasq
+hostapd
+ntp
+openvpn
+openfortivpn
+obfs4proxy
+tor
+ethtool
+
+# --- обслуживание системы ---
+pkgfile
+reflector
+yay

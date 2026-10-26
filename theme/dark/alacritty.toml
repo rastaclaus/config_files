@@ -1,0 +1,7 @@
+# Фрагмент конфигурации Alacritty для тёмной темы.
+# Копируется в ~/.local/state/dotfiles/alacritty.toml скриптом theme-sync.
+[general]
+import = ["~/.config/alacritty/themes/themes/gruvbox_dark.toml"]
+
+[window]
+opacity = 0.8

@@ -1,0 +1,36 @@
+# name: 'Gruvbox Light'
+# preferred_background: fbf1c7
+# Палитра согласована с gruvbox_light.toml (alacritty/themes/themes).
+# Цвета промпта заданы явно (hex): именованные green/brgreen/red рисуются
+# палитрой терминала и на headless-хосте не меняются вместе с темой.
+
+fish_color_normal 3c3836
+fish_color_command 79740e
+fish_color_quote b57614
+fish_color_redirection 3c3836
+fish_color_end 8f3f71
+fish_color_error 9d0006
+fish_color_param 3c3836
+fish_color_comment 928374
+fish_color_match 076678
+fish_color_selection white --bold --background=d5c4a1
+fish_color_search_match b57614 --background=d5c4a1
+fish_color_history_current --bold
+fish_color_operator 076678
+fish_color_escape 427b58
+fish_color_cwd 79740e
+fish_color_cwd_root 9d0006
+fish_color_valid_path --underline
+fish_color_autosuggestion 928374
+fish_color_user 79740e
+fish_color_host 3c3836
+fish_color_cancel -r
+fish_pager_color_completion 3c3836
+fish_pager_color_description b57614
+fish_pager_color_prefix 3c3836 --bold --underline
+fish_pager_color_progress brwhite --background=cyan
+fish_pager_color_selected_background --background=d5c4a1
+fish_color_option 3c3836
+fish_color_keyword 79740e
+fish_color_host_remote b57614
+fish_color_status 9d0006

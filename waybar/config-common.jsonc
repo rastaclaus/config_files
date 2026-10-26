@@ -1,0 +1,67 @@
+{
+    // Shared bar options and modules for both sway and niri.
+    // Included by config-sway / config-niri (include is a per-bar option, so
+    // each compositor picks its own workspace module on top of these defaults).
+    "layer": "top",
+    "position": "bottom",
+    "height": 26,
+    "spacing": 6,
+    "fixed-center": false,
+    // The bar is always visible; ignore the default hide/show on SIGUSR1.
+    "on-sigusr1": "noop",
+    // Pick up theme changes written by darkman without restarting.
+    "reload_style_on_change": true,
+
+    "modules-right": [ "clock", "cpu", "memory", "custom/weather", "battery", "tray" ],
+
+    // StatusNotifier host for both sway and niri. Populates from DBus applets
+    // (nm-applet --indicator, swaync, blueman-applet, ...). Only one host may
+    // exist per session, which is fine since a single bar runs at a time.
+    "tray": {
+        "icon-size": 18,
+        "spacing": 8
+    },
+
+    "clock": {
+        "timezone": "Europe/Moscow",
+        "format": "Time: {:%A %Y-%m-%d %H:%M:%S}",
+        "tooltip-format": "<big>{:%Y %B}</big>\n<tt><small>{calendar}</small></tt>",
+        "interval": 1
+    },
+    "cpu": {
+        "format": "CPU: {usage}%",
+        "interval": 2
+    },
+    "memory": {
+        "format": "Mem: {percentage}%",
+        "interval": 2
+    },
+    // Laptops only: with no battery in /sys/class/power_supply the module hides
+    // itself (waybar's battery module calls event_box_.hide()), so it is safe in
+    // the shared config. Reads sysfs directly via libudev, no upower needed.
+    // {time} = left to empty (on battery) / left to full (charging).
+    "battery": {
+        "interval": 30,
+        "states": {
+            "warning": 30,
+            "critical": 15
+        },
+        "format": "{capacity}% {icon}",
+        "format-charging": "{capacity}% {icon} {time}",
+        "format-discharging": "{capacity}% {icon} {time}",
+        "format-time": "{H}:{m}",
+        "format-icons": {
+            "default": [ "\uf244", "\uf243", "\uf242", "\uf241", "\uf240" ],
+            "charging": "\uf0e7",
+            "plugged": "\uf1e6",
+            "full": "\uf240"
+        },
+        "tooltip-format": "{capacity}% — {timeTo}\nPower: {power} W\nHealth: {health}%"
+    },
+    "custom/weather": {
+        "exec": "~/.config/waybar/weather.py",
+        "interval": 600,
+        "return-type": "json",
+        "format": "Weather: {}"
+    }
+}

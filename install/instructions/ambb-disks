@@ -1,0 +1,12 @@
+Disk /dev/nvme0n1: 476.94 GiB, 512110190592 bytes, 1000215216 sectors
+Disk model: KINGSTON OM8SEP4512N-A0
+Units: sectors of 1 * 512 = 512 bytes
+Sector size (logical/physical): 512 bytes / 512 bytes
+I/O size (minimum/optimal): 512 bytes / 512 bytes
+Disklabel type: gpt
+Disk identifier: 16B0EF21-6B29-4D0E-935D-91F6C3D919E9
+
+Device             Start        End   Sectors   Size Type
+/dev/nvme0n1p1      2048    1050623   1048576   512M EFI System
+/dev/nvme0n1p2   1050624  966660095 965609472 460.4G Linux filesystem
+/dev/nvme0n1p3 966660096 1000214527  33554432    16G Linux swap

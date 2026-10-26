@@ -1,0 +1,9 @@
+# AUR packages installed on EVERY host (including the headless one).
+
+# --- editor tooling ---
+fish-lsp          # LSP для fish shell
+neovim-nightly-bin # Neovim 0.13-dev (конфиг в nvim/; заменяет neovim из extra)
+
+# --- python ---
+pyenv-virtualenv  # интеграция pyenv с virtualenv
+revdiff           # просмотр diff в редакторе из команды

@@ -36,17 +36,26 @@ function fish_prompt
         set -l prompt_status
         test $last_status -ne 0; and set prompt_status (set_color $fish_color_status)"[$last_status]$normal"
     
-        # Only show host if in SSH or container
-        # Store this in a global variable because it's slow and unchanging
-        if not set -q prompt_host
-                set -g prompt_host ""
+        # Only show host if in SSH or container.
+        # Cache only the slow detection, not the rendered string: the colors
+        # follow the theme, so they must be resolved on every prompt. Baking
+        # set_color output into a global cache froze the host color until fish
+        # was restarted (visible in SSH after theme-switch).
+        if not set -q prompt_show_host
+                set -g prompt_show_host 0
                 if set -q SSH_TTY
                         or begin
                                 command -sq systemd-detect-virt
                                 and systemd-detect-virt -q
                         end
-                        set prompt_host $usercolor$USER$normal@(set_color $fish_color_host)$hostname$normal":"
+                        set -g prompt_show_host 1
                 end
+        end
+    
+        # Build host/user prefix on every prompt: colors must track the theme.
+        set -l prompt_host ""
+        if test "$prompt_show_host" = 1
+                set prompt_host $usercolor$USER$normal@(set_color $fish_color_host)$hostname$normal":"
         end
     
         # Shorten pwd if prompt is too long

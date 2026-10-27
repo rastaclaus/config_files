@@ -14,8 +14,6 @@
 #   --dry-run         print what would happen, change nothing
 #   -h, --help
 #
-# OpenCode настраивает отдельный скрипт: install/install_opencode.sh.
-#
 # Runtime state (themes, fish universal vars) is written to
 # ~/.local/state/dotfiles and ~/.config/fish*, never into this repo.
 #
@@ -43,7 +41,7 @@ while [[ $# -gt 0 ]]; do
     --no-links)    DO_LINKS=0;    shift ;;
     --no-shell)    DO_SHELL=0;    shift ;;
     --no-nvim)     DO_NVIM=0;     shift ;;
-    --submodules)  die "--submodules is gone: ocbox lives in its own repository with its own installer" ;;
+    --submodules)  die "--submodules is gone: submodule-based sandboxes live in their own repository" ;;
     --dry-run)     DRY_RUN=1;     shift ;;
     -h|--help)     usage; exit 0 ;;
     *) die "unknown option: $1 (try --help)" ;;
@@ -110,8 +108,7 @@ setup_nerd_font_symbols() {
   run sudo ln -s "$src" "$dst" || warn "failed to enable Nerd Font symbols fallback"
 }
 
-# web-docs-mcp (opencode MCP "web-docs") is provisioned by install/install_opencode.sh:
-# OpenCode is set up by its own script, packages stay in the manifests.
+# web-docs-mcp and other MCP helpers are provisioned by their own installer.
 
 if [[ $DO_PACKAGES -eq 1 ]]; then
   install_yay
@@ -214,46 +211,6 @@ write_compositor() {
   fi
 }
 
-cleanup_legacy_ocbox() {
-  # ocbox сюда больше не входит: песочница OpenCode — отдельный проект со своим
-  # установщиком. Здесь только одноразовая уборка того, что осталось от старой
-  # раскладки, и только если это ссылки внутрь $REPO.
-  local d="$HOME/.config/opencode/sandbox" e ours=1 link
-
-  # 1. Бывший merge-подкаталог ~/.config/opencode/sandbox (до сабмодуля).
-  if [[ -d "$d" && ! -L "$d" ]]; then
-    if [[ -z "$(ls -A "$d" 2>/dev/null)" ]]; then
-      run rmdir "$d" && info "removed empty legacy merge dir $d"
-    else
-      for e in "$d"/*; do
-        if [[ ! -L "$e" ]]; then ours=0; break; fi
-        case "$(readlink "$e")" in
-          "$REPO"/opencode/sandbox/*) ;;
-          *) ours=0; break ;;
-        esac
-      done
-      if [[ $ours -eq 1 ]]; then
-        run rm -rf "$d"
-        info "removed legacy merge dir $d"
-      else
-        warn "legacy ocbox dir $d has local files; left in place, check manually"
-      fi
-    fi
-  fi
-
-  # 2. Симлинки ocbox на бывший сабмодуль `ocbox/` в этом дереве.
-  for e in "$HOME/.config/opencode-sandbox" "$LOCAL_PREFIX/bin/ocbox"; do
-    [[ -L "$e" ]] || continue
-    link="$(readlink "$e" 2>/dev/null || true)"
-    case "$link" in
-      "$REPO"/ocbox|"$REPO"/ocbox/*)
-        run rm -f "$e"
-        info "removed legacy ocbox link $e"
-        ;;
-    esac
-  done
-}
-
 if [[ $DO_LINKS -eq 1 ]]; then
   log "setting up symlinks"
   while read -r src target tags _; do
@@ -287,7 +244,6 @@ if [[ $DO_LINKS -eq 1 ]]; then
   write_compositor
 
   cleanup_legacy_hooks
-  cleanup_legacy_ocbox
 else
   log "skipping symlinks (--no-links)"
 fi

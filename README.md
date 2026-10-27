@@ -12,14 +12,13 @@
 ./install/install.sh --host desktop  # явный хост, --dry-run — только показать
 ./install/verify.sh                  # read-only проверки раскладки и темы
 ./install/cleanup.sh                 # dry-run: пакеты вне манифестов
-./install/install_opencode.sh        # OpenCode: layout, MCP, модели
 ./install/install_vpn.sh --check     # VPN-профиль, см. vpn/README.md
 ```
 
 ## Структура
 
 ```
-fish/ helix/ nvim/ opencode/ direnv/ ghostty/ alacritty/ rofi/ darkman/
+fish/ helix/ nvim/ direnv/ ghostty/ alacritty/ rofi/ darkman/
 networkmanager-dmenu/ xdg-desktop-portal/ applications/ autostart/
 sway/ niri/ ironbar/ waybar/ wayland/          # Wayland-сессия (профиль gui)
 theme/dark/ theme/light/                       # палитры gruvbox
@@ -31,7 +30,6 @@ hosts/                                         # per-host оверрайды
   desktop/  ambb/  alen/  work/
 install/
   install.sh          # установщик пакетов и симлинков
-  install_opencode.sh # OpenCode: layout, MCP, списки моделей
   install_vpn.sh      # профиль OpenVPN под NetworkManager
   lib.sh              # общие помощники: хост, манифесты, линковка
   cleanup.sh          # удаление пакетов вне манифестов
@@ -61,9 +59,6 @@ install/
 | `hosts/<host>/packages-aur.txt` | доп. AUR-пакеты хоста |
 | `hosts/<host>/keep.txt` | исключения для cleanup (см. [Cleanup](#cleanup)) |
 
-`ocbox` (песочница OpenCode) — отдельный проект со своим установщиком; этот
-репозиторий его не ставит, не линкует и не настраивает.
-
 ## Хосты
 
 | хост | hostname | профиль | композитор | что это |
@@ -85,10 +80,9 @@ install/
 записи — симлинками в репозиторий (общее первым, хост побеждает при конфликте).
 Две записи с тегом `merge` всегда раскладываются так — `~/.config/fish` и
 `~/.config/helix`: приложения должны писать рядом с трекнутыми файлами.
-`~/.config/opencode` — тоже merge, но его раскладывает `install_opencode.sh`
-(настройка OpenCode намеренно вне основного установщика). Остальное — один
-симлинк. Файлы из `volatile.conf` копируются в merge-каталог, а не линкуются.
-Всё заменяемое установщик бэкапит в `~/.dotfiles-backup-<timestamp>/`.
+Остальное — один симлинк. Файлы из `volatile.conf` копируются в merge-каталог,
+а не линкуются. Всё заменяемое установщик бэкапит в
+`~/.dotfiles-backup-<timestamp>/`.
 
 ## Композиторы и Wayland
 
@@ -178,23 +172,6 @@ echo 'QT_QPA_PLATFORMTHEME=gtk3' | sudo tee -a /etc/environment
 Состояние, контракт хуков, Mattermost, обои и особенности каждого приложения —
 [docs/theme.md](docs/theme.md).
 
-## OpenCode / MCP
-
-```sh
-./install/install_opencode.sh              # layout + MCP + модели
-./install/install_opencode.sh --no-models  # без обновления списков моделей
-./install/install_opencode.sh --check      # проверить, ничего не меняя
-```
-
-`~/.config/opencode` — merge-каталог: конфиги и `plugins/` линкуются в
-репозиторий, а `package.json`, `node_modules/`, `service.json` остаются
-локальными. Подключены три MCP-сервера: `vision` (картинки), `web-docs`
-(API-доки) и `deepwiki` (архитектура публичных GitHub-репо).
-
-`default_agent` — `plan` (deepseek-v4-pro), `build` — deepseek-v4-flash#low,
-модель сессии переключает `plugins/agent-model-sync.ts`. Свой провайдер,
-политики, секреты и модели по агентам — [docs/opencode.md](docs/opencode.md).
-
 ## Установка
 
 ```sh
@@ -228,7 +205,7 @@ echo 'QT_QPA_PLATFORMTHEME=gtk3' | sudo tee -a /etc/environment
    Плагинами управляет `vim.pack.add()` в `nvim/lua/plugins.lua`, версии пинятся
    в `nvim/nvim-pack-lock.json` (не в git) — см. [docs/nvim.md](docs/nvim.md).
 
-Профиль `headless` ставит только base + fish/opencode/редакторы: без GUI и Sway.
+Профиль `headless` ставит только base + fish/редакторы: без GUI и Sway.
 Dev/DevOps-пакеты включаются на хост через `hosts/<host>/packages.txt`.
 
 Пакет поставлен — не значит запущен: на свежей системе включи Docker и добавь
@@ -323,7 +300,6 @@ cp vpn/local.env.example vpn/local.env   # заполнить, chmod 600
 | [docs/theme.md](docs/theme.md) | state-каталог, хуки, Mattermost, обои, per-app поведение |
 | [docs/niri.md](docs/niri.md) | шпаргалка niri: модель окон, биндинги, визуал, диагностика |
 | [docs/nvim.md](docs/nvim.md) | git-ревью и автодополнение в редакторе |
-| [docs/opencode.md](docs/opencode.md) | провайдеры, MCP, модели по агентам |
 | [vpn/README.md](vpn/README.md) | скелет OpenVPN и его переменные |
 
 `alacritty/themes/` — вендорнутая копия [alacritty-theme](https://github.com/alacritty/alacritty-theme)

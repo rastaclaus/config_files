@@ -128,11 +128,11 @@ alacritty, мышечная память переносится.
   `$TMPDIR/<22-char base64url>/{history,screen,selection}.txt`, остальное отдаёт
   `/usr/bin/xdg-open` (в `mimeapps.list` `text/plain` привязан к helix, и менять
   ассоциацию глобально ради дампов незачем).
-- В полноэкранном TUI (opencode, htop, vim, less) истории нет вообще: приложение
+- В полноэкранном TUI (htop, vim, less) истории нет вообще: приложение
   живёт на alternate screen и перерисовывает одну сетку, поэтому
   `write_screen_file` отдаёт эту сетку, а `loc=history` молча ничего не делает.
-  Реальный транскрипт — средствами приложения: `prefix e` в tmux, `/export`
-  (`ctrl+x x`) и `ctrl+z` (`terminal_suspend`) в opencode.
+  Реальный транскрипт — средствами приложения: `prefix e` в tmux или
+  `terminal_suspend`.
 
 ## tmux
 

@@ -177,7 +177,7 @@ keybind = chain=copy_to_clipboard:plain
 # строку раз в 0.3 с, write_scrollback_file отставал на 21-22 с (= ровно один
 # экран строк), write_screen_file — на 0-1 с.
 #
-# Побочно: в alt-screen (opencode TUI, htop, vim, less) истории нет, поэтому
+# Побочно: в alt-screen (htop, vim, less) истории нет, поэтому
 # write_scrollback_file там возвращал null и клавиша молча ничего не делала;
 # write_screen_file в alt-screen снимает сам alt-экран, что и нужно.
 #

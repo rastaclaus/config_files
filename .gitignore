@@ -7,7 +7,6 @@ __pycache__/
 # VPN secrets / local parameters (see vpn/README.md)
 *.pem
 vpn/local.env
-opencode/service.json
 
 # fish runtime state (живёт в ~/.config/fish, не в репозитории):
 # universal-переменные и служебные файлы, которые пересоздаёт сам fish.

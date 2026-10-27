@@ -81,7 +81,6 @@ luarocks                    # менеджер пакетов Lua
 tree-sitter                 # библиотека инкрементального парсинга
 
 # --- cli helpers ---
-opencode                    # AI-агент для терминала (конфиг в opencode/)
 glow                        # рендер Markdown в терминале
 tree-sitter-cli             # CLI для сборки/тестирования грамматик tree-sitter
 imagemagick                 # обработка изображений (convert, magick)

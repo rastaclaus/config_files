@@ -2,4 +2,3 @@
 # (node language servers / formatters are installed via pacman, see packages/base.txt)
 @redocly/cli  # сборка/линтинг и preview OpenAPI-документации
 markserv      # локальный сервер для просмотра Markdown
-mcp-vision-bridge  # MCP-сервер зрения: analyze_image через любую мультимодальную модель (opencode MCP "vision")

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Общие помощники для install.sh, install_opencode.sh и cleanup.sh. Файл
+# Общие помощники для install.sh и cleanup.sh. Файл
 # подключается через `source` и сам по себе ничего не выполняет.
 #
 # Выставляет переменные:
@@ -13,7 +13,7 @@
 #   HOST, HOST_DIR, PROFILE, COMPOSITOR   заполняет resolve_host
 #
 # Раскладка симлинков (ensure_link, merge_dir, copy_volatile) тоже здесь: её
-# делят install.sh и install_opencode.sh, иначе merge-логика разъедется.
+# использует install.sh, чтобы merge-логика была в одном месте.
 #
 # shellcheck shell=bash
 

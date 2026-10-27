@@ -87,7 +87,7 @@ else
 fi
 
 # merge-каталоги: реальные каталоги, файлы — ссылки внутрь репозитория
-for d in fish helix opencode; do
+for d in fish helix; do
     if [[ -L "$HOME/.config/$d" ]]; then
         bad "~/.config/$d is a symlink; expected a merge directory"
     elif [[ -d "$HOME/.config/$d" ]]; then
@@ -98,28 +98,14 @@ for d in fish helix opencode; do
 done
 
 for f in fish/config.fish fish/conf.d/theme.fish helix/config.toml \
-         fish/functions/fzf-git-status.fish fish/functions/fzf-git-log.fish \
-         opencode/opencode.jsonc opencode/cli.json opencode/AGENTS.md; do
+         fish/functions/fzf-git-status.fish fish/functions/fzf-git-log.fish; do
     t="$HOME/.config/$f"
     if [[ -L "$t" && "$(readlink -f "$t")" == "$REPO/$f" ]]; then
         ok "~/.config/$f -> repo"
-    elif [[ "$f" == opencode/* ]]; then
-        bad "~/.config/$f is not a symlink into the repo (run ./install/install_opencode.sh)"
     else
         bad "~/.config/$f is not a symlink into the repo"
     fi
 done
-# The OpenCode layout is owned by install/install_opencode.sh: run its own
-# checks (config parses, public providers/MCP servers present, web-docs-mcp).
-if [[ -x "$REPO/install/install_opencode.sh" ]]; then
-    if out="$("$REPO/install/install_opencode.sh" --check 2>&1)"; then
-        ok "install_opencode.sh --check"
-    else
-        while IFS= read -r line; do
-            [[ "$line" == FAIL:* ]] && bad "opencode: ${line#FAIL: }"
-        done <<< "$out"
-    fi
-fi
 
 # theme-switch — обёртка над theme-sync; старая локальная копия не должна
 # остаться: она писала universal background_mode и правила helix-config.
@@ -164,44 +150,12 @@ else
     bad "~/.local/bin/xdg-open is not a symlink to applications/xdg-open"
 fi
 
-# ocbox (OpenCode sandbox) is a separate project with its own installer: this
-# repo neither installs nor links it. Leftover links into the old submodule
-# path are stale and must not survive.
-ocbox_left=""
-for p in "$HOME/.local/bin/ocbox" "$HOME/.config/opencode-sandbox"; do
-    if [[ -L "$p" ]]; then
-        case "$(readlink "$p")" in
-            "$REPO"/ocbox|"$REPO"/ocbox/*) ocbox_left+=" $p" ;;
-        esac
-    fi
-done
-if [[ -n "$ocbox_left" ]]; then
-    bad "stale ocbox link(s) into the old submodule:$ocbox_left"
-else
-    ok "no ocbox links into the repo (separate project)"
-fi
-
 # universal background_mode больше не читается fish (источник — state-файл).
 if command -v fish >/dev/null 2>&1 && fish -c 'set -q -U background_mode' 2>/dev/null; then
     bad "legacy background_mode universal variable is still set"
 else
     ok "no legacy background_mode universal variable"
 fi
-
-# Рантайм OpenCode (plugin-зависимости, пароль локального сервера) должен
-# оставаться локальным файлом: если он окажется симлинком в репозиторий,
-# приложение снова начнёт писать в трекаемое дерево.
-if [[ -e "$HOME/.config/opencode/service.json" && -L "$HOME/.config/opencode/service.json" ]]; then
-    bad "opencode/service.json is a symlink into the repo; expected a local file"
-else
-    ok "opencode/service.json is not linked into the repo"
-fi
-for f in package.json bun.lock package-lock.json; do
-    t="$HOME/.config/opencode/$f"
-    if [[ -L "$t" && "$(readlink -f "$t")" == "$REPO"/* ]]; then
-        bad "~/.config/opencode/$f points into the repo; runtime files must stay local"
-    fi
-done
 
 if [[ -L "$HOME/.config/fish/fish_variables" ]]; then
     bad "fish_variables must be a real file, not a symlink"
@@ -545,8 +499,8 @@ else
 fi
 
 # ---------------------------------------- 7. переключение не трогает репозиторий
-# ignore-файлы тоже смотрим: иначе рантайм, который приложение пишет в репо
-# (opencode когда-то так и делал), для проверки просто невидим.
+# ignore-файлы тоже смотрим: иначе рантайм, который приложение пишет в репо,
+# для проверки просто невидим.
 before="$(git -C "$REPO" status --porcelain --ignored)"
 [[ -z "$(git -C "$REPO" status --porcelain)" ]] ||
     warn "repo has uncommitted changes; checking they stay unchanged"

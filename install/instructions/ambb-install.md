@@ -449,11 +449,7 @@ cd ~/config_files
 
 ./install/install.sh --dry-run      # проверка
 ./install/install.sh                # пакеты + npm/uv + симлинки
-./install/install_opencode.sh       # конфиг OpenCode, MCP-инструменты, модели
 ```
-
-Песочница `ocbox` в этот репозиторий не входит: это отдельный проект со своим
-установщиком, здесь её никто не ставит и не линкует.
 
 `install.sh` сам определит хост: hostname `ambb` → `hosts/ambb`, профиль `gui`
 (см. `install/hosts.conf`). Дальше раскомментировать нужное в

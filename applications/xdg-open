@@ -26,7 +26,7 @@
 #   history.txt   — write_scrollback_file (история без видимого экрана)
 #   selection.txt — write_selection_file
 #
-# ВАЖНО: в alt-screen (opencode TUI, htop, vim) ghostty историю не пишет вовсе —
+# ВАЖНО: в alt-screen (htop, vim) ghostty историю не пишет вовсе —
 # writeScreenFile для loc=history возвращает null, удаляет tempdir и до
 # xdg-open не доходит. screen_file в alt-screen работает и снимает саму сетку
 # alt-screen.

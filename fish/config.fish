@@ -27,14 +27,10 @@ fish_add_path -g $HOME/.local/bin $HOME/.cargo/bin
 pyenv init - fish | source
 direnv hook fish | source
 
-set -x PROVIDER1_API_KEY (cat $HOME/.config/provider1_key)
-set -x OPENAI_API_KEY (cat $HOME/.config/provider1_key)
-set -x PROVIDER2_API_KEY (cat $HOME/.config/provider2_key)
-
-# Внутренние (рабочие) endpoint'ы и ключ живут вне репозитория:
+# Внутренние (рабочие) endpoint'ы и ключи живут вне репозитория:
 # ~/.config/internal.env, по строке KEY=value без кавычек. Так в репозитории
-# не остаётся ни адресов, ни имени файла с ключом. Файла нет — переменные
-# просто не задаются, публичные провайдеры работают как обычно.
+# не остаётся ни адресов, ни имён файлов с ключами. Файла нет — переменные
+# просто не задаются.
 if test -r $HOME/.config/internal.env
     for line in (string match -rv '^\s*(#|$)' < $HOME/.config/internal.env)
         set -gx (string split -m1 = -- $line)

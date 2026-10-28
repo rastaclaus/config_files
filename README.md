@@ -204,6 +204,9 @@ echo 'QT_QPA_PLATFORMTHEME=gtk3' | sudo tee -a /etc/environment
    treesitter-парсеры (`NVIM_TS_INSTALL_SYNC=1`; `--no-nvim` — пропустить).
    Плагинами управляет `vim.pack.add()` в `nvim/lua/plugins.lua`, версии пинятся
    в `nvim/nvim-pack-lock.json` (не в git) — см. [docs/nvim.md](docs/nvim.md).
+   Ревью всей ветки перед пушем — `<leader>gm`: diffview открывает панель файлов
+   и диффы от точки ответвления (merge-base с `origin/HEAD`, `main` или
+   `master`).
 
 Профиль `headless` ставит только base + fish/редакторы: без GUI и Sway.
 Dev/DevOps-пакеты включаются на хост через `hosts/<host>/packages.txt`.
@@ -299,7 +302,7 @@ cp vpn/local.env.example vpn/local.env   # заполнить, chmod 600
 | [docs/ghostty.md](docs/ghostty.md) | терминал: клавиши, scroll-mode, дампы, tmux, SSH |
 | [docs/theme.md](docs/theme.md) | state-каталог, хуки, Mattermost, обои, per-app поведение |
 | [docs/niri.md](docs/niri.md) | шпаргалка niri: модель окон, биндинги, визуал, диагностика |
-| [docs/nvim.md](docs/nvim.md) | git-ревью и автодополнение в редакторе |
+| [docs/nvim.md](docs/nvim.md) | git-ревью (gitsigns, fzf-lua, diffview) и автодополнение в редакторе |
 | [vpn/README.md](vpn/README.md) | скелет OpenVPN и его переменные |
 
 `alacritty/themes/` — вендорнутая копия [alacritty-theme](https://github.com/alacritty/alacritty-theme)

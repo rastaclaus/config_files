@@ -1,6 +1,45 @@
 require('fzf-lua').setup({})
 -- vim.cmd("FzfLua register_ui_select")
 
+-- Восстановить командную строку после отмены в fzf (см. маппинг <C-x><C-f> ниже).
+local function restore_cmdline(line, pos)
+	vim.api.nvim_feedkeys(
+		vim.api.nvim_replace_termcodes(":" .. line, true, false, true), "n", false)
+	vim.schedule(function()
+		vim.fn.setcmdline(line, pos)
+	end)
+end
+
+-- Подстановка имени файла из fzf в командную строку (:e, :vne, :sp, :tabnew, :source, ...).
+-- Пока набираем Ex-команду, <C-x><C-f> открывает тот же picker, что <leader>ff,
+-- и вставляет выбранный файл на место курсора. Отмена (Esc/<C-c>) восстанавливает
+-- исходную командную строку с уже набранным текстом.
+-- В режимах вне ":"-команд (<C-f> в cmdline-window, /-поиск) сохраняем дефолт <C-f>.
+vim.keymap.set("c", "<C-x><C-f>", function()
+	if vim.fn.getcmdtype() ~= ":" then return "<C-f>" end
+	local line, pos = vim.fn.getcmdline(), vim.fn.getcmdpos()
+	vim.schedule(function()
+		require("fzf-lua").files({
+			actions = {
+				["enter"] = function(selected)
+					local file = selected and selected[1]
+					if not file then return end
+					local newline = line:sub(1, pos - 1)
+						.. vim.fn.fnameescape(file) .. line:sub(pos)
+					vim.api.nvim_feedkeys(
+						vim.api.nvim_replace_termcodes(":" .. newline, true, false, true), "n", false)
+					-- Без <CR>: команда остаётся в cmdline, Enter жмёт пользователь.
+				end,
+				-- Esc/<C-c> в fzf: вернуть командную строку как была.
+				["esc"] = function() restore_cmdline(line, pos) end,
+				["ctrl-c"] = function() restore_cmdline(line, pos) end,
+			},
+		})
+	end)
+	-- Закрываем cmdline; fzf откроется из schedule уже в normal mode.
+	return "<C-c>"
+end, { expr = true, desc = "Вставить файл из fzf в командную строку" })
+
 vim.keymap.set("n", "<leader>ff", ":FzfLua files<CR>", { desc = "Find file" })
 vim.keymap.set("n", "<leader>fg", ":FzfLua grep_project<CR>", { desc = "Grep project" })
 vim.keymap.set("n", "<leader>fb", ":FzfLua buffers<CR>", { desc = "Find buffer" })

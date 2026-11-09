@@ -24,6 +24,9 @@ vim.keymap.set("c", "<C-x><C-f>", function()
 				["enter"] = function(selected)
 					local file = selected and selected[1]
 					if not file then return end
+					-- Энтри fzf-lua снабжены иконкой и nbsp-разделителем:
+					-- отрезаем всё до последнего U+2002, чтобы вставить чистый путь.
+					file = file:match(".*\xe2\x80\x82(.*)$") or file
 					local newline = line:sub(1, pos - 1)
 						.. vim.fn.fnameescape(file) .. line:sub(pos)
 					vim.api.nvim_feedkeys(

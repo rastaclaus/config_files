@@ -1,7 +1,8 @@
 # Kitty
 
 Основной терминал (`Mod`+`Return` в niri, `$term` в sway). Конфиг почти
-дефолтный: шрифт и файлы авто-темы. `~/.config/kitty` — симлинк на `kitty/`;
+дефолтный: шрифт, пейджер истории и файлы авто-темы. `~/.config/kitty` —
+симлинк на `kitty/`;
 палитры лежат рядом с конфигом в `{dark,light}-theme.auto.conf` — это файлы
 авто-темы kitty (0.38+), а не отдельный каталог themes/. Проверено на
 **0.49.2**: опции версионно-зависимы, сверяйся с `/usr/share/doc/kitty/html`
@@ -29,6 +30,25 @@ light-theme.auto.conf`): darkman на этом десктопе всегда о�
 - Для отладки: `map` на `simulate_color_scheme_preference_change toggle`
   переключает тему принудительно; `kitty --debug-rendering` пишет, какая тема
   применена.
+
+## Пейджер истории
+
+Скроллбак открывается в **nvim** в read-only режиме:
+
+```conf
+scrollback_pager nvim -R -c 'map q :qa!<CR>' -c 'map <Space> <C-f>' -c 'map b <C-b>' @placeholder
+```
+
+- `@placeholder` (kitty 0.42+) kitty заменяет на путь к временному файлу со
+  скроллбаком; открытие файла даёт полноценный nvim с интерфейсом, поиском
+  `/` и всей обычной навигацией. Вариант `@` (stdin) гонит данные через ex-
+  режим nvim и вместо UI печатает текст в терминал — не использовать.
+- Открывается по `ctrl+shift+page_up` (`show_scrollback`) и по клику мышью
+  по истории (`mouse_map middle release ungrabbed mouse_show_scrollback`,
+  стоковая привязка).
+- `q` выходит без сохранения, `Space`/`b` — листать как в `less`. Строки,
+  уехавшие за пейджер, теряются — kitty копит ограниченный буфер
+  (`scrollback_lines`, дефолт 2000).
 
 ## Клавиши
 

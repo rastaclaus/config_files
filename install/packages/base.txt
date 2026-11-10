@@ -96,3 +96,10 @@ docker                      # контейнеризация (демон + CLI)
 docker-buildx               # плагин BuildKit для сборки образов
 docker-compose              # запуск многоконтейнерных приложений (v2 CLI)
 kubectl                     # CLI для Kubernetes
+
+# --- tex / LaTeX ---
+# Держим в base: LaTeX нужен на каждом хосте, включая headless.
+# texlive-bin, texlive-basic и dvisvgm приезжают зависимостями texlive-latex.
+texlive-latex               # базовый LaTeX поверх texlive-bin (pdflatex, xelatex, lualatex)
+texlab                      # LSP для LaTeX (helix, nvim)
+tectonic                    # самодостаточный компилятор LaTeX (XeTeX-движок, тянет пакеты из CTAN при сборке)

@@ -19,16 +19,26 @@ vulkan-mesa-layers           # слои Vulkan для драйверов Mesa
 radeontop                    # мониторинг GPU AMD
 
 # --- terminal / launcher ---
-ghostty                      # основной терминал (конфиг ghostty/)
-alacritty                    # терминал на GPU (конфиг alacritty/)
-kitty                        # терминал на GPU, конфиг как у ghostty (конфиг kitty/)
+kitty                        # основной терминал (конфиг kitty/)
 rofi                         # лаунчер и меню (конфиг rofi/)
 rofi-emoji                   # плагин эмодзи для rofi
 
 # --- browser ---
-# Объявлен явно: на него ссылаются applications/chromium-{wayland,proxy}.
-# Раньше приезжал транзитивно как зависимость mermaid-cli.
+# Оба объявлены явно: на chromium ссылаются обёртки из applications/
+# (chromium-{wayland,proxy}); firefox — основной браузер.
 chromium                     # браузер (обёртки Wayland/прокси в applications/)
+firefox                      # браузер
+
+# --- офис / документы / медиа ---
+libreoffice-fresh            # офисный пакет (Writer/Calc/Impress)
+libreoffice-fresh-ru         # русский интерфейс LibreOffice
+hunspell-ru                  # русский словарь орфографии (LibreOffice, браузеры)
+# VLC с 3.0.24 разбит на подпакеты: vlc -> vlc-gui-qt -> vlc-cli ->
+# vlc-plugins-base/video-output; остальные vlc-plugin-* приезжают зависимостями
+# vlc-plugins-all, но сам он не тянет vlc-plugins-extra — потому он здесь явно.
+vlc                          # медиаплеер (Qt GUI)
+vlc-plugins-all              # полный набор плагинов VLC (метапакет поверх base/extra/video-output)
+vlc-plugins-extra            # доп. плагины VLC (не входят в vlc-plugins-all)
 
 # --- messengers / chat ---
 telegram-desktop             # мессенджер Telegram (Qt6)

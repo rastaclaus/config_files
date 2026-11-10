@@ -38,7 +38,6 @@ pantum-driver                         36.0 MiB
 throne-bin                            176.0 MiB
 # tk                                    12.3 MiB
 # transmission-gtk                       4.5 MiB
-vlc                                   42.2 MiB
 # w3m                                    1.8 MiB
 # wine                                  589.2 MiB
 # winetricks                            875.1 KiB

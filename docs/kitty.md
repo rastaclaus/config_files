@@ -33,22 +33,25 @@ light-theme.auto.conf`): darkman на этом десктопе всегда о�
 
 ## Пейджер истории
 
-Скроллбак открывается в **nvim** в read-only режиме:
+Скроллбак (клавиша `ctrl+shift+page_up` или клик мышью по истории) открывается
+в **nvim**. Рецепт из документации kitty (nvim 0.12+):
 
 ```conf
-scrollback_pager nvim -R -c 'map q :qa!<CR>' -c 'map <Space> <C-f>' -c 'map b <C-b>' @placeholder
+scrollback_pager nvim --cmd 'set eventignore=FileType' +'nnoremap q ZQ' +'call nvim_open_term(0, {})' +'set nomodified nolist' +INPUT_LINE_NUMBER -
 ```
 
-- `@placeholder` (kitty 0.42+) kitty заменяет на путь к временному файлу со
-  скроллбаком; открытие файла даёт полноценный nvim с интерфейсом, поиском
-  `/` и всей обычной навигацией. Вариант `@` (stdin) гонит данные через ex-
-  режим nvim и вместо UI печатает текст в терминал — не использовать.
-- Открывается по `ctrl+shift+page_up` (`show_scrollback`) и по клику мышью
-  по истории (`mouse_map middle release ungrabbed mouse_show_scrollback`,
-  стоковая привязка).
-- `q` выходит без сохранения, `Space`/`b` — листать как в `less`. Строки,
-  уехавшие за пейджер, теряются — kitty копит ограниченный буфер
-  (`scrollback_lines`, дефолт 2000).
+- kitty передаёт скроллбак в STDIN пейджера (аргумент `-`); `nvim_open_term`
+  рисует его в терминальном окне nvim, так что работают поиск `/`, вся
+  обычная навигация и рендер ANSI-цветов.
+- `INPUT_LINE_NUMBER` kitty заменяет на номер строки, с которой пейджер
+  должен открыться, чтобы совпасть с текущим скроллом в окне.
+- `q` (маппинг на `ZQ`) выходит без сохранения; `eventignore=FileType` и
+  `nomodified nolist` убирают лишние события и подсказки для pager-буфера.
+- Строки старше буфера теряются: kitty копит ограниченную историю
+  (`scrollback_lines`, дефолт 2000), её можно увеличить или включить
+  `scrollback_pager_history_size` для расширенного pager-буфера.
+- Больше фич (копирование из истории, поиск по клику и т.п.) — плагин
+  [kitty-scrollback.nvim](https://github.com/mikesmithgh/kitty-scrollback.nvim).
 
 ## Клавиши
 

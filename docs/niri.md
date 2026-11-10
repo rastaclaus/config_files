@@ -137,7 +137,9 @@ include "config.d/50-touchpad.kdl" optional=true   // создаётся togglet
 нечего (verify.sh запрещает `/home/<user>` вне md). Поэтому после правки
 репозиторного `niri/config.kdl` те же правки нужно перенести в живой файл и
 сделать `niri msg action load-config-file`; симлинк восстанавливать нельзя —
-потеряются jcode-хоткеи.
+потеряются jcode-хоткеи. Осторожно с `install.sh`: он ставит этот симлинк
+(видно в `--dry-run` как `link …/niri/config.kdl`), поэтому после его запуска
+jcode-блок нужно возвращать `jcode setup-hotkey` или руками.
 
 ## niri msg
 

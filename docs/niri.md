@@ -130,15 +130,15 @@ include "config.d/50-touchpad.kdl" optional=true   // создаётся togglet
 ## Живой конфиг vs репозиторий
 
 В отличие от sway (`~/.config/sway/config` — симлинк в репозиторий),
-`~/.config/niri/config.kdl` — **реальный файл**: `jcode setup-hotkey`
+`~/.config/niri/config.kdl` — **реальный файл**: внешний менеджер хоткеев
 материализует его и дописывает свой managed-блок (`Super+Semicolon`,
 `Super+Apostrophe`, …) с хардкодными путями, которым в трекаемом файле делать
 нечего (verify.sh запрещает `/home/<user>` вне md). Поэтому после правки
 репозиторного `niri/config.kdl` те же правки нужно перенести в живой файл и
 сделать `niri msg action load-config-file`; симлинк восстанавливать нельзя —
-потеряются jcode-хоткеи. Осторожно с `install.sh`: он ставит этот симлинк
+потеряются хоткеи из managed-блока. Осторожно с `install.sh`: он ставит этот симлинк
 (видно в `--dry-run` как `link …/niri/config.kdl`), поэтому после его запуска
-jcode-блок нужно возвращать `jcode setup-hotkey` или руками.
+managed-блок нужно возвращать менеджером хоткеев или руками.
 
 ## niri msg
 

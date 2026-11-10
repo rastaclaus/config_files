@@ -55,14 +55,21 @@ scrollback_pager nvim --cmd 'set eventignore=FileType' +'nnoremap q ZQ' +'call n
 
 ## Клавиши
 
-Все шорткаты — стоковые. Часто используемые:
+Стоковые плюс два своих маппинга:
 
 | клавиши | действие |
 |---|---|
+| `alt+h` / `alt+l` | предыдущая / следующая вкладка kitty (свой `map`) |
 | `ctrl+shift+c` / `ctrl+shift+v` | копировать / вставить CLIPBOARD |
 | `ctrl+shift+s` / `shift+insert` | вставить PRIMARY |
 | `ctrl+shift+e` | открыть URL (kitten hints) |
 | `ctrl+shift+f5` | перечитать конфиг (и так работает `auto_reload_config`) |
+
+Вкладки также листаются стоковыми `ctrl+shift+←/→` и `ctrl+tab`/`ctrl+shift+tab`.
+`alt+h`/`alt+l` работают и на русской раскладке: kitty мапит по «латинской
+букве» клавиши (fallback на alternate keysym), а не по символу. Побочный эффект
+любого `map` с alt — комбинация больше не доходит до TUI-программ внутри
+терминала (mc, htop и т.п.), для них alt+h/l заняты.
 
 ## Выделение и копирование
 

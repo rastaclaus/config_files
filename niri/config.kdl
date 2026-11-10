@@ -59,13 +59,13 @@ layout {
 
 // ----------------------------------------------------------- window rules
 // Focus ring and border are drawn by default as a *solid background rectangle
-// behind* the window, so with a semitransparent client (ghostty/alacritty at
+// behind* the window, so with a semitransparent client (kitty at
 // background-opacity < 1) the ring colour bleeds through the whole window: the
 // focused window looked tinted blue (#394853 instead of #282828, measured).
 // `false` = draw them as an outline around the window even for clients that
 // keep their client-side decorations. Ring stays visible, tint is gone.
 window-rule {
-    match app-id=r#"^(com\.mitchellh\.ghostty|Alacritty|kitty)$"#
+    match app-id=r#"^kitty$"#
     draw-border-with-background false
 }
 
@@ -104,9 +104,7 @@ screenshot-path "~/screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 // niri does not fill this section with defaults, so the full set is spelled out.
 binds {
     // --- programs / session ---
-    Mod+Return hotkey-overlay-title="Terminal: ghostty" { spawn "ghostty"; }
-    Mod+Shift+Return hotkey-overlay-title="Terminal: alacritty (fallback)" { spawn "alacritty"; }
-    Mod+Ctrl+Return hotkey-overlay-title="Terminal: kitty" { spawn "kitty"; }
+    Mod+Return hotkey-overlay-title="Terminal: kitty" { spawn "kitty"; }
     Mod+D hotkey-overlay-title="Launcher: rofi" { spawn "rofi" "-show" "combi"; }
     Mod+Shift+U { spawn "rofi" "-modi" "unicode" "-show" "unicode"; }
     Mod+Shift+S { spawn "rofi" "-modi" "emoji" "-show" "emoji"; }

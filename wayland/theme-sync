@@ -26,9 +26,9 @@ SCRIPT="$(readlink -f "${BASH_SOURCE[0]}")"
 REPO="$(cd "$(dirname "$SCRIPT")/.." && pwd)"
 # shellcheck source=wayland/compositor-env.sh
 . "$REPO/wayland/compositor-env.sh"
-# ВАЖНО: путь фиксирован (XDG-дефолт), потому что alacritty/rofi не умеют
-# подставлять переменные окружения в import-пути. При смене XDG_STATE_HOME
-# нужно править и эти конфиги.
+# ВАЖНО: путь фиксирован (XDG-дефолт), потому что rofi не умеет подставлять
+# переменные окружения в import-путь. При смене XDG_STATE_HOME нужно править
+# и его конфиг.
 STATE="$HOME/.local/state/dotfiles"
 
 mode="${1:-}"
@@ -37,7 +37,7 @@ case "$mode" in
     *) echo "usage: $0 dark|light" >&2; exit 2 ;;
 esac
 
-mkdir -p "$STATE/alacritty" "$STATE/helix/runtime/themes" "$STATE/ironbar"
+mkdir -p "$STATE/helix/runtime/themes" "$STATE/ironbar"
 
 prev_mode="$(cat "$STATE/background-mode" 2>/dev/null || true)"
 printf '%s\n' "$mode" > "$STATE/background-mode"
@@ -48,7 +48,6 @@ copy() { # copy <src> <dst>
     cat "$1" > "$2"
 }
 
-copy "$REPO/theme/$mode/alacritty.toml" "$STATE/alacritty.toml"
 copy "$REPO/theme/$mode/rofi.rasi"      "$STATE/rofi.rasi"
 copy "$REPO/theme/$mode/helix.toml"     "$STATE/helix/runtime/themes/dotfiles.toml"
 

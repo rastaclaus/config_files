@@ -22,7 +22,7 @@ ok()   { printf 'ok: %s\n' "$*"; }
 warn() { printf 'warn: %s\n' "$*" >&2; }
 
 # ------------------------------------------------------------ 1. state-файлы
-for f in background-mode alacritty.toml rofi.rasi \
+for f in background-mode rofi.rasi \
          helix/runtime/themes/dotfiles.toml ironbar/colors.css ironbar/style.css; do
     if [[ -f "$STATE/$f" ]]; then ok "state/$f"; else bad "missing $STATE/$f"; fi
 done
@@ -116,40 +116,6 @@ else
     bad "~/.local/bin/theme-switch is not a symlink to applications/theme-switch"
 fi
 
-# xdg-open — шим для ghostty (дамп скроллбека → nvim в новом окне). Должен быть
-# симлинком в репозиторий и должен делегировать: `--version` не открывает ни
-# одного файла, поэтому безопасен как smoke-тест.
-xo="$HOME/.local/bin/xdg-open"
-if [[ -L "$xo" && "$(readlink -f "$xo")" == "$REPO/applications/xdg-open" && -x "$xo" ]]; then
-    ok "~/.local/bin/xdg-open -> repo"
-    if "$xo" --version >/dev/null 2>&1; then
-        ok "xdg-open shim delegates (/usr/bin/xdg-open --version)"
-    else
-        bad "xdg-open shim does not delegate (--version failed)"
-    fi
-    # Dump-ветка: путь той же формы, что пишет ghostty. Если ghostty нет
-    # (headless), шим обязан делегировать, а не падать на `exec ghostty`.
-    if ! command -v ghostty >/dev/null 2>&1; then
-        tmproot="$(mktemp -d)"
-        # Имя каталога ghostty — 16 случайных байт в base64url (22 символа).
-        dumpdir="$tmproot/AAAAAAAAAAAAAAAAAAAAAA"
-        mkdir -p "$dumpdir"
-        # screen.txt — основной путь (write_screen_file), history.txt —
-        # write_scrollback_file; шим должен принимать оба.
-        for name in screen.txt history.txt; do
-            printf 'x\n' > "$dumpdir/$name"
-            if TMPDIR="$tmproot" "$xo" "$dumpdir/$name" >/dev/null 2>&1; then
-                ok "xdg-open shim delegates ghostty dumps ($name) without ghostty"
-            else
-                bad "xdg-open shim fails on a ghostty dump path ($name) without ghostty installed"
-            fi
-        done
-        rm -rf "$tmproot"
-    fi
-else
-    bad "~/.local/bin/xdg-open is not a symlink to applications/xdg-open"
-fi
-
 # universal background_mode больше не читается fish (источник — state-файл).
 if command -v fish >/dev/null 2>&1 && fish -c 'set -q -U background_mode' 2>/dev/null; then
     bad "legacy background_mode universal variable is still set"
@@ -218,7 +184,6 @@ cmp_state() { # cmp_state <файл в theme/$mode> <файл в $STATE>
         bad "state/$2 differs from theme/$mode/$1"
     fi
 }
-cmp_state alacritty.toml alacritty.toml
 cmp_state rofi.rasi      rofi.rasi
 cmp_state helix.toml     helix/runtime/themes/dotfiles.toml
 cmp_state ironbar.css    ironbar/colors.css
@@ -231,184 +196,7 @@ else
     bad "ironbar wrapper is missing imports (expected colors.css and $REPO/ironbar/style.css)"
 fi
 
-# ------------------------------------------------- 4b. Ghostty: конфиг и темы
-# ghostty читает конфиг из ~/.config/ghostty (симлинк в репозиторий), а палитры
-# — из ghostty/themes/<name> по имени из `theme = light:...,dark:...`
-# (имя файла без расширения: ghostty ищет ровно "<name>").
-if [[ "$declared_profile" == "headless" ]]; then
-    ok "ghostty config not needed on headless"
-else
-    if [[ -L "$HOME/.config/ghostty" && "$(readlink -f "$HOME/.config/ghostty")" == "$REPO/ghostty" ]]; then
-        ok "~/.config/ghostty -> repo"
-    else
-        bad "~/.config/ghostty is not a symlink to $REPO/ghostty"
-    fi
-    # Легаси-файл `config` ghostty читает первым; вместе с config.ghostty это
-    # даёт предупреждение в лог и непредсказуемый порядок настроек.
-    if [[ -e "$HOME/.config/ghostty/config" ]]; then
-        bad "legacy ~/.config/ghostty/config exists; only config.ghostty is supported"
-    else
-        ok "no legacy ghostty config file"
-    fi
-fi
-
-# Содержимое конфига — свойство репозитория, а не хоста: проверяем на любом
-# профиле, включая headless (там ghostty нет, но правку в репо поймать нужно).
-if [[ -f "$REPO/ghostty/config.ghostty" ]]; then
-    if grep -Eq '^[[:space:]]*shell-integration-features[[:space:]]*=.*\bssh-terminfo\b' \
-            "$REPO/ghostty/config.ghostty"; then
-        ok "ghostty shell-integration-features includes ssh-terminfo"
-    else
-        bad "ghostty config has no ssh-terminfo: remote TERM=xterm-ghostty will have no terminfo"
-    fi
-
-    # clipboard-read=allow убирает запрос на OSC 52 read (nvim `"+p` на сервере).
-    cr="$(sed -n 's/^[[:space:]]*clipboard-read[[:space:]]*=[[:space:]]*//p' "$REPO/ghostty/config.ghostty" | head -n 1)"
-    if [[ "$cr" == "allow" ]]; then
-        ok "ghostty clipboard-read = allow"
-    else
-        warn "ghostty clipboard-read is '${cr:-<default ask>}': OSC 52 reads will prompt"
-    fi
-fi
-
-# Сам конфиг должен проходить парсер ghostty: опечатка в ключе (например,
-# забытый `keybind =` перед `scroll-mode/...`) видна только здесь.
-if [[ "$declared_profile" != "headless" ]] && command -v ghostty >/dev/null 2>&1; then
-    # --config-file — глобальный флаг, поэтому стоит ДО `+validate-config`:
-    # после команды он молча возвращает rc=1 без диагностики.
-    if diag="$(ghostty --config-file="$REPO/ghostty/config.ghostty" +validate-config 2>&1)"; then
-        ok "ghostty +validate-config"
-    else
-        while IFS= read -r line; do bad "ghostty config: $line"; done <<< "$diag"
-    fi
-fi
-
-# Имена тем в config.ghostty должны существовать файлами в ghostty/themes.
-if [[ -f "$REPO/ghostty/config.ghostty" ]]; then
-    themes_line="$(sed -n 's/^[[:space:]]*theme[[:space:]]*=[[:space:]]*//p' "$REPO/ghostty/config.ghostty" | head -n 1)"
-    for t in $(tr ',:' '\n\n' <<< "$themes_line" | sed '/^\(light\|dark\)$/d' | tr -d ' '); do
-        # Ghostty ищет файл темы по точному имени из `theme =`, без
-        # расширения (расширение .conf молча не находится).
-        if [[ -f "$REPO/ghostty/themes/$t" ]]; then
-            ok "ghostty theme $t"
-        else
-            bad "ghostty theme '$t' from config.ghostty not found in ghostty/themes/"
-        fi
-    done
-fi
-
-# Палитры двух терминалов не должны разъезжаться: alacritty остаётся fallback'ом.
-# Обе функции печатают строки "<слот> <hex без #>" и сортируют их, чтобы
-# сравнивать diff'ом: bg/fg плюс слоты палитры 0..15.
-alacritty_selection() { # <файл темы alacritty> — [colors.selection] как "<bg|text> <hex>"
-    awk -F"'" '
-        /^\[colors\.selection\]/ { s = 1; next }
-        /^\[/ { s = 0 }
-        s && /^[a-z_]+[ \t]*=/ {
-            key = $1; gsub(/[ \t=]/, "", key);
-            col = $2; gsub(/#/, "", col);
-            if (key == "foreground") key = "text";
-            print key " " col
-        }
-    ' "$1" | sort
-}
-
-alacritty_palette() { # <файл темы alacritty>
-    awk -F"'" '
-        /^\[/ { sec = "" }
-        /^\[colors\.primary\]/ { sec = "primary"; next }
-        /^\[colors\.normal\]/  { sec = "normal"; next }
-        /^\[colors\.bright\]/  { sec = "bright"; next }
-        sec != "" && /^[a-z_]+[ \t]*=/ {
-            key = $1; gsub(/[ \t=]/, "", key);
-            if (sec == "primary") {
-                if (key == "background") { print "bg " $2; next }
-                if (key == "foreground") { print "fg " $2; next }
-            } else {
-                order[1] = "black"; order[2] = "red"; order[3] = "green"; order[4] = "yellow";
-                order[5] = "blue"; order[6] = "magenta"; order[7] = "cyan"; order[8] = "white";
-                for (i = 1; i <= 8; i++) if (key == order[i])
-                    printf "%d %s\n", (sec == "normal" ? i - 1 : i + 7), $2;
-            }
-        }
-    ' "$1" | sed 's/#//g' | sort -k1,1
-}
-
-ghostty_palette() { # <файл темы ghostty>
-    awk -F"=" '
-        /^[[:space:]]*background[[:space:]]*=/ {
-            v = $2; gsub(/[[:space:]#]/, "", v); print "bg " v
-        }
-        /^[[:space:]]*foreground[[:space:]]*=/ {
-            v = $2; gsub(/[[:space:]#]/, "", v); print "fg " v
-        }
-        /^[[:space:]]*palette[[:space:]]*=/ {
-            n = $2; v = $3; gsub(/[[:space:]]/, "", n); gsub(/[[:space:]#]/, "", v);
-            print n " " v
-        }
-    ' "$1" | sort -k1,1
-}
-
-for pair in "dark:gruvbox_dark:gruvbox-dark" "light:gruvbox_light:gruvbox-light"; do
-    IFS=: read -r m al gh <<< "$pair"
-    al_file="$REPO/alacritty/themes/themes/$al.toml"
-    gh_file="$REPO/ghostty/themes/$gh"
-    if [[ ! -f "$al_file" || ! -f "$gh_file" ]]; then
-        bad "palette source missing for $m ($al_file / $gh_file)"
-    elif diff -u <(alacritty_palette "$al_file") <(ghostty_palette "$gh_file") >/dev/null; then
-        ok "ghostty $gh palette matches alacritty $al"
-    else
-        bad "ghostty $gh palette drifts from alacritty $al: $(diff <(alacritty_palette "$al_file") <(ghostty_palette "$gh_file") | head -n 4 | tr '\n' ' ')"
-    fi
-
-    # Прозрачность: у alacritty она в state-фрагменте темы (theme/<mode>/
-    # alacritty.toml), у ghostty — в файле темы. Значения должны совпадать,
-    # иначе окна двух терминалов на одном рабочем столе выглядят по-разному.
-    al_op="$(awk -F= '/^\[window\]/ { s = 1; next } /^\[/ { s = 0 }
-                       s && /^[[:space:]]*opacity[[:space:]]*=/ {
-                           gsub(/[[:space:]]/, "", $2); print $2; exit }' \
-             "$REPO/theme/$m/alacritty.toml" 2>/dev/null)"
-    gh_op="$(awk -F= '/^[[:space:]]*background-opacity[[:space:]]*=/ {
-                           v = $2; gsub(/[[:space:]]/, "", v); print v; exit }' "$gh_file")"
-    if [[ -z "$al_op" || -z "$gh_op" ]]; then
-        bad "opacity missing: theme/$m/alacritty.toml='$al_op' ghostty/$gh='$gh_op'"
-    elif [[ "$al_op" == "$gh_op" ]]; then
-        ok "ghostty $gh opacity $gh_op matches alacritty $m"
-    else
-        bad "ghostty $gh background-opacity '$gh_op' != alacritty $m opacity '$al_op'"
-    fi
-
-    # Выделение должно совпадать у обоих терминалов: bg2 в gruvbox-раскладке
-    # светлый, на тёмном фоне он читался как подсветка из светлой темы, поэтому
-    # dark переведён на bg1. Курсор по-прежнему не переопределяем — дефолт
-    # ghostty (инверсия клетки) совпадает с alacritty.
-    if grep -qE '^[[:space:]]*cursor-(color|text)[[:space:]]*=' "$gh_file"; then
-        bad "ghostty $gh overrides cursor colors; keep the ghostty default (as in alacritty)"
-    else
-        ok "ghostty $gh keeps default cursor colors"
-    fi
-
-    al_sel="$(alacritty_selection "$al_file")"
-    gh_sel="$(awk -F= '
-        /^[[:space:]]*selection-(background|foreground)[[:space:]]*=/ {
-            key = $1; v = $2;
-            gsub(/[[:space:]]/, "", key); gsub(/[[:space:]#]/, "", v);
-            sub(/^selection-/, "", key);
-            if (key == "background") key = "background";
-            if (key == "foreground") key = "text";
-            print key " " v
-        }
-    ' "$gh_file" | sort)"
-    if [[ -z "$al_sel" && -z "$gh_sel" ]]; then
-        ok "ghostty $gh keeps default selection colors"
-    elif [[ "$al_sel" == "$gh_sel" ]]; then
-        ok "ghostty $gh selection matches alacritty $al ($(tr '\n' ' ' <<< "$al_sel"))"
-    else
-        bad "ghostty $gh selection drifts from alacritty $al: alacritty='$(tr '\n' ' ' <<< "$al_sel")' ghostty='$(tr '\n' ' ' <<< "$gh_sel")'"
-    fi
-done
-
-# ------------------------------------------------- 4b-ter. Kitty: конфиг и темы
+# ------------------------------------------------- 4b. Kitty: конфиг и темы
 # kitty читает конфиг из ~/.config/kitty (симлинк в репозиторий), палитры — из
 # файлов авто-темы {dark,light}-theme.auto.conf в том же каталоге: kitty (0.38+)
 # сам следит за схемой ОС и применяет их без хука.
@@ -455,71 +243,6 @@ else
     ok "kitty config parse skipped (kitty not installed)"
 fi
 
-# Палитра, выделение и курсор kitty не должны разъезжаться с ghostty (а тот —
-# с alacritty, проверено выше): те же ключи в другом синтаксисе.
-kitty_palette() { # <файл темы kitty>
-    awk -F"[[:space:]]+" '
-        /^[[:space:]]*background[[:space:]]/ { gsub(/#/, "", $2); print "bg " $2 }
-        /^[[:space:]]*foreground[[:space:]]/ { gsub(/#/, "", $2); print "fg " $2 }
-        /^[[:space:]]*color([0-9]|1[0-5])[[:space:]]/ {
-            n = $1; sub(/^color/, "", n); gsub(/#/, "", $2); print n " " $2
-        }
-    ' "$1" | sort -k1,1
-}
-
-kitty_selection() { # <файл темы kitty>
-    awk -F"[[:space:]]+" '
-        /^[[:space:]]*selection_(background|foreground)[[:space:]]/ {
-            key = $1; sub(/^selection_/, "", key); gsub(/#/, "", $2);
-            if (key == "foreground") key = "text";
-            print key " " $2
-        }
-    ' "$1" | sort
-}
-
-for pair in "dark:gruvbox_dark:gruvbox-dark:dark-theme.auto.conf" \
-            "light:gruvbox_light:gruvbox-light:light-theme.auto.conf"; do
-    IFS=: read -r m al gh kt <<< "$pair"
-    al_file="$REPO/alacritty/themes/themes/$al.toml"
-    kt_file="$REPO/kitty/$kt"
-    if [[ ! -f "$al_file" || ! -f "$kt_file" ]]; then
-        bad "palette source missing for $m ($al_file / $kt_file)"
-    elif diff -u <(alacritty_palette "$al_file") <(kitty_palette "$kt_file") >/dev/null; then
-        ok "kitty $kt palette matches alacritty $al"
-    else
-        bad "kitty $kt palette drifts from alacritty $al: $(diff <(alacritty_palette "$al_file") <(kitty_palette "$kt_file") | head -n 4 | tr '\n' ' ')"
-    fi
-
-    if [[ -f "$kt_file" ]]; then
-        al_sel2="$(alacritty_selection "$al_file")"
-        kt_sel="$(kitty_selection "$kt_file")"
-        if [[ "$al_sel2" == "$kt_sel" ]]; then
-            ok "kitty $kt selection matches alacritty $al ($(tr '\n' ' ' <<< "$kt_sel"))"
-        else
-            bad "kitty $kt selection drifts from alacritty $al: alacritty='$(tr '\n' ' ' <<< "$al_sel2")' kitty='$(tr '\n' ' ' <<< "$kt_sel")'"
-        fi
-        # Прозрачность: dark — 0.8 из kitty.conf, light гасится через
-        # transparent_background_colors в самой теме. Сверяем с alacritty/ghostty.
-        al_op="$(awk -F= '/^\[window\]/ { s = 1; next } /^\[/ { s = 0 }
-                           s && /^[[:space:]]*opacity[[:space:]]*=/ {
-                               gsub(/[[:space:]]/, "", $2); print $2; exit }' \
-                 "$REPO/theme/$m/alacritty.toml" 2>/dev/null)"
-        if [[ "$m" == dark ]]; then
-            kt_op="$(awk -F"[[:space:]]+" '/^[[:space:]]*background_opacity[[:space:]]/ { print $2; exit }' "$REPO/kitty/kitty.conf" 2>/dev/null)"
-        else
-            kt_op="$(awk -F"[[:space:]]+" '/^[[:space:]]*transparent_background_colors[[:space:]]/ { print $2; exit }' "$kt_file" 2>/dev/null)"
-            kt_op="${kt_op#*@}"
-        fi
-        if [[ -z "$al_op" || -z "$kt_op" ]]; then
-            bad "kitty opacity missing: theme/$m/alacritty.toml='$al_op' kitty='$kt_op'"
-        elif [[ "$al_op" == "$kt_op" ]]; then
-            ok "kitty $m opacity $kt_op matches alacritty $m"
-        else
-            bad "kitty $m opacity '$kt_op' != alacritty $m opacity '$al_op'"
-        fi
-    fi
-done
-
 # ------------------------------------------- 4c-bis. niri: конфиг и рамка окон
 # Синтаксис ловим до запуска сессии: кривая правка конфига роняет niri на старте.
 if command -v niri >/dev/null 2>&1 && [[ -f "$REPO/niri/config.kdl" ]]; then
@@ -532,20 +255,20 @@ fi
 
 # Фокус-рамка niri по умолчанию рисуется как ЗАЛИТЫЙ прямоугольник за окном
 # (docs: "rendered as a solid background rectangle behind windows... will show
-# up through semitransparent windows"). У терминала с background-opacity < 1
-# она просвечивает и красит всё окно в свой цвет. Правило
+# up through semitransparent windows"). У полупрозрачного окна kitty она
+# просвечивает и красит всё окно в свой цвет. Правило
 # `draw-border-with-background false` рисует её контуром ВОКРУГ окна.
 if [[ -f "$REPO/niri/config.kdl" ]]; then
     if awk '
         /^[[:space:]]*window-rule[[:space:]]*\{/ { inblk = 1; app = 0; bg = 0; next }
-        inblk && /ghostty/ { app = 1 }
+        inblk && /kitty/ { app = 1 }
         inblk && /draw-border-with-background[[:space:]]+false/ { bg = 1 }
         inblk && /^[[:space:]]*\}[[:space:]]*$/ { if (app && bg) found = 1; inblk = 0 }
         END { exit(found ? 0 : 1) }
     ' "$REPO/niri/config.kdl"; then
         ok "niri draws border around translucent terminals (no focus-ring bleed)"
     else
-        bad "niri has no window-rule with draw-border-with-background false for ghostty"
+        bad "niri has no window-rule with draw-border-with-background false for kitty"
     fi
 fi
 

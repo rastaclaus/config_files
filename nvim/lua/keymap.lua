@@ -58,7 +58,7 @@ end)
 -- Terminal keymap
 vim.keymap.set("n", "<leader>tt", ":term<CR>", { noremap = true, silent = true, desc = "Toggle terminal" })
 vim.keymap.set("t", "<ESC><ESC>", "<C-\\><C-N>", { noremap = true, silent = true, desc = "Term normal mode" })
-vim.keymap.set("t", "<C-o>", "<C-\\><C-[>", { desc = "Alacritty normal mode" })
+vim.keymap.set("t", "<C-o>", "<C-\\><C-[>", { desc = "Terminal normal mode" })
 
 -- Tabs keymap
 vim.keymap.set("n", "<leader>tn", ":tabnew<CR>", { desc = "New tab" })

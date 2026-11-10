@@ -8,7 +8,6 @@ Merge-каталоги (`fish`, `helix`) дают приложению реал�
 ```
 ~/.local/state/dotfiles/
   background-mode                      # "dark" или "light"
-  alacritty.toml                       # [general] import палитры
   rofi.rasi                            # @theme для rofi
   helix/runtime/themes/dotfiles.toml   # тема "dotfiles" (наследует gruvbox_*)
   ironbar/colors.css                   # @define-color палитра
@@ -17,8 +16,8 @@ Merge-каталоги (`fish`, `helix`) дают приложению реал�
   theme-hooks.log                      # вывод хуков и коды возврата
 ```
 
-Путь **захардкожен** (не `$XDG_STATE_HOME`): alacritty и rofi не раскрывают
-переменные окружения в `import`/`?import`.
+Путь **захардкожен** (не `$XDG_STATE_HOME`): rofi не раскрывает переменные
+окружения в `?import`.
 
 ## Как переключается
 
@@ -35,9 +34,7 @@ darkman вызывает хук `~/.local/share/darkman/theme` с `dark|light`; 
 | хук | что делает |
 |---|---|
 | `10-gtk.sh` | `gsettings`: `adw-gtk3(-dark)` + `color-scheme` — сигнал для всех libadwaita-приложений |
-| `20-ghostty.sh` | `SIGUSR2` запущенному ghostty (перечитывает конфиг, цвета применяются на живую) |
 | `22-kitty.sh` | `SIGUSR1` запущенному kitty (перечитывает конфиг и заново применяет авто-тему) |
-| `25-alacritty.sh` | `alacritty msg config` — палитра и прозрачность fallback-терминала |
 | `30-helix.sh` | `SIGUSR1` — helix перечитывает конфиг и тему |
 | `40-tmux.sh` | `tmux set -s theme` запущенному серверу + обновление статус-строки |
 | `50-fish.sh` | `SIGWINCH` fish, чтобы нарисованный промпт перекрасился сразу |
@@ -123,24 +120,13 @@ fish — на следующем промпте, ironbar — по hot-reload о�
 - **Ironbar.** Всегда запускается с `-t <state>/ironbar/style.css`: палитра в
   `colors.css`, в репозитории только раскладка без `@define-color`. Вотчер следит
   за обёрткой, поэтому после правки репозиторного CSS нужен `theme-sync`.
-- **Ghostty.** Только тема: `theme = light:gruvbox-light,dark:gruvbox-dark`,
-  файлы `ghostty/themes/gruvbox-{dark,light}` без расширения. Ghostty сам следит
-  за `gsettings color-scheme` через libadwaita и перекрашивается без хука;
-  `20-ghostty.sh` нужен для правленых палитр и как страховка. Шрифт, паддинги и
-  прозрачность подогнаны под alacritty: `Noto Sans Mono` 11.25 с `JetBrains Mono`
-  в fallback, `window-padding-x/y = 0` (у ghostty дефолт 2),
-  `background-opacity-cells = true` (alacritty гасит всё окно композитором).
-  Цвета выделения закреплены в темах, курсор — инверсия по умолчанию, как в
-  alacritty; `verify.sh` сверяет hex с темами alacritty.
-- **Kitty.** Тоже только тема, но через файлы авто-темы
+- **Kitty.** Только тема, через файлы авто-темы
   `kitty/{dark,light}-theme.auto.conf`: kitty (0.38+) сам читает
   `org.freedesktop.appearance` через xdg-desktop-portal (значение отдаёт
   darkman) и перекрашивает окна на смену схемы; `22-kitty.sh` (SIGUSR1) нужен
-  для правленых палитр и как страховка. Прозрачность в файл темы kitty не
-  входит: базовые `0.8` в kitty.conf (тёмная тема), светлая тема непрозрачная
-  через `transparent_background_colors #fbf1c7@1.0`. Палитры, выделение и
-  курсор сверяются `verify.sh` с alacritty и ghostty; клавиши —
-  [kitty.md](kitty.md).
+  для правленых палитр и как страховка. Конфиг почти дефолтный:
+  `Noto Sans Mono` 11.25 (JetBrains Mono подключается fontconfig как fallback);
+  клавиши — [kitty.md](kitty.md).
 - **Neovim.** `nvim/lua/theme.lua` следит за `~/.local/state/dotfiles` через
   `vim.uv.new_fs_event` (дебаунс 80 мс, fallback на `new_fs_poll`), поэтому уже
   открытые редакторы переключаются без внешних бинарей и RPC-сокета. На
@@ -157,12 +143,13 @@ fish — на следующем промпте, ironbar — по hot-reload о�
   `SIGWINCH` в терминалах с reflow, и нарисованный промпт держит старую тему до
   `Enter` — цена в перерисовке промпта на каждый ресайз.
 - **Tmux.** `.tmux.conf` держит обе палитры inline (`dark-theme-*` /
-  `light-theme-*`, значения из gruvbox-тем alacritty), стили используют имена
+  `light-theme-*`, значения из тех же gruvbox-палитр, что у kitty и fish),
+  стили используют имена
   `theme*`. Нужен tmux >= 3.8 (`theme`, `theme*`, хуки
   `client-light-theme`/`client-dark-theme`), старее — `%if` откатывает на
   статичный Solarized. State-файла нет: `theme` — серверная опция, `40-tmux.sh`
   лишь делает `tmux set -s theme <mode>`, если сервер уже запущен. Сама tmux
-  смену не замечает (alacritty отвечает на `OSC 11`, но не реализует
+  смену не замечает (kitty отвечает на `OSC 11`, но не реализует
   `DECSET 2031`), поэтому сказать ей нужно явно. Режим общий для всех
   клиентов.
 - **Waybar.** В переключении не участвует, живёт в rollback-режиме со статичной
@@ -176,10 +163,9 @@ merge-каталогов и симлинков, отсутствие битых 
 что переключение темы не меняет `git status` (он read-only и возвращает текущий
 режим), что `~/.local/bin/theme-switch` указывает в репозиторий, что легаси
 `background_mode` не выставлена, что хуки исполняемые и синтаксически
-валидны, что палитры ghostty совпадают с alacritty и что хуки
-последнего переключения вышли с кодом 0.
+валидны и что хуки последнего переключения вышли с кодом 0.
 
 `XDG_STATE_HOME` должен оставаться дефолтным. Кто как подхватывает: fish —
 `SIGWINCH`, helix — `SIGUSR1` (новые окна видят сразу), neovim — свой вотчер,
-ghostty — `SIGUSR2`, rofi — при следующем запуске, tmux — на `theme-sync`
+rofi — при следующем запуске, tmux — на `theme-sync`
 (запущенный сервер обновляется на месте, новый подхватит режим при attach).

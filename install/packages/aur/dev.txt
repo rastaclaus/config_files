@@ -5,4 +5,3 @@ bridge-utils                           # утилиты для сетевых м
 bun-bin                                # быстрый JS/TS-рантайм и менеджер пакетов
 mongodb-tools-bin                      # CLI MongoDB (mongodump, mongorestore и др.)
 mongosh-bin                            # оболочка MongoDB
-multipass                              # запуск VM Ubuntu из CLI

@@ -9,11 +9,7 @@ set $down j
 set $up k
 set $right l
 # Your preferred terminal emulator
-set $term ghostty
-# Fallback-терминал: остаётся установленным, пока ghostty обкатывается.
-set $term_fallback alacritty
-# Третий терминал с конфигом как у ghostty (kitty/kitty.conf).
-set $term_kitty kitty
+set $term kitty
 font pango:SourceCodePro Medium 10
 
 ### Output configuration
@@ -41,8 +37,6 @@ input type:keyboard {
 # Basics:
     # Start a terminal
     bindsym $mod+Return exec $term
-    bindsym $mod+Shift+Return exec $term_fallback
-    bindsym $mod+Ctrl+Return exec $term_kitty
     bindsym $mod+n exec --no-startup-id networkmanager_dmenu
 
     # Kill focused window

@@ -1,6 +1,6 @@
 # name: 'Gruvbox Light'
 # preferred_background: fbf1c7
-# Палитра согласована с gruvbox_light.toml (alacritty/themes/themes).
+# Палитра согласована с kitty/light-theme.auto.conf (gruvbox light).
 # Цвета промпта заданы явно (hex): именованные green/brgreen/red рисуются
 # палитрой терминала и на headless-хосте не меняются вместе с темой.
 

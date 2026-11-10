@@ -36,7 +36,7 @@ set -euo pipefail
 
 WALLPAPER_DIR="${WALLPAPER_DIR:-$HOME/Wallpapers}"
 WALLPAPER_BG="${WALLPAPER_BG:-000000}"
-# Hard-coded like in wayland/theme-sync: alacritty/rofi cannot expand variables
+# Hard-coded like in wayland/theme-sync: rofi cannot expand variables
 # in import paths, so the state directory has a fixed location.
 STATE_DIR="$HOME/.local/state/dotfiles"
 SLICE_DIR="$WALLPAPER_DIR/.slices"

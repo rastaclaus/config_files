@@ -239,7 +239,7 @@ if [[ $DO_LINKS -eq 1 ]]; then
 
   # Тема и helix-тема живут в state; see wayland/theme-sync.
   log "preparing runtime state in $STATE_DIR"
-  run mkdir -p "$STATE_DIR/alacritty" "$STATE_DIR/helix/runtime/themes" "$STATE_DIR/ironbar"
+  run mkdir -p "$STATE_DIR/helix/runtime/themes" "$STATE_DIR/ironbar"
   ensure_link "$STATE_DIR/helix/runtime" "$HOME/.config/helix/runtime"
   write_compositor
 

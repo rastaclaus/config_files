@@ -1,6 +1,6 @@
 # name: 'Gruvbox Dark'
 # preferred_background: 282828
-# Палитра согласована с gruvbox_dark.toml (alacritty/themes/themes).
+# Палитра согласована с kitty/dark-theme.auto.conf (gruvbox dark).
 # Цвета промпта заданы явно (hex): именованные green/brgreen/red рисуются
 # палитрой терминала и на headless-хосте не меняются вместе с темой.
 

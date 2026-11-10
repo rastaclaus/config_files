@@ -3,7 +3,7 @@
 # GTK / xdg-desktop-portal: adw-gtk3 и color-scheme.
 #
 # color-scheme — это же сигнал для приложений, которые сами следят за системной
-# темой (ghostty через libadwaita, Qt через GTK platform theme, портал).
+# темой (Qt через GTK platform theme, портал).
 set -euo pipefail
 
 # shellcheck source=wayland/theme-hook-lib.sh

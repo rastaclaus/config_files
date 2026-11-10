@@ -18,7 +18,7 @@
 ## Структура
 
 ```
-fish/ helix/ nvim/ direnv/ ghostty/ alacritty/ kitty/ rofi/ darkman/
+fish/ helix/ nvim/ direnv/ kitty/ rofi/ darkman/
 networkmanager-dmenu/ xdg-desktop-portal/ applications/ autostart/
 sway/ niri/ ironbar/ waybar/ wayland/          # Wayland-сессия (профиль gui)
 theme/dark/ theme/light/                       # палитры gruvbox
@@ -136,7 +136,7 @@ wlroots-композиторы), в обоих `Settings=darkman` и `Inhibit=no
 
 Биндинги синхронизированы между `sway/config` и `niri/config.kdl`
 (`Mod`+h/j/k/l, workspace `Mod`+1..0, терминал, лаунчер, скриншоты, медиа);
-`Mod`+`Return` — ghostty, `Mod`+`Shift`+`Return` — alacritty. Особенности sway без
+`Mod`+`Return` — kitty. Особенности sway без
 аналога в niri (splits, stacking, focus-parent, scratchpad, resize mode) остаются
 только в `sway/config`. Обёртки в `applications/`: `chromium-wayland` добавляет
 Ozone/Wayland-флаги, `chromium-proxy` — ещё `socks5://localhost:2080` и отдельный
@@ -144,24 +144,22 @@ Ozone/Wayland-флаги, `chromium-proxy` — ещё `socks5://localhost:2080` 
 
 ## Терминал
 
-Основной — **ghostty** (`Mod`+`Return`), alacritty остаётся на
-`Mod`+`Shift`+`Return` как fallback, kitty — на `Mod`+`Ctrl`+`Return` с конфигом
-как у ghostty. `~/.config/ghostty` — симлинк на `ghostty/`,
-конфиг `config.ghostty`, палитры `ghostty/themes/gruvbox-{dark,light}`; проверено
-на 1.3.1, опции версионно-зависимы. tmux сверху держит историю на панель и
-переживает окно терминала.
+Основной — **kitty** (`Mod`+`Return`). `~/.config/kitty` — симлинк на `kitty/`;
+конфиг почти дефолтный (шрифт `Noto Sans Mono` 11.25), палитры — в файлах
+авто-темы `kitty/{dark,light}-theme.auto.conf`; проверено на 0.49.2, опции
+версионно-зависимы. tmux сверху держит историю на панель и переживает окно
+терминала.
 
-Клавиши, scroll-mode, дампы экрана, SSH-клипборд и связка с tmux —
-[docs/ghostty.md](docs/ghostty.md). kitty-аналог (авто-темы через портал,
-модальный scroll-mode, hints вместо vi-курсора) — [docs/kitty.md](docs/kitty.md).
+Авто-темы через портал, hints, SSH-клипборд и связка с tmux —
+[docs/kitty.md](docs/kitty.md).
 
 ## Тема и обои
 
 `theme-switch [dark|light]` (без аргумента — инвертировать) правит файлы в
 `~/.local/state/dotfiles` и запускает хуки; работает и на headless. Палитры
-gruvbox синхронизированы между alacritty, ghostty, kitty, fish, helix, tmux и rofi,
-`verify.sh` сверяет hex. Обои подбираются под режим (`*_dark.*` / `*_light.*`) и
-меняются вместе с темой; `Mod`+`T` — сменить вручную.
+gruvbox синхронизированы между kitty, fish, helix, tmux и rofi. Обои подбираются
+под режим (`*_dark.*` / `*_light.*`) и меняются вместе с темой; `Mod`+`T` —
+сменить вручную.
 
 Qt-приложения следуют GTK-теме через переменную окружения — разовый ручной шаг,
 репозиторий `/etc/environment` не трогает:
@@ -301,13 +299,8 @@ cp vpn/local.env.example vpn/local.env   # заполнить, chmod 600
 
 | файл | о чём |
 |---|---|
-| [docs/ghostty.md](docs/ghostty.md) | терминал: клавиши, scroll-mode, дампы, tmux, SSH |
-| [docs/kitty.md](docs/kitty.md) | kitty: авто-темы, scroll-mode, hints, отличия от ghostty |
+| [docs/kitty.md](docs/kitty.md) | kitty: авто-темы, hints, SSH, tmux |
 | [docs/theme.md](docs/theme.md) | state-каталог, хуки, Mattermost, обои, per-app поведение |
 | [docs/niri.md](docs/niri.md) | шпаргалка niri: модель окон, биндинги, визуал, диагностика |
 | [docs/nvim.md](docs/nvim.md) | git-ревью (gitsigns, fzf-lua, diffview) и автодополнение в редакторе |
 | [vpn/README.md](vpn/README.md) | скелет OpenVPN и его переменные |
-
-`alacritty/themes/` — вендорнутая копия [alacritty-theme](https://github.com/alacritty/alacritty-theme)
-(там свой README, `images/`, `print_colors.sh`); править её не нужно, репозиторий
-использует только `themes/gruvbox_{dark,light}.toml`.

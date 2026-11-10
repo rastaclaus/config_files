@@ -33,8 +33,7 @@ Wayland-обвязка — в [README](../README.md), тема и обои — �
 
 | клавиши | действие |
 |---|---|
-| `Mod+Return` / `Mod+Shift+Return` | ghostty / alacritty (fallback) |
-| `Mod+Ctrl+Return` | kitty (конфиг как у ghostty, [docs/kitty.md](kitty.md)) |
+| `Mod+Return` | kitty ([docs/kitty.md](kitty.md)) |
 | `Mod+D` | rofi combi; `Alt+Tab` — переключатель окон |
 | `Mod+Shift+U` / `Mod+Shift+S` | rofi: юникод / эмодзи |
 | `Mod+N` | networkmanager-dmenu |
@@ -111,7 +110,7 @@ layout {
 
 ```kdl
 window-rule {
-    match app-id=r#"^(com\.mitchellh\.ghostty|Alacritty)$"#
+    match app-id=r#"^kitty$"#
     draw-border-with-background false
 }
 ```

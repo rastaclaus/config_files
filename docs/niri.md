@@ -128,6 +128,17 @@ include "config.d/50-touchpad.kdl" optional=true   // создаётся togglet
 `HDMI-A-1` (2560×1440, x=0) + `DP-1` (2560×1440, x=2560); **ambb** — `eDP-1`
 3072×1920@120 со `scale 1.4`. Посмотреть рантайм: `niri msg outputs`.
 
+## Живой конфиг vs репозиторий
+
+В отличие от sway (`~/.config/sway/config` — симлинк в репозиторий),
+`~/.config/niri/config.kdl` — **реальный файл**: `jcode setup-hotkey`
+материализует его и дописывает свой managed-блок (`Super+Semicolon`,
+`Super+Apostrophe`, …) с хардкодными путями, которым в трекаемом файле делать
+нечего (verify.sh запрещает `/home/<user>` вне md). Поэтому после правки
+репозиторного `niri/config.kdl` те же правки нужно перенести в живой файл и
+сделать `niri msg action load-config-file`; симлинк восстанавливать нельзя —
+потеряются jcode-хоткеи.
+
 ## niri msg
 
 ```sh

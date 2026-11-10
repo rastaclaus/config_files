@@ -412,7 +412,9 @@ done
 # kitty читает конфиг из ~/.config/kitty (симлинк в репозиторий), палитры — из
 # файлов авто-темы {dark,light}-theme.auto.conf в том же каталоге: kitty (0.38+)
 # сам следит за схемой ОС и применяет их без хука.
-if [[ -L "$HOME/.config/kitty" && "$(readlink -f "$HOME/.config/kitty")" == "$REPO/kitty" ]]; then
+if [[ "$declared_profile" == "headless" ]]; then
+    ok "kitty config not needed on headless"
+elif [[ -L "$HOME/.config/kitty" && "$(readlink -f "$HOME/.config/kitty")" == "$REPO/kitty" ]]; then
     ok "~/.config/kitty -> repo"
 else
     bad "~/.config/kitty is not a symlink to $REPO/kitty"
@@ -420,7 +422,7 @@ fi
 
 # Файлы авто-темы должны существовать: без них kitty при смене схемы молча
 # остаётся на цветах из kitty.conf.
-for f in dark-theme.auto.conf light-theme.auto.conf; do
+for f in dark-theme.auto.conf light-theme.auto.conf no-preference-theme.auto.conf; do
     if [[ -f "$REPO/kitty/$f" ]]; then
         ok "kitty theme $f"
     else
@@ -434,7 +436,11 @@ done
 if command -v kitty >/dev/null 2>&1; then
     if diag="$(kitty +runpy "
 from kitty.config import load_config
+from kitty.colors import parse_colors
 load_config('$REPO/kitty/kitty.conf')
+for t in ('dark-theme.auto.conf', 'light-theme.auto.conf', 'no-preference-theme.auto.conf'):
+    with open(f'$REPO/kitty/{t}') as f:
+        parse_colors([f])
 print('PARSE_OK')
 " 2>&1)" && grep -q PARSE_OK <<< "$diag"; then
         if grep -qE 'Ignoring unknown config key|Error|Traceback' <<< "$diag"; then

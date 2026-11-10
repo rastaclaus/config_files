@@ -24,11 +24,15 @@ scroll-mode на `ctrl+shift+space`. `~/.config/kitty` — симлинк на `
 kitty читает `org.freedesktop.appearance color-scheme` через xdg-desktop-portal —
 на этом десктопе значение отдаёт darkman (см. `xdg-desktop-portal/niri-portals.conf`)
 — и перекрашивает уже открытые окна без перезапуска и без хука. Файл
-`no-preference-theme.auto.conf` не создаётся: darkman всегда отдаёт light или dark.
+`no-preference-theme.auto.conf` включает светлую палитру (`include
+light-theme.auto.conf`): darkman на этом десктопе всегда отдаёт light или dark,
+но GNOME-портал без тёмного стиля отвечает no-preference, и без файла kitty
+остался бы на дефолтных цветах.
 
 - Файл темы принимает **только цветовые ключи** (палитра, выделение, курсор,
-  таб-бар, `transparent_background_colors`, `background_image`); `font_family`
-  или `background_opacity` в нём молча не сработают.
+  таб-бар, `transparent_background_colors`, `background_image`) плюс `include`
+  (резолвится относительно каталога kitty); `font_family` или
+  `background_opacity` в нём молча не сработают.
 - **Прозрачность в файл темы не влезает**: у kitty `background_opacity` не
   цветовой ключ. Базовые `0.8` заданы в `kitty.conf` (тёмная тема — как в
   ghostty), а светлая глушит прозрачность через
@@ -47,7 +51,7 @@ kitty читает `org.freedesktop.appearance color-scheme` через xdg-desk
 | клавиши | действие |
 |---|---|
 | `ctrl+shift+c` / `ctrl+shift+v` | копировать / вставить CLIPBOARD (стоковые) |
-| `ctrl+insert` / `shift+insert` | PRIMARY (стоковые) |
+| `ctrl+shift+s` / `shift+insert` | вставить PRIMARY (стоковые) |
 | `ctrl+shift+y` | **наше**: экран + история в CLIPBOARD как plain text |
 | `ctrl+alt+o` | **наше**: экран + история в nvim поверх окна |
 | `ctrl+shift+space` | **наше**: режим `scroll-mode` |

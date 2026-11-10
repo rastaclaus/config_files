@@ -65,7 +65,7 @@ layout {
 // `false` = draw them as an outline around the window even for clients that
 // keep their client-side decorations. Ring stays visible, tint is gone.
 window-rule {
-    match app-id=r#"^(com\.mitchellh\.ghostty|Alacritty)$"#
+    match app-id=r#"^(com\.mitchellh\.ghostty|Alacritty|kitty)$"#
     draw-border-with-background false
 }
 
@@ -106,6 +106,7 @@ binds {
     // --- programs / session ---
     Mod+Return hotkey-overlay-title="Terminal: ghostty" { spawn "ghostty"; }
     Mod+Shift+Return hotkey-overlay-title="Terminal: alacritty (fallback)" { spawn "alacritty"; }
+    Mod+Ctrl+Return hotkey-overlay-title="Terminal: kitty" { spawn "kitty"; }
     Mod+D hotkey-overlay-title="Launcher: rofi" { spawn "rofi" "-show" "combi"; }
     Mod+Shift+U { spawn "rofi" "-modi" "unicode" "-show" "unicode"; }
     Mod+Shift+S { spawn "rofi" "-modi" "emoji" "-show" "emoji"; }

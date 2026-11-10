@@ -21,6 +21,7 @@ radeontop                    # мониторинг GPU AMD
 # --- terminal / launcher ---
 ghostty                      # основной терминал (конфиг ghostty/)
 alacritty                    # терминал на GPU (конфиг alacritty/)
+kitty                        # терминал на GPU, конфиг как у ghostty (конфиг kitty/)
 rofi                         # лаунчер и меню (конфиг rofi/)
 rofi-emoji                   # плагин эмодзи для rofi
 

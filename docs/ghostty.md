@@ -1,7 +1,8 @@
 # Ghostty
 
 Основной терминал (`Mod`+`Return`); alacritty остаётся на `Mod`+`Shift`+`Return`
-как fallback. `~/.config/ghostty` — симлинк на `ghostty/`, конфиг
+как fallback, kitty — на `Mod`+`Ctrl`+`Return` с конфигом-зеркалом этого
+([docs/kitty.md](kitty.md)). `~/.config/ghostty` — симлинк на `ghostty/`, конфиг
 `config.ghostty` (файл `config` создавать нельзя: ghostty загрузит оба и
 предупредит), палитры — `ghostty/themes/gruvbox-{dark,light}` (имя темы — имя
 файла без расширения, с `.conf` молча не найдётся). Проверено на **1.3.1**:

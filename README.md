@@ -18,7 +18,7 @@
 ## Структура
 
 ```
-fish/ helix/ nvim/ direnv/ ghostty/ alacritty/ rofi/ darkman/
+fish/ helix/ nvim/ direnv/ ghostty/ alacritty/ kitty/ rofi/ darkman/
 networkmanager-dmenu/ xdg-desktop-portal/ applications/ autostart/
 sway/ niri/ ironbar/ waybar/ wayland/          # Wayland-сессия (профиль gui)
 theme/dark/ theme/light/                       # палитры gruvbox
@@ -145,19 +145,21 @@ Ozone/Wayland-флаги, `chromium-proxy` — ещё `socks5://localhost:2080` 
 ## Терминал
 
 Основной — **ghostty** (`Mod`+`Return`), alacritty остаётся на
-`Mod`+`Shift`+`Return` как fallback. `~/.config/ghostty` — симлинк на `ghostty/`,
+`Mod`+`Shift`+`Return` как fallback, kitty — на `Mod`+`Ctrl`+`Return` с конфигом
+как у ghostty. `~/.config/ghostty` — симлинк на `ghostty/`,
 конфиг `config.ghostty`, палитры `ghostty/themes/gruvbox-{dark,light}`; проверено
 на 1.3.1, опции версионно-зависимы. tmux сверху держит историю на панель и
 переживает окно терминала.
 
 Клавиши, scroll-mode, дампы экрана, SSH-клипборд и связка с tmux —
-[docs/ghostty.md](docs/ghostty.md).
+[docs/ghostty.md](docs/ghostty.md). kitty-аналог (авто-темы через портал,
+модальный scroll-mode, hints вместо vi-курсора) — [docs/kitty.md](docs/kitty.md).
 
 ## Тема и обои
 
 `theme-switch [dark|light]` (без аргумента — инвертировать) правит файлы в
 `~/.local/state/dotfiles` и запускает хуки; работает и на headless. Палитры
-gruvbox синхронизированы между alacritty, ghostty, fish, helix, tmux и rofi,
+gruvbox синхронизированы между alacritty, ghostty, kitty, fish, helix, tmux и rofi,
 `verify.sh` сверяет hex. Обои подбираются под режим (`*_dark.*` / `*_light.*`) и
 меняются вместе с темой; `Mod`+`T` — сменить вручную.
 
@@ -300,6 +302,7 @@ cp vpn/local.env.example vpn/local.env   # заполнить, chmod 600
 | файл | о чём |
 |---|---|
 | [docs/ghostty.md](docs/ghostty.md) | терминал: клавиши, scroll-mode, дампы, tmux, SSH |
+| [docs/kitty.md](docs/kitty.md) | kitty: авто-темы, scroll-mode, hints, отличия от ghostty |
 | [docs/theme.md](docs/theme.md) | state-каталог, хуки, Mattermost, обои, per-app поведение |
 | [docs/niri.md](docs/niri.md) | шпаргалка niri: модель окон, биндинги, визуал, диагностика |
 | [docs/nvim.md](docs/nvim.md) | git-ревью (gitsigns, fzf-lua, diffview) и автодополнение в редакторе |

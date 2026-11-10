@@ -36,6 +36,7 @@ darkman вызывает хук `~/.local/share/darkman/theme` с `dark|light`; 
 |---|---|
 | `10-gtk.sh` | `gsettings`: `adw-gtk3(-dark)` + `color-scheme` — сигнал для всех libadwaita-приложений |
 | `20-ghostty.sh` | `SIGUSR2` запущенному ghostty (перечитывает конфиг, цвета применяются на живую) |
+| `22-kitty.sh` | `SIGUSR1` запущенному kitty (перечитывает конфиг и заново применяет авто-тему) |
 | `25-alacritty.sh` | `alacritty msg config` — палитра и прозрачность fallback-терминала |
 | `30-helix.sh` | `SIGUSR1` — helix перечитывает конфиг и тему |
 | `40-tmux.sh` | `tmux set -s theme` запущенному серверу + обновление статус-строки |
@@ -126,6 +127,15 @@ rofi подхватит тему при следующем запуске, fish 
   `background-opacity-cells = true` (alacritty гасит всё окно композитором).
   Цвета выделения закреплены в темах, курсор — инверсия по умолчанию, как в
   alacritty; `verify.sh` сверяет hex с темами alacritty.
+- **Kitty.** Тоже только тема, но через файлы авто-темы
+  `kitty/{dark,light}-theme.auto.conf`: kitty (0.38+) сам читает
+  `org.freedesktop.appearance` через xdg-desktop-portal (значение отдаёт
+  darkman) и перекрашивает окна на смену схемы; `22-kitty.sh` (SIGUSR1) нужен
+  для правленых палитр и как страховка. Прозрачность в файл темы kitty не
+  входит: базовые `0.8` в kitty.conf (тёмная тема), светлая тема непрозрачная
+  через `transparent_background_colors #fbf1c7@1.0`. Палитры, выделение и
+  курсор сверяются `verify.sh` с alacritty и ghostty; клавиши —
+  [kitty.md](kitty.md).
 - **Neovim.** `nvim/lua/theme.lua` следит за `~/.local/state/dotfiles` через
   `vim.uv.new_fs_event` (дебаунс 80 мс, fallback на `new_fs_poll`), поэтому уже
   открытые редакторы переключаются без внешних бинарей и RPC-сокета. На

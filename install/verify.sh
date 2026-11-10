@@ -300,6 +300,19 @@ fi
 # Палитры двух терминалов не должны разъезжаться: alacritty остаётся fallback'ом.
 # Обе функции печатают строки "<слот> <hex без #>" и сортируют их, чтобы
 # сравнивать diff'ом: bg/fg плюс слоты палитры 0..15.
+alacritty_selection() { # <файл темы alacritty> — [colors.selection] как "<bg|text> <hex>"
+    awk -F"'" '
+        /^\[colors\.selection\]/ { s = 1; next }
+        /^\[/ { s = 0 }
+        s && /^[a-z_]+[ \t]*=/ {
+            key = $1; gsub(/[ \t=]/, "", key);
+            col = $2; gsub(/#/, "", col);
+            if (key == "foreground") key = "text";
+            print key " " col
+        }
+    ' "$1" | sort
+}
+
 alacritty_palette() { # <файл темы alacritty>
     awk -F"'" '
         /^\[/ { sec = "" }
@@ -375,15 +388,7 @@ for pair in "dark:gruvbox_dark:gruvbox-dark" "light:gruvbox_light:gruvbox-light"
         ok "ghostty $gh keeps default cursor colors"
     fi
 
-    al_sel="$(awk -F"'" '
-        /^\[colors\.selection\]/ { s = 1; next }
-        /^\[/ { s = 0 }
-        s && /^[a-z_]+[ \t]*=/ {
-            key = $1; gsub(/[ \t=]/, "", key);
-            col = $2; gsub(/#/, "", col);
-            print key " " col
-        }
-    ' "$al_file" | sort)"
+    al_sel="$(alacritty_selection "$al_file")"
     gh_sel="$(awk -F= '
         /^[[:space:]]*selection-(background|foreground)[[:space:]]*=/ {
             key = $1; v = $2;
@@ -400,6 +405,112 @@ for pair in "dark:gruvbox_dark:gruvbox-dark" "light:gruvbox_light:gruvbox-light"
         ok "ghostty $gh selection matches alacritty $al ($(tr '\n' ' ' <<< "$al_sel"))"
     else
         bad "ghostty $gh selection drifts from alacritty $al: alacritty='$(tr '\n' ' ' <<< "$al_sel")' ghostty='$(tr '\n' ' ' <<< "$gh_sel")'"
+    fi
+done
+
+# ------------------------------------------------- 4b-ter. Kitty: конфиг и темы
+# kitty читает конфиг из ~/.config/kitty (симлинк в репозиторий), палитры — из
+# файлов авто-темы {dark,light}-theme.auto.conf в том же каталоге: kitty (0.38+)
+# сам следит за схемой ОС и применяет их без хука.
+if [[ -L "$HOME/.config/kitty" && "$(readlink -f "$HOME/.config/kitty")" == "$REPO/kitty" ]]; then
+    ok "~/.config/kitty -> repo"
+else
+    bad "~/.config/kitty is not a symlink to $REPO/kitty"
+fi
+
+# Файлы авто-темы должны существовать: без них kitty при смене схемы молча
+# остаётся на цветах из kitty.conf.
+for f in dark-theme.auto.conf light-theme.auto.conf; do
+    if [[ -f "$REPO/kitty/$f" ]]; then
+        ok "kitty theme $f"
+    else
+        bad "kitty auto theme missing: kitty/$f"
+    fi
+done
+
+# Сам конфиг должен проходить парсер kitty: опечатка в ключе выводится в stderr
+# строкой 'Ignoring unknown config key', ошибка в map — исключением. Без kitty
+# (headless) проверка недоступна.
+if command -v kitty >/dev/null 2>&1; then
+    if diag="$(kitty +runpy "
+from kitty.config import load_config
+load_config('$REPO/kitty/kitty.conf')
+print('PARSE_OK')
+" 2>&1)" && grep -q PARSE_OK <<< "$diag"; then
+        if grep -qE 'Ignoring unknown config key|Error|Traceback' <<< "$diag"; then
+            bad "kitty config parse warnings: $(grep -E 'Ignoring|Error|Traceback' <<< "$diag" | head -n 2 | tr '\n' ' ')"
+        else
+            ok "kitty +load-config parse"
+        fi
+    else
+        bad "kitty config parse failed: $(head -n 3 <<< "$diag" | tr '\n' ' ')"
+    fi
+else
+    ok "kitty config parse skipped (kitty not installed)"
+fi
+
+# Палитра, выделение и курсор kitty не должны разъезжаться с ghostty (а тот —
+# с alacritty, проверено выше): те же ключи в другом синтаксисе.
+kitty_palette() { # <файл темы kitty>
+    awk -F"[[:space:]]+" '
+        /^[[:space:]]*background[[:space:]]/ { gsub(/#/, "", $2); print "bg " $2 }
+        /^[[:space:]]*foreground[[:space:]]/ { gsub(/#/, "", $2); print "fg " $2 }
+        /^[[:space:]]*color([0-9]|1[0-5])[[:space:]]/ {
+            n = $1; sub(/^color/, "", n); gsub(/#/, "", $2); print n " " $2
+        }
+    ' "$1" | sort -k1,1
+}
+
+kitty_selection() { # <файл темы kitty>
+    awk -F"[[:space:]]+" '
+        /^[[:space:]]*selection_(background|foreground)[[:space:]]/ {
+            key = $1; sub(/^selection_/, "", key); gsub(/#/, "", $2);
+            if (key == "foreground") key = "text";
+            print key " " $2
+        }
+    ' "$1" | sort
+}
+
+for pair in "dark:gruvbox_dark:gruvbox-dark:dark-theme.auto.conf" \
+            "light:gruvbox_light:gruvbox-light:light-theme.auto.conf"; do
+    IFS=: read -r m al gh kt <<< "$pair"
+    al_file="$REPO/alacritty/themes/themes/$al.toml"
+    kt_file="$REPO/kitty/$kt"
+    if [[ ! -f "$al_file" || ! -f "$kt_file" ]]; then
+        bad "palette source missing for $m ($al_file / $kt_file)"
+    elif diff -u <(alacritty_palette "$al_file") <(kitty_palette "$kt_file") >/dev/null; then
+        ok "kitty $kt palette matches alacritty $al"
+    else
+        bad "kitty $kt palette drifts from alacritty $al: $(diff <(alacritty_palette "$al_file") <(kitty_palette "$kt_file") | head -n 4 | tr '\n' ' ')"
+    fi
+
+    if [[ -f "$kt_file" ]]; then
+        al_sel2="$(alacritty_selection "$al_file")"
+        kt_sel="$(kitty_selection "$kt_file")"
+        if [[ "$al_sel2" == "$kt_sel" ]]; then
+            ok "kitty $kt selection matches alacritty $al ($(tr '\n' ' ' <<< "$kt_sel"))"
+        else
+            bad "kitty $kt selection drifts from alacritty $al: alacritty='$(tr '\n' ' ' <<< "$al_sel2")' kitty='$(tr '\n' ' ' <<< "$kt_sel")'"
+        fi
+        # Прозрачность: dark — 0.8 из kitty.conf, light гасится через
+        # transparent_background_colors в самой теме. Сверяем с alacritty/ghostty.
+        al_op="$(awk -F= '/^\[window\]/ { s = 1; next } /^\[/ { s = 0 }
+                           s && /^[[:space:]]*opacity[[:space:]]*=/ {
+                               gsub(/[[:space:]]/, "", $2); print $2; exit }' \
+                 "$REPO/theme/$m/alacritty.toml" 2>/dev/null)"
+        if [[ "$m" == dark ]]; then
+            kt_op="$(awk -F"[[:space:]]+" '/^[[:space:]]*background_opacity[[:space:]]/ { print $2; exit }' "$REPO/kitty/kitty.conf" 2>/dev/null)"
+        else
+            kt_op="$(awk -F"[[:space:]]+" '/^[[:space:]]*transparent_background_colors[[:space:]]/ { print $2; exit }' "$kt_file" 2>/dev/null)"
+            kt_op="${kt_op#*@}"
+        fi
+        if [[ -z "$al_op" || -z "$kt_op" ]]; then
+            bad "kitty opacity missing: theme/$m/alacritty.toml='$al_op' kitty='$kt_op'"
+        elif [[ "$al_op" == "$kt_op" ]]; then
+            ok "kitty $m opacity $kt_op matches alacritty $m"
+        else
+            bad "kitty $m opacity '$kt_op' != alacritty $m opacity '$al_op'"
+        fi
     fi
 done
 

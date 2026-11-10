@@ -53,13 +53,18 @@ darkman вызывает хук `~/.local/share/darkman/theme` с `dark|light`; 
 
 ## Ручное переключение
 
-`theme-switch [dark|light]` (`applications/theme-switch` → `~/.local/bin`) —
-обёртка над `theme-sync`; без аргумента инвертирует `background-mode`. Работает и
-на headless: `theme-sync` пишет state-файлы, а GUI-перезагрузки пропускает сам.
-Терминал на стороне SSH-клиента он не перекрасит — палитра клиента вне контроля
-сервера, меняются только цвета, которые печатают приложения (fish, helix, tmux).
-rofi подхватит тему при следующем запуске, fish — на следующем промпте, ironbar —
-по hot-reload обёртки; перезапускать ничего не нужно.
+`theme-switch [dark|light]` (`applications/theme-switch` → `~/.local/bin`) — без
+аргумента инвертирует `background-mode`. Если darkman запущен, он источник
+истины: скрипт делает `darkman set <mode>`, тот обновляет значение портала
+(`org.freedesktop.appearance`, по нему тему выбирают kitty и другие) и через
+свой хук запускает `theme-sync` (иначе gsettings/portal расходились — новые
+окна kitty открывались со старой темой). На headless darkman нет: скрипт сам
+падает до `theme-sync`, который пишет state-файлы, а GUI-перезагрузки
+пропускает. Терминал на стороне SSH-клиента он не перекрасит — палитра
+клиента вне контроля сервера, меняются только цвета, которые печатают
+приложения (fish, helix, tmux). rofi подхватит тему при следующем запуске,
+fish — на следующем промпте, ironbar — по hot-reload обёртки; перезапускать
+ничего не нужно.
 
 ## Mattermost
 

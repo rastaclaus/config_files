@@ -42,4 +42,15 @@ case "$mode" in
         ;;
 esac
 
+# Если darkman жив — источник истины он: `darkman set` обновляет его режим
+# (и значение org.freedesktop.appearance для портала, по которому kitty и
+# прочие выбирают тему), а его хук уже запускает theme-sync (иначе были бы
+# два независимых источника: gsettings от theme-sync и портал от darkman —
+# новые окна kitty открывались со старой темой). На headless darkman нет —
+# работаем напрямую через theme-sync.
+if command -v darkman >/dev/null 2>&1 && \
+   systemctl --user is-active --quiet darkman.service 2>/dev/null; then
+    exec darkman set "$mode"
+fi
+
 exec "$REPO/wayland/theme-sync" "$mode"

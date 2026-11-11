@@ -18,7 +18,7 @@
 ## Структура
 
 ```
-fish/ helix/ nvim/ direnv/ kitty/ rofi/ darkman/
+fish/ helix/ nvim/ direnv/ kitty/ wezterm/ rofi/ darkman/
 networkmanager-dmenu/ xdg-desktop-portal/ applications/ autostart/
 sway/ niri/ ironbar/ waybar/ wayland/          # Wayland-сессия (профиль gui)
 theme/dark/ theme/light/                       # палитры gruvbox
@@ -136,7 +136,7 @@ wlroots-композиторы), в обоих `Settings=darkman` и `Inhibit=no
 
 Биндинги синхронизированы между `sway/config` и `niri/config.kdl`
 (`Mod`+h/j/k/l, workspace `Mod`+1..0, терминал, лаунчер, скриншоты, медиа);
-`Mod`+`Return` — kitty. Особенности sway без
+`Mod`+`Return` — kitty, `Mod`+`Shift`+`Return` — wezterm. Особенности sway без
 аналога в niri (splits, stacking, focus-parent, scratchpad, resize mode) остаются
 только в `sway/config`. Обёртки в `applications/`: `chromium-wayland` добавляет
 Ozone/Wayland-флаги, `chromium-proxy` — ещё `socks5://localhost:2080` и отдельный
@@ -148,7 +148,11 @@ Ozone/Wayland-флаги, `chromium-proxy` — ещё `socks5://localhost:2080` 
 конфиг почти дефолтный (шрифт `Noto Sans Mono` 11.25), палитры — в файлах
 авто-темы `kitty/{dark,light}-theme.auto.conf`; проверено на 0.49.2, опции
 версионно-зависимы. tmux сверху держит историю на панель и переживает окно
-терминала.
+терминала. Второй терминал — **wezterm** (`Mod`+`Shift`+`Return`):
+`~/.config/wezterm` — симлинк на `wezterm/` (один `wezterm.lua`), палитры —
+встроенные схемы gruvbox, авто-тема через портал без хука, персистентные
+SSH-сессии — через mux-домены (`wezterm connect SSHMUX:<host>`); подробно —
+[docs/wezterm.md](docs/wezterm.md).
 
 Авто-темы через портал, hints, SSH-клипборд и связка с tmux —
 [docs/kitty.md](docs/kitty.md).
@@ -309,6 +313,7 @@ cp vpn/local.env.example vpn/local.env   # заполнить, chmod 600
 | файл | о чём |
 |---|---|
 | [docs/kitty.md](docs/kitty.md) | kitty: авто-темы, hints, SSH, tmux |
+| [docs/wezterm.md](docs/wezterm.md) | wezterm: авто-тема без хука, вкладки, phys-биндинги, персистентный SSH-mux |
 | [docs/theme.md](docs/theme.md) | state-каталог, хуки, Mattermost, обои, per-app поведение |
 | [docs/niri.md](docs/niri.md) | шпаргалка niri: модель окон, биндинги, визуал, диагностика |
 | [docs/nvim.md](docs/nvim.md) | git-ревью (gitsigns, fzf-lua, diffview) и автодополнение в редакторе |

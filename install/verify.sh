@@ -272,6 +272,45 @@ if [[ -f "$REPO/niri/config.kdl" ]]; then
     fi
 fi
 
+# ------------------------------------------- 4c-bis. wezterm: конфиг
+# Конфиг — ~/.config/wezterm/wezterm.lua (симлинк на репозиторий). Парсим тем
+# же способом, что и kitty: wezterm загрузит Lua и напечатает биндинги; ошибка
+# синтаксиса уйдёт в stderr. Отдельного CLI-валидатора у wezterm нет.
+if [[ "$declared_profile" == "headless" ]]; then
+    ok "wezterm config not needed on headless"
+elif [[ -L "$HOME/.config/wezterm" && "$(readlink -f "$HOME/.config/wezterm")" == "$REPO/wezterm" ]]; then
+    ok "~/.config/wezterm -> repo"
+else
+    bad "~/.config/wezterm is not a symlink to $REPO/wezterm"
+fi
+
+if command -v wezterm >/dev/null 2>&1; then
+    if wezterm --config-file "$REPO/wezterm/wezterm.lua" show-keys >/dev/null 2>&1; then
+        ok "wezterm config parse"
+    else
+        bad "wezterm config parse failed: $(wezterm --config-file "$REPO/wezterm/wezterm.lua" show-keys 2>&1 | head -n 3 | tr '\n' ' ')"
+    fi
+else
+    ok "wezterm config parse skipped (wezterm not installed)"
+fi
+
+# Биндинг Shift+Mod+Return -> wezterm должен быть в обоих композиторах
+# (kitty остаётся на Mod+Return).
+if [[ -f "$REPO/niri/config.kdl" ]]; then
+    if grep -qE 'Mod\+Shift\+Return.*spawn.*"wezterm"' "$REPO/niri/config.kdl"; then
+        ok "niri spawns wezterm on Mod+Shift+Return"
+    else
+        bad "niri has no Mod+Shift+Return binding for wezterm"
+    fi
+fi
+if [[ -f "$REPO/sway/config" ]]; then
+    if grep -qE 'bindsym \$mod\+Shift\+Return exec wezterm' "$REPO/sway/config"; then
+        ok "sway spawns wezterm on \$mod+Shift+Return"
+    else
+        bad "sway has no \$mod+Shift+Return binding for wezterm"
+    fi
+fi
+
 # ------------------------------------------ 4c. хуки темы: состав и синтаксис
 hooks_dir="$REPO/wayland/theme-hooks.d"
 hooks=()

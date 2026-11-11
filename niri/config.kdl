@@ -69,6 +69,17 @@ window-rule {
     draw-border-with-background false
 }
 
+// wezterm: полностью без клиентских декораций (window_decorations = "NONE" в
+// wezterm.lua). При client-side режиме RESIZE wezterm рисует собственную рамку
+// (FallbackFrame) — на этом десктопе она выглядела как лишняя полоса у тайлового
+// окна; серверные декорации niri с prefer-no-csd всё равно не рисует, а ресайз
+// тайлом делает композитор, которому рамка клиента не нужна. app-id wezterm —
+// org.wezfurlong.wezterm (регистр в regex niri значим, поэтому [Ww] и т.д.).
+window-rule {
+    match app-id=r#"^org\.wezfurlong\.[Ww]e[Zz][Tt]erm$"#
+    draw-border-with-background false
+}
+
 // ---------------------------------------------------------------- startup
 // nm-applet выбирает бэкенд иконки один раз при запуске и, не найдя
 // StatusNotifier-хоста, навсегда уходит в legacy GtkStatusIcon, который
@@ -105,6 +116,7 @@ screenshot-path "~/screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png"
 binds {
     // --- programs / session ---
     Mod+Return hotkey-overlay-title="Terminal: kitty" { spawn "kitty"; }
+    Mod+Shift+Return hotkey-overlay-title="Terminal: wezterm" { spawn "wezterm"; }
     Mod+D hotkey-overlay-title="Launcher: rofi" { spawn "rofi" "-show" "combi"; }
     Mod+Shift+U { spawn "rofi" "-modi" "unicode" "-show" "unicode"; }
     Mod+Shift+S { spawn "rofi" "-modi" "emoji" "-show" "emoji"; }

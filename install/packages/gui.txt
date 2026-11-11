@@ -20,6 +20,7 @@ radeontop                    # мониторинг GPU AMD
 
 # --- terminal / launcher ---
 kitty                        # основной терминал (конфиг kitty/)
+wezterm                      # второй терминал (конфиг wezterm/; Shift+Mod+Return)
 rofi                         # лаунчер и меню (конфиг rofi/)
 rofi-emoji                   # плагин эмодзи для rofi
 

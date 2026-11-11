@@ -37,6 +37,7 @@ input type:keyboard {
 # Basics:
     # Start a terminal
     bindsym $mod+Return exec $term
+    bindsym $mod+Shift+Return exec wezterm
     bindsym $mod+n exec --no-startup-id networkmanager_dmenu
 
     # Kill focused window

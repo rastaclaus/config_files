@@ -1,0 +1,4 @@
+# Extra AUR packages specific to host "work" (headless, SSH only).
+# One package per line; '#' starts a comment.
+
+shpool                    # пулл терминальных сессий, переживает разрыв SSH

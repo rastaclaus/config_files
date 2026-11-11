@@ -153,6 +153,15 @@ Ozone/Wayland-флаги, `chromium-proxy` — ещё `socks5://localhost:2080` 
 Авто-темы через портал, hints, SSH-клипборд и связка с tmux —
 [docs/kitty.md](docs/kitty.md).
 
+## shpool
+
+**shpool** (AUR, ставится на headless-хосты через `hosts/work/packages-aur.txt`)
+держит терминальные сессии на удалённой машине: SSH-соединение рвётся — сессия
+живёт и переподключается через `shpool -d attach <имя>`. Конфиг —
+`~/.config/shpool/config.toml` (симлинк на `shpool/config.toml`): флаг
+`fish_features=no-query-term` отключает DA1-запросы fish 4.x, которые в PTY без
+терминала дают 10-секундную задержку при создании каждой сессии.
+
 ## Тема и обои
 
 `theme-switch [dark|light]` (без аргумента — инвертировать) правит файлы в

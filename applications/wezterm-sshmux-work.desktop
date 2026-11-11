@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=1.0
+Name=WezTerm SSHMUX:work
+Comment=Подключение к mux-сессии work
+Exec=wezterm connect SSHMUX:work
+Icon=org.wezfurlong.wezterm
+Type=Application
+Categories=System;TerminalEmulator;
+Terminal=false
+StartupNotify=true

@@ -27,10 +27,6 @@ vim.pack.add({
 
 	-- Markdown rendering
 	{ src = "https://github.com/MeanderingProgrammer/render-markdown.nvim"},
-
-	-- AI-ассистент (OpenCode V2)
-	-- https://github.com/sudo-tee/opencode.nvim
-	{ src = "https://github.com/sudo-tee/opencode.nvim" },
 })
 
 require("plugins.treesitter")
@@ -43,7 +39,5 @@ require("plugins.conform")
 require("plugins.autopairs")
 require("plugins.surround")
 require("plugins.markdown")
-require("plugins.opencode")
-
 
 require("plugins.colorschemes")

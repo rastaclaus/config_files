@@ -57,9 +57,16 @@ function fish_prompt
         if test "$prompt_show_host" = 1
                 set prompt_host $usercolor$USER$normal@(set_color $fish_color_host)$hostname$normal":"
         end
-    
+
+        # Внутри сессии zmx показываем её имя (переменную выставляет zmx attach).
+        # Цвет автосuggestions — приглушённый, чтобы не спорил с user@host.
+        set -l prompt_zmx
+        if set -q ZMX_SESSION
+                set -a prompt_zmx (set_color $fish_color_autosuggestion)"[$ZMX_SESSION]"$normal " "
+        end
+
         # Shorten pwd if prompt is too long
         set -l pwd (prompt_pwd)
-    
-        echo -n -s $prompt_host $cwd $pwd $normal $prompt_status $delim
+
+        echo -n -s $prompt_zmx $prompt_host $cwd $pwd $normal $prompt_status $delim
 end

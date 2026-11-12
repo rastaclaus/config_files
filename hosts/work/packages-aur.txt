@@ -2,3 +2,4 @@
 # One package per line; '#' starts a comment.
 
 shpool                    # пулл терминальных сессий, переживает разрыв SSH
+zmx-bin                   # session persistence: attach/detach к сессиям без панелей

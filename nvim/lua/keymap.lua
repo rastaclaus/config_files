@@ -55,6 +55,38 @@ vim.keymap.set("n", "<leader>pa", function()
 	print("file:", path)
 end)
 
+-- Copy "path:line" (normal) or "path:start-end" (visual) for AI code-review.
+-- Путь относительный к git-репо, если файл в репо; иначе относительный к cwd.
+local function copy_line_ref()
+	local path = vim.api.nvim_buf_get_name(0)
+	if path == "" then
+		vim.notify("Buffer is not saved", vim.log.levels.WARN)
+		return
+	end
+	path = vim.fs.normalize(path)
+	local root = vim.fs.root(0, { ".git" })
+	if root then
+		path = vim.fs.relpath(root, path) or path
+	else
+		path = vim.fn.fnamemodify(path, ":~:.")
+	end
+	local ref
+	if vim.fn.mode():find("[vV\22]") then
+		local start_line = vim.fn.line("'<")
+		local end_line = vim.fn.line("'>")
+		ref = path .. ":" .. start_line
+		if end_line > start_line then
+			ref = ref .. "-" .. end_line
+		end
+	else
+		ref = path .. ":" .. vim.fn.line(".")
+	end
+	vim.fn.setreg("+", ref)
+	print(ref)
+end
+
+vim.keymap.set({ "n", "v" }, "<leader>pl", copy_line_ref, { desc = "Copy file:line (AI review ref)" })
+
 -- Terminal keymap
 vim.keymap.set("n", "<leader>tt", ":term<CR>", { noremap = true, silent = true, desc = "Toggle terminal" })
 vim.keymap.set("t", "<ESC><ESC>", "<C-\\><C-N>", { noremap = true, silent = true, desc = "Term normal mode" })

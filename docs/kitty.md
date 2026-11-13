@@ -61,6 +61,7 @@ scrollback_pager nvim --cmd 'set eventignore=FileType' +'nnoremap q ZQ' +'call n
 |---|---|
 | `alt+h` / `alt+l` | предыдущая / следующая вкладка kitty (свой `map`) |
 | `ctrl+shift+t` | новая вкладка в cwd активного окна (`new_tab_with_cwd`, свой `map`) |
+| `ctrl+shift+enter` | новое окно (сплит) в cwd активного окна (`new_window_with_cwd`, свой `map`) |
 | `ctrl+shift+c` / `ctrl+shift+v` | копировать / вставить CLIPBOARD |
 | `ctrl+shift+s` / `shift+insert` | вставить PRIMARY |
 | `ctrl+shift+e` | открыть URL (kitten hints) |
@@ -101,10 +102,11 @@ terminfo на сервере: из kitty сессия приезжает как 
 (`kitten ssh host`: сам проливает terminfo и включит shell integration) или
 разовый `infocmp -a xterm-kitty | ssh host tic -x -o ~/.terminfo /dev/stdin`.
 
-Наследование cwd в новых вкладках (`ctrl+shift+t`) тоже работает через ssh
-kitten: удалённая shell-интеграция репортит каталог (OSC 7), и новая вкладка
+Наследование cwd в новых вкладках (`ctrl+shift+t`) и окнах (`ctrl+shift+enter`,
+`new_window_with_cwd`) тоже работает через ssh
+kitten: удалённая shell-интеграция репортит каталог (OSC 7), и новое окно/вкладка
 подключается к тому же хосту в тот же каталог. С обычным `ssh` механизм
-недоступен — вкладка откроется локально; внутри tmux cwd не прокидывается.
+недоступен — окно/вкладка откроется локально; внутри tmux cwd не прокидывается.
 
 ## tmux
 

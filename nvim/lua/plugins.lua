@@ -14,6 +14,7 @@ vim.pack.add({
 	-- Git
 	{ src = "https://github.com/lewis6991/gitsigns.nvim" }, -- signs, hunks, stage
 	{ src = "https://github.com/sindrets/diffview.nvim" }, -- review branch in a tab
+	{ src = "https://github.com/vuki656/review.nvim" }, -- review comments + export to agent
 
 	-- Helpers
 	{ src = "https://github.com/stevearc/conform.nvim" }, -- formatting
@@ -34,6 +35,7 @@ require("plugins.oil")
 require("plugins.fzflua")
 require("plugins.gitsigns")
 require("plugins.diffview")
+require("plugins.review")
 require("plugins.which_key")
 require("plugins.conform")
 require("plugins.autopairs")

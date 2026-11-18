@@ -1,5 +1,9 @@
 require("which-key").setup({})
 
+require("which-key").add({
+	{ "<leader>v", group = "Review" },
+})
+
 vim.keymap.set("n", "<leader>hk", function()
     require("which-key").show()
 end, {desc = "Show keymaps"})

@@ -1,4 +1,5 @@
--- Inline-ревью изменений: значки в signcolumn, хунки, stage/reset.
+-- Значки изменений, stage/reset хунков и blame; без просмотра диффов.
+-- Просмотр изменений живёт в review.nvim (<leader>vo/<leader>vb) и diffview.
 -- Маппинги buffer-local: создаются только там, где есть git.
 require("gitsigns").setup({
 	signs = {
@@ -20,7 +21,6 @@ require("gitsigns").setup({
 	signs_staged_enable = true, -- отдельные значки для застейдженного
 	attach_to_untracked = true, -- значки и в новых файлах
 	current_line_blame = false, -- включается по <leader>hB
-	word_diff = false, -- включается по <leader>hw
 	on_attach = function(bufnr)
 		local gs = require("gitsigns")
 
@@ -55,19 +55,11 @@ require("gitsigns").setup({
 		map("n", "<leader>hS", gs.stage_buffer, "Stage buffer")
 		map("n", "<leader>hR", gs.reset_buffer, "Reset buffer")
 
-		-- Просмотр
-		map("n", "<leader>hp", gs.preview_hunk, "Preview hunk")
-		map("n", "<leader>hi", gs.preview_hunk_inline, "Preview hunk inline")
-		map("n", "<leader>hd", gs.diffthis, "Diff vs index")
-		map("n", "<leader>hD", function()
-			gs.diffthis("~")
-		end, "Diff vs previous commit")
+		-- Blame
 		map("n", "<leader>hb", function()
 			gs.blame_line({ full = true })
 		end, "Blame line")
 		map("n", "<leader>hB", gs.toggle_current_line_blame, "Toggle line blame")
-		map("n", "<leader>hw", gs.toggle_word_diff, "Toggle word diff")
-		map("n", "<leader>hq", gs.setqflist, "Hunks to quickfix")
 
 		-- Text object: i h
 		map({ "o", "x" }, "ih", gs.select_hunk, "Select hunk")

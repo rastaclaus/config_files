@@ -12,7 +12,7 @@
 
 ## Ревью перед коммитом
 
-Четыре уровня, от мелкого к крупному.
+Пять уровней, от мелкого к крупному.
 
 **1. По ходу правки — gitsigns.** В `signcolumn` видно изменённое и
 застейдженное (значки для индекса отличаются); маппинги создаются только в
@@ -21,17 +21,59 @@
 | клавиши | действие |
 |---|---|
 | `]c` / `[c` | следующий / предыдущий хунк |
-| `<leader>hp`, `<leader>hi` | превью хунка в popup / в буфере |
 | `<leader>hs`, `<leader>hu` | застейджить / отменить stage (n, v) |
 | `<leader>hr` | откатить хунк к индексу (n, v) |
-| `<leader>hd`, `<leader>hD` | diff против индекса / против `HEAD~` |
 | `<leader>hb`, `<leader>hB` | blame строки / переключатель blame |
-| `<leader>hq` | все хунки в quickfix |
 | `ih` (в `o` / `x`) | text-object «хунк» |
 
-Остальное — `:Gitsigns stage_hunk|preview_hunk|diffthis|blame` и `:help gitsigns`.
+Просмотр диффов отсюда убран, чтобы не дублировать review.nvim и diffview.
+Остальное — `:Gitsigns stage_hunk|reset_hunk|blame` и `:help gitsigns`.
 
-**2. Обзор по репозиторию — fzf-lua.**
+**2. Ревью с комментариями — review.nvim.**
+
+Основной вход для ревью изменений: unified diff в отдельном табе, комментарии к
+строке и диапазону, экспорт в markdown для внешнего harness.
+
+| клавиши | действие |
+|---|---|
+| `<leader>vo` | открыть/закрыть ревью рабочего дерева (`git diff HEAD` + untracked) |
+| `<leader>vb` | ревью ветки от merge-base, включая незакоммиченное |
+| `<leader>vc` | быстрый комментарий к строке или выделению (n, v) |
+| `<leader>vp` | панель быстрых комментариев |
+| `<leader>ve` | экспорт: clipboard + markdown-файл |
+| `<leader>vs` | отправить комментарии ревью в harness |
+| `<leader>vS` | отправить быстрые комментарии в harness |
+| `<leader>vq` | закрыть ревью |
+
+Внутри review-таба: `c` — комментарий, `<Tab>` — тип (Fix / Note / Question),
+`<CR>` — сохранить, `]f` / `[f` — файлы, `]c` / `[c` — хунки, `<Space>` —
+stage/unstage файла, `e` — открыть реальный файл, `q` — закрыть, `?` — помощь.
+
+`<leader>ve` пишет markdown в `~/.local/state/nvim/review/latest.md` (быстрые
+комментарии — в `quick-latest.md`) и копирует его в clipboard. Формат:
+
+````markdown
+# Code Review Comments
+
+## src/api/client.ts
+
+### [FIX] src/api/client.ts:42
+
+```typescript
+ const res = await fetch(url)
++return res.json()
+ }
+```
+
+Обработать non-2xx здесь.
+````
+
+Дальше файл отдаётся harness: в opencode `@~/.local/state/nvim/review/latest.md`,
+либо clipboard вставляется в чат. Сессия живёт в `.git/review-session.json`,
+`git status` не грязнит. Закрытие через `Exit` сохраняет сессию, `Exit & Copy`
+очищает, `:Review clear` удаляет комментарии.
+
+**3. Обзор по репозиторию — fzf-lua.**
 
 | клавиши | действие |
 |---|---|
@@ -45,7 +87,7 @@
 В `git_status`: `←` stage, `→` unstage, `C-x` reset, `C-d` хунки файла, `C-q`
 коммиты.
 
-**3. Вся ветка целиком — diffview.**
+**4. Вся ветка целиком — diffview.**
 
 | клавиши | действие |
 |---|---|
@@ -67,13 +109,14 @@
 `<leader>gM` открывает `:DiffviewFileHistory --range=<merge-base>..HEAD` — те же
 границы, но только коммиты ветки.
 
-**4. Коммит.** `git commit` открывает nvim (`EDITOR=/usr/bin/nvim`), а
+**5. Коммит.** `git commit` открывает nvim (`EDITOR=/usr/bin/nvim`), а
 `commit.verbose=true` показывает дифф застейдженного прямо в `COMMIT_EDITMSG`.
 `<leader>gp` — `:DiffGitCached` отдельным сплитом, `:wq` — записать и закрыть.
 Включён `spell`, дифф подсвечен `syntax/gitcommit.vim`.
 
 ```text
-]c ]c <leader>hp ...   # пробежаться по своим изменениям
+]c ]c                  # пробежаться по своим изменениям
+<leader>hb             # blame строки, если нужно
 <leader>hs             # застейджить то, что относится к коммиту
 <leader>gD             # глазами проверить индекс
 git commit             # сообщение + дифф, :wq
@@ -107,5 +150,5 @@ dev-версию, обнови плагин (`:packupdate`).
 ## Прочие маппинги
 
 `<leader>` — пробел. Группы: `f*` — поиск (fzf-lua), `b*` — буферы, `t*` —
-табы, `s*` — сплиты, `h*` — хунки git, `g*` — git, `e` — oil, `q` / `d` —
-диагностика LSP, `<leader>hk` — which-key.
+табы, `s*` — сплиты, `h*` — хунки/stage/blame, `g*` — git, `v*` — ревью,
+`e` — oil, `q` / `d` — диагностика LSP, `<leader>hk` — which-key.
